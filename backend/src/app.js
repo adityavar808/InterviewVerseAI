@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import session from "express-session";
+
+import passport from "./config/passport.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
@@ -22,6 +25,18 @@ app.use(
 app.use(helmet());
 
 app.use(cookieParser());
+
+app.use(
+    session({
+        secret: "keyboardcat",
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
+app.use(passport.initialize());
+
+app.use(passport.session());
 
 
 // Routes
