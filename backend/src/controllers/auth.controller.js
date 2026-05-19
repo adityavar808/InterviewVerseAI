@@ -10,6 +10,8 @@ import generateOTP from "../utils/generateOTP.js";
 
 import sendEmail from "../services/email.service.js";
 
+import PendingUser from "../models/pendingUser.model.js";
+
 // ================= REFRESH ACCESS TOKEN =================
 const refreshAccessToken = async (req, res) => {
   try {
@@ -71,8 +73,12 @@ const registerUser = async (req, res) => {
     // Generate OTP
     const otp = generateOTP();
 
+    await PendingUser.deleteMany({
+      email,
+    });
+
     // Create user
-    const user = await User.create({
+    const user = await PendingUser.create({
       name,
 
       email,
@@ -81,7 +87,7 @@ const registerUser = async (req, res) => {
 
       otp,
 
-      otpExpire: Date.now() + 10 * 60 * 1000,
+      otpExpiry: Date.now() + 10 * 60 * 1000,
     });
 
     // Send OTP Email
@@ -128,6 +134,13 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (!user.isVerified) {
+      return res.status(401).json({
+        success: false,
+        message: "Please verify your email first",
+      });
+    }
+
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
@@ -171,7 +184,7 @@ const loginUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
-    });   
+    });
   }
 };
 
@@ -320,36 +333,69 @@ const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    // Find user
-    const user = await User.findOne({
+    // Find pending user
+
+    const pendingUser = await PendingUser.findOne({
       email,
+
       otp,
-      otpExpire: { $gt: Date.now() },
+
+      otpExpiry: {
+        $gt: Date.now(),
+      },
     });
 
-    if (!user) {
+    // Invalid OTP
+
+    if (!pendingUser) {
       return res.status(400).json({
         success: false,
+
         message: "Invalid or expired OTP",
       });
     }
 
-    // Verify account
-    user.isVerified = true;
+    // Check existing real user
 
-    user.otp = undefined;
+    const existingUser = await User.findOne({
+      email,
+    });
 
-    user.otpExpire = undefined;
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
 
-    await user.save();
+        message: "User already exists",
+      });
+    }
+
+    // Create verified real user
+
+    await User.create({
+      name: pendingUser.name,
+
+      email: pendingUser.email,
+
+      password: pendingUser.password,
+
+      isVerified: true,
+    });
+
+    // Delete pending user
+
+    await PendingUser.deleteOne({
+      email,
+    });
 
     res.status(200).json({
       success: true,
+
       message: "Email verified successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
+
       message: error.message,
     });
   }
@@ -361,7 +407,9 @@ const resendOTP = async (req, res) => {
     const { email } = req.body;
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await PendingUser.findOne({
+      email,
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -375,7 +423,7 @@ const resendOTP = async (req, res) => {
 
     user.otp = otp;
 
-    user.otpExpire = Date.now() + 10 * 60 * 1000;
+    user.otpExpiry = Date.now() + 10 * 60 * 1000;
 
     await user.save();
 
@@ -410,54 +458,40 @@ This OTP will expire in 10 minutes.
 
 // ================= GOOGLE AUTH SUCCESS =================
 const googleAuthSuccess = async (req, res) => {
+  try {
+    const user = req.user;
 
-    try {
+    // Generate Tokens
+    const accessToken = generateAccessToken(user);
 
-        const user = req.user;
+    const refreshToken = generateRefreshToken(user);
 
+    // Save refresh token
+    user.refreshToken = refreshToken;
 
-        // Generate Tokens
-        const accessToken =
-            generateAccessToken(user);
+    await user.save();
 
-        const refreshToken =
-            generateRefreshToken(user);
+    // Store cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
 
+      secure: false,
 
-        // Save refresh token
-        user.refreshToken = refreshToken;
+      sameSite: "strict",
 
-        await user.save();
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
-
-        // Store cookie
-        res.cookie("refreshToken", refreshToken, {
-
-            httpOnly: true,
-
-            secure: false,
-
-            sameSite: "strict",
-
-            maxAge:
-                7 * 24 * 60 * 60 * 1000,
-        });
-
-
-        // Redirect frontend
-        res.redirect(
-            `${process.env.CLIENT_URL}/oauth-success?token=${accessToken}`
-        );
-
-    }
-
-    catch (error) {
-
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+    // Redirect frontend
+    res.redirect(
+      `${process.env.CLIENT_URL}/oauth-success?token=${accessToken}`,
+    );
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 export {
