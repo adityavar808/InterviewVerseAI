@@ -7,6 +7,15 @@ import OAuthSuccess from "../pages/auth/OAuthSuccess";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 
+import Interviews from "../pages/interviews/Interviews";
+import ResumeAnalyzer from "../pages/resume/ResumeAnalyzer";
+import CodingPractice from "../pages/coding/CodingPractice";
+import Analytics from "../pages/analytics/Analytics";
+import Profile from "../pages/profile/Profile";
+import Settings from "../pages/settings/Settings";
+
+import InterviewSession from "../pages/interview-session/InterviewSession";
+
 import DashboardHome from "../pages/dashboard/DashboardHome";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 
@@ -18,7 +27,6 @@ const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Public Auth Routes */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
@@ -27,22 +35,13 @@ const AppRoutes = () => {
 
           <Route path="/verify-otp" element={<VerifyOTP />} />
 
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          <Route
-            path="/reset-password/:token"
-            element={<ResetPassword />}
-          />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Route>
 
         {/* OAuth */}
-        <Route
-          path="/oauth-success"
-          element={<OAuthSuccess />}
-        />
+        <Route path="/oauth-success" element={<OAuthSuccess />} />
 
         {/* User Dashboard */}
         <Route
@@ -50,6 +49,81 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <DashboardHome />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Interviews */}
+
+        <Route
+          path="/interviews"
+          element={
+            <ProtectedRoute>
+              <Interviews />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Resume Analyzer */}
+
+        <Route
+          path="/resume-analyzer"
+          element={
+            <ProtectedRoute>
+              <ResumeAnalyzer />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Coding Practice */}
+
+        <Route
+          path="/coding"
+          element={
+            <ProtectedRoute>
+              <CodingPractice />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Analytics */}
+
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile */}
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Settings */}
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/interview-session"
+          element={
+            <ProtectedRoute>
+              <InterviewSession />
             </ProtectedRoute>
           }
         />

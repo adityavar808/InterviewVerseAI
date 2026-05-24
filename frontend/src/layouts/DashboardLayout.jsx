@@ -8,8 +8,12 @@ const DashboardLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div
-      className="flex text-white relative overflow-hidden"
-      style={{ background: "#020617", height: "100vh" }}
+      className="flex text-white relative overflow-x-hidden"
+      style={{
+        background: "#020617",
+        height: "100vh",
+        overflow: "hidden",
+      }}
     >
       {/* Grid overlay */}
       <div
@@ -100,7 +104,7 @@ const DashboardLayout = ({ children }) => {
         style={{ height: "100vh" }}
       >
         {/* Navbar — never scrolls */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 relative z-10">
           <Navbar
             setSidebarOpen={setSidebarOpen}
             collapsed={collapsed}
@@ -109,7 +113,9 @@ const DashboardLayout = ({ children }) => {
         </div>
 
         {/* Main content — the ONLY thing that scrolls */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 relative z-0">
+          {children}
+        </main>
       </div>
     </div>
   );

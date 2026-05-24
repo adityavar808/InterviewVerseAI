@@ -9,10 +9,24 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 
+import { useDispatch } from "react-redux";
+
+import { useNavigate } from "react-router-dom";
+
+import toast from "react-hot-toast";
+
+import api from "../../services/api";
+
+import { logout } from "../../redux/slices/authSlice";
+
 const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
   const [open, setOpen] = useState(false);
 
   const dropdownRef = useRef(null);
+
+  const dispatch = useDispatch();
+
+  const navigate = useNavigate();
 
   // CLOSE DROPDOWN ON OUTSIDE CLICK
 
@@ -29,6 +43,24 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+
+      localStorage.removeItem("accessToken");
+
+      dispatch(logout());
+
+      setOpen(false);
+
+      toast.success("Logged out successfully");
+
+      navigate("/login");
+    } catch (error) {
+      toast.error("Logout failed");
+    }
+  };
 
   return (
     <div
@@ -93,7 +125,6 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
 
       {/* RIGHT SECTION — responsive */}
       <div className="flex items-center gap-2 md:gap-4">
-
         {/* NOTIFICATION */}
         <button
           className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
@@ -128,8 +159,7 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
         />
 
         {/* PROFILE SECTION */}
-        <div className="relative" ref={dropdownRef}>
-
+        <div className="relative" ref={dropdownRef}>  
           {/* PROFILE BUTTON */}
           <button
             onClick={() => setOpen(!open)}
@@ -161,37 +191,103 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
           </button>
 
           {/* DROPDOWN */}
+
           {open && (
             <div
-              className="absolute right-0 top-14 w-64 rounded-2xl p-3 z-50"
+              className="
+      absolute
+      right-0
+      top-14
+      w-56
+      rounded-2xl
+      p-2
+      z-[99999]
+    "
               style={{
-                background: "rgba(15,23,42,0.92)",
+                background: "rgba(15,23,42,0.88)",
+
                 backdropFilter: "blur(24px)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.4)",
+
+                border: "1px solid rgba(255,255,255,0.06)",
+
+                boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
               }}
             >
               {/* USER INFO */}
-              <div className="pb-3 border-b border-white/10">
-                <p className="text-white font-semibold">Aditya</p>
-                <p className="text-slate-400 text-sm">aditya@example.com</p>
+
+              <div className="px-3 py-2.5 mb-1">
+                <p className="text-sm font-medium text-white">Aditya</p>
+
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  aditya@example.com
+                </p>
               </div>
 
-              {/* MENU ITEMS */}
-              <div className="mt-3 space-y-1">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 transition">
-                  <User size={18} />
-                  <span>Profile</span>
+              {/* MENU */}
+
+              <div className="space-y-1">
+                {/* PROFILE */}
+
+                <button
+                  className="
+          w-full
+          flex
+          items-center
+          gap-3
+          px-3
+          py-2.5
+          rounded-xl
+          text-slate-300
+          hover:bg-white/5
+          transition-all
+        "
+                >
+                  <User size={16} />
+
+                  <span className="text-sm">Profile</span>
                 </button>
 
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 transition">
-                  <Settings size={18} />
-                  <span>Settings</span>
+                {/* SETTINGS */}
+
+                <button
+                  className="
+          w-full
+          flex
+          items-center
+          gap-3
+          px-3
+          py-2.5
+          rounded-xl
+          text-slate-300
+          hover:bg-white/5
+          transition-all
+        "
+                >
+                  <Settings size={16} />
+
+                  <span className="text-sm">Settings</span>
                 </button>
 
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 transition">
-                  <LogOut size={18} />
-                  <span>Logout</span>
+                {/* LOGOUT */}
+
+                <button
+                  onClick={handleLogout}
+                  className="
+          w-full
+          flex
+          items-center
+          gap-3
+          px-3
+          py-2.5
+          rounded-xl
+          text-red-400
+          hover:bg-red-500/10
+          transition-all
+        "
+                >
+                  <LogOut size={16} />
+
+                  <span className="text-sm">Logout</span>
                 </button>
               </div>
             </div>

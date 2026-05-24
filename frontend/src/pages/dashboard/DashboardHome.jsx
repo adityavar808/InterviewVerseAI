@@ -57,7 +57,7 @@ const upcomingTasks = [
 const DashboardHome = () => {
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8 relative z-0">
         {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}

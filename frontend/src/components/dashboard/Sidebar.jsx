@@ -55,28 +55,44 @@ const navItems = [
   },
 ];
 
-const Sidebar = ({ collapsed, setSidebarOpen }) => {
+const Sidebar = ({
+  collapsed,
+  setSidebarOpen,
+}) => {
+
   return (
+
     <div
       className={`
-    ${collapsed ? "w-24" : "w-72"}
+        ${
+          collapsed
+            ? "w-24"
+            : "w-72"
+        }
 
-    transition-[width] duration-300
-    flex flex-col
-    p-5
-    relative
-    overflow-hidden
-    max-w-[85vw]
-  `}
+        h-screen
+        transition-[width]
+        duration-300
+        flex
+        flex-col
+        p-5
+        relative
+        overflow-hidden
+        max-w-[85vw]
+      `}
       style={{
-        background: "rgba(2,6,23,0.95)",
+        background:
+          "rgba(2,6,23,0.95)",
 
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        borderRight:
+          "1px solid rgba(255,255,255,0.06)",
 
-        backdropFilter: "blur(24px)",
+        backdropFilter:
+          "blur(24px)",
       }}
     >
-      {/* Ambient orb top-left */}
+
+      {/* Ambient Orb */}
 
       <div
         className="absolute pointer-events-none"
@@ -85,184 +101,315 @@ const Sidebar = ({ collapsed, setSidebarOpen }) => {
           height: "200px",
           top: "-60px",
           left: "-60px",
+
           background:
             "radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)",
         }}
       />
 
-      {/* Logo Area */}
+      {/* LOGO AREA */}
 
-      <div className="relative mb-8">
-        {/* Badge */}
+      <div
+        className={`
+          relative
+          mb-8
+
+          ${
+            collapsed
+              ? "flex flex-col items-center"
+              : ""
+          }
+        `}
+      >
+
+        {/* AI BADGE */}
 
         <div
-          className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full"
-          style={{
-            background: "rgba(6,182,212,0.1)",
+          className={`
+            inline-flex items-center rounded-full mb-3
 
-            border: "1px solid rgba(6,182,212,0.2)",
+            ${
+              collapsed
+                ? "justify-center w-12 h-12"
+                : "gap-1.5 px-2.5 py-1"
+            }
+          `}
+          style={{
+            background:
+              "rgba(6,182,212,0.1)",
+
+            border:
+              "1px solid rgba(6,182,212,0.2)",
           }}
         >
-          <Zap size={10} className="text-cyan-400" />
 
-          <span
-            className="text-cyan-400 font-mono uppercase tracking-widest"
-            style={{
-              fontSize: "9px",
-            }}
-          >
-            AI Platform
-          </span>
+          <Zap
+            size={10}
+            className="text-cyan-400"
+          />
+
+          {!collapsed && (
+
+            <span
+              className="text-cyan-400 font-mono uppercase tracking-widest"
+              style={{
+                fontSize: "9px",
+              }}
+            >
+
+              AI Platform
+
+            </span>
+
+          )}
+
         </div>
 
+        {/* LOGO */}
+
         {!collapsed && (
+
           <>
             <h1
               className="text-xl font-bold leading-tight"
               style={{
-                background: "linear-gradient(135deg, #06b6d4, #818cf8)",
+                background:
+                  "linear-gradient(135deg, #06b6d4, #818cf8)",
 
-                WebkitBackgroundClip: "text",
+                WebkitBackgroundClip:
+                  "text",
 
-                WebkitTextFillColor: "transparent",
+                WebkitTextFillColor:
+                  "transparent",
               }}
             >
+
               InterviewVerse
+
             </h1>
 
-            <p className="text-slate-500 text-xs mt-0.5">Powered by AI</p>
+            <p className="text-slate-500 text-xs mt-0.5">
+
+              Powered by AI
+
+            </p>
+
           </>
+
         )}
 
-        {/* Shimmer line */}
+        {/* Divider */}
 
         <div
-          className="absolute bottom-0 left-0 right-0 h-px mt-3"
+          className={`
+            h-px mt-4
+
+            ${
+              collapsed
+                ? "w-10"
+                : "w-full"
+            }
+          `}
           style={{
             background:
               "linear-gradient(90deg, rgba(6,182,212,0.4), transparent)",
-
-            marginTop: "12px",
-
-            position: "relative",
           }}
         />
+
       </div>
 
-      {/* Nav Label */}
+      {/* NAVIGATION LABEL */}
 
-      <p
-        className="text-slate-600 font-mono uppercase tracking-widest mb-3"
-        style={{
-          fontSize: "9px",
-        }}
-      >
-        Navigation
-      </p>
+      {!collapsed && (
 
-      {/* Nav Items */}
+        <p
+          className="text-slate-600 font-mono uppercase tracking-widest mb-3"
+          style={{
+            fontSize: "9px",
+          }}
+        >
+
+          Navigation
+
+        </p>
+
+      )}
+
+      {/* NAV ITEMS */}
 
       <nav
         className={`
-    space-y-2
-    flex-1
-    min-h-0
-    overflow-y-auto
+          flex-1
+          min-h-0
+          space-y-2
 
-    ${collapsed ? "flex flex-col items-center" : ""}
-  `}
+          ${
+            collapsed
+              ? "flex flex-col items-center overflow-hidden"
+              : "overflow-y-auto"
+          }
+        `}
       >
-        {navItems.map(({ icon: Icon, label, path }) => (
-          <NavLink
-            onClick={() => setSidebarOpen?.(false)}
-            key={label}
-            to={path}
-            className={({ isActive }) =>
+
+        {navItems.map(
+          ({
+            icon: Icon,
+            label,
+            path,
+          }) => (
+
+            <NavLink
+              key={label}
+
+              to={path}
+
+              onClick={() =>
+                setSidebarOpen?.(false)
+              }
+
+              className={({
+                isActive,
+              }) =>
+                `
+                flex items-center
+
+                ${
+                  collapsed
+                    ? "justify-center w-14 h-14 mx-auto"
+                    : "gap-3 px-3 py-2.5"
+                }
+
+                rounded-xl border transition-all duration-200
+
+                ${
+                  isActive
+                    ? "bg-cyan-500/10 border-cyan-500/20"
+                    : "border-transparent hover:bg-white/5 hover:border-white/10"
+                }
               `
-  flex items-center
+              }
+            >
 
-  ${collapsed ? "justify-center w-14 h-14 mx-auto" : "gap-3 px-3 py-2.5"}
+              {({
+                isActive,
+              }) => (
+                <>
 
-  rounded-xl transition-all duration-200 border
-
-  ${
-    isActive
-      ? "bg-cyan-500/10 border-cyan-500/20"
-      : "border-transparent hover:bg-white/5 hover:border-white/10"
-  }
-`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon
-                  size={17}
-                  style={{
-                    color: isActive
-                      ? "rgb(34,211,238)"
-                      : "rgba(148,163,184,0.7)",
-                  }}
-                />
-
-                <span
-                  className="text-sm font-medium"
-                  style={{
-                    color: isActive
-                      ? "rgba(255,255,255,0.9)"
-                      : "rgba(148,163,184,0.7)",
-                  }}
-                >
-                  {!collapsed && label}
-                </span>
-
-                {/* Active Indicator */}
-
-                {isActive && !collapsed && (
-                  <div
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400"
+                  <Icon
+                    size={18}
                     style={{
-                      boxShadow: "0 0 6px rgba(6,182,212,0.8)",
+                      color:
+                        isActive
+                          ? "rgb(34,211,238)"
+                          : "rgba(148,163,184,0.7)",
                     }}
                   />
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
+
+                  {!collapsed && (
+
+                    <>
+                      <span
+                        className="text-sm font-medium"
+                        style={{
+                          color:
+                            isActive
+                              ? "rgba(255,255,255,0.92)"
+                              : "rgba(148,163,184,0.7)",
+                        }}
+                      >
+
+                        {label}
+
+                      </span>
+
+                      {isActive && (
+
+                        <div
+                          className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400"
+                          style={{
+                            boxShadow:
+                              "0 0 6px rgba(6,182,212,0.8)",
+                          }}
+                        />
+
+                      )}
+
+                    </>
+
+                  )}
+
+                </>
+              )}
+
+            </NavLink>
+          )
+        )}
+
       </nav>
 
-      {/* Bottom User Card */}
+      {/* USER CARD */}
 
       <div
-        className="mt-6 p-3 rounded-xl"
-        style={{
-          background: "rgba(255,255,255,0.03)",
+        className={`
+          mt-6
+          rounded-2xl
+          border
+          transition-all
+          duration-300
 
-          border: "1px solid rgba(255,255,255,0.06)",
+          ${
+            collapsed
+              ? "p-3"
+              : "p-4"
+          }
+        `}
+        style={{
+          background:
+            "rgba(255,255,255,0.03)",
+
+          borderColor:
+            "rgba(255,255,255,0.06)",
         }}
       >
+
         <div
           className={`
-  flex items-center
-  ${collapsed ? "justify-center" : "gap-3"}
-  px-3 py-2.5 rounded-xl transition-all duration-200 border
-`}
+            flex items-center
+
+            ${
+              collapsed
+                ? "justify-center"
+                : "gap-3"
+            }
+          `}
         >
+
+          {/* AVATAR */}
+
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
             style={{
-              background: "linear-gradient(135deg, #06b6d4, #0891b2)",
+              background:
+                "linear-gradient(135deg, #06b6d4, #0891b2)",
 
               color: "#020617",
             }}
           >
+
             A
+
           </div>
 
+          {/* USER INFO */}
+
           {!collapsed && (
-            <div className="flex-1 min-w-0">
+
+            <div className="min-w-0 flex-1">
+
               <p className="text-slate-200 text-sm font-medium truncate">
+
                 Aditya
+
               </p>
 
               <p
@@ -271,14 +418,20 @@ const Sidebar = ({ collapsed, setSidebarOpen }) => {
                   fontSize: "10px",
                 }}
               >
+
                 aditya@example.com
+
               </p>
+
             </div>
+
           )}
+
         </div>
+
       </div>
 
-      {/* Ambient Orb Bottom */}
+      {/* Bottom Orb */}
 
       <div
         className="absolute pointer-events-none"
@@ -287,10 +440,12 @@ const Sidebar = ({ collapsed, setSidebarOpen }) => {
           height: "160px",
           bottom: "-40px",
           right: "-40px",
+
           background:
             "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
         }}
       />
+
     </div>
   );
 };
