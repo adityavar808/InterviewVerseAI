@@ -1,33 +1,23 @@
 import { Navigate } from "react-router-dom";
 
-import { useSelector }
-from "react-redux";
+import { getStoredAdminSession } from "../admin/utils/adminHelpers";
 
-const AdminRoute = ({
-  children,
-}) => {
+const AdminRoute = ({ children }) => {
+  const session =
+    getStoredAdminSession();
+  const admin = session?.admin;
 
-  const {
-    user,
-    isAuthenticated,
-  } = useSelector(
-    (state) => state.auth
-  );
-
-  if (!isAuthenticated) {
-
+  if (!session?.accessToken || !admin) {
     return (
-      <Navigate to="/login" />
+      <Navigate
+        to="/admin-login"
+        replace
+      />
     );
   }
 
-  if (
-    user?.role !== "admin"
-  ) {
-
-    return (
-      <Navigate to="/dashboard" />
-    );
+  if (admin.role !== "admin") {
+    return <Navigate to="/login" replace />;
   }
 
   return children;

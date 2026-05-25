@@ -11,6 +11,7 @@ import generateOTP from "../utils/generateOTP.js";
 import sendEmail from "../services/email.service.js";
 
 import PendingUser from "../models/pendingUser.model.js";
+import PlatformSetting from "../models/platformSetting.model.js";
 
 // ================= REFRESH ACCESS TOKEN =================
 const refreshAccessToken = async (req, res) => {
@@ -37,6 +38,20 @@ const refreshAccessToken = async (req, res) => {
       });
     }
 
+    if (user.role === "admin") {
+      user.refreshToken = "";
+
+      await user.save();
+
+      res.clearCookie("refreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message:
+          "Admin accounts cannot use the candidate session. Please use the admin portal.",
+      });
+    }
+
     // Generate new access token
     const newAccessToken = generateAccessToken(user);
 
@@ -56,6 +71,17 @@ const refreshAccessToken = async (req, res) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    const settings = await PlatformSetting.findOne({
+      key: "default",
+    });
+
+    if (settings && !settings.allowRegistrations) {
+      return res.status(403).json({
+        success: false,
+        message: "New registrations are currently disabled",
+      });
+    }
 
     // Check existing user
     const existingUser = await User.findOne({ email });
@@ -134,6 +160,21 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (user.status === "suspended") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended",
+      });
+    }
+
+    if (user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "This account belongs to an admin. Please use the admin login portal.",
+      });
+    }
+
     if (!user.isVerified) {
       return res.status(401).json({
         success: false,
@@ -158,6 +199,9 @@ const loginUser = async (req, res) => {
 
     // Save refresh token in DB
     user.refreshToken = refreshToken;
+    user.lastLoginAt = new Date();
+    user.lastActiveAt = new Date();
+    user.status = "active";
 
     await user.save();
 
@@ -220,6 +264,14 @@ const logoutUser = async (req, res) => {
 
 // ================= CURRENT USER =================
 const getMe = async (req, res) => {
+  if (req.user.role === "admin") {
+    return res.status(403).json({
+      success: false,
+      message:
+        "Admin accounts are not allowed in the candidate portal. Please use the admin portal.",
+    });
+  }
+
   res.status(200).json({
     success: true,
     user: req.user,
@@ -461,6 +513,12 @@ const googleAuthSuccess = async (req, res) => {
   try {
     const user = req.user;
 
+    if (user.role === "admin") {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/admin-login`,
+      );
+    }
+
     // Generate Tokens
     const accessToken = generateAccessToken(user);
 
@@ -468,6 +526,9 @@ const googleAuthSuccess = async (req, res) => {
 
     // Save refresh token
     user.refreshToken = refreshToken;
+    user.lastLoginAt = new Date();
+    user.lastActiveAt = new Date();
+    user.status = "active";
 
     await user.save();
 

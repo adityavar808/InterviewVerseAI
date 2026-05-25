@@ -15,11 +15,13 @@ import Profile from "../pages/profile/Profile";
 import Settings from "../pages/settings/Settings";
 
 import InterviewSession from "../pages/interview-session/InterviewSession";
+import Home from "../pages/landing/home";
 
 import DashboardHome from "../pages/dashboard/DashboardHome";
-import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminLogin from "../pages/admin-auth/AdminLogin";
 
 import ProtectedRoute from "./ProtectedRoute";
+import AdminRoutes from "../admin/routes/AdminRoutes";
 import AdminRoute from "./AdminRoute";
 import PublicRoute from "./PublicRoute";
 
@@ -29,6 +31,8 @@ const AppRoutes = () => {
       <Routes>
         {/* Public Auth Routes */}
         <Route element={<PublicRoute />}>
+          <Route path="/" element={<Home/>}></Route>
+
           <Route path="/login" element={<Login />} />
 
           <Route path="/register" element={<Register />} />
@@ -130,13 +134,15 @@ const AppRoutes = () => {
 
         {/* Admin Dashboard */}
         <Route
-          path="/admin"
+          path="/admin/*"
           element={
             <AdminRoute>
-              <AdminDashboard />
+              <AdminRoutes />
             </AdminRoute>
           }
         />
+
+        <Route path="/admin-login" element={<AdminLogin />} />
       </Routes>
     </BrowserRouter>
   );

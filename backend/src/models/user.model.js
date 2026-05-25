@@ -27,6 +27,14 @@ const userSchema = new mongoose.Schema(
       default: "student",
     },
 
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: function () {
+        return this.isVerified ? "active" : "inactive";
+      },
+    },
+
     isVerified: {
       type: Boolean,
       default: false,
@@ -50,6 +58,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    adminRefreshToken: {
+      type: String,
+      default: "",
+    },
+
+    lastLoginAt: {
+      type: Date,
+    },
+
+    lastActiveAt: {
+      type: Date,
+    },
+
     otp: {
       type: String,
     },

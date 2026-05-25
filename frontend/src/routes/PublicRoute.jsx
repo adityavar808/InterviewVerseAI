@@ -1,8 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
+import {
+  getStoredAdminSession,
+} from "../admin/utils/adminHelpers";
 
 const PublicRoute = () => {
-  const { isAuthenticated, isAuthLoading } = useSelector(
+  const {
+    isAuthenticated,
+    isAuthLoading,
+    user,
+  } = useSelector(
     (state) => state.auth
   );
 
@@ -11,6 +18,22 @@ const PublicRoute = () => {
       <div className="h-screen flex items-center justify-center">
         Loading...
       </div>
+    );
+  }
+
+  if (isAuthenticated && user?.role === "admin") {
+    const adminSession =
+      getStoredAdminSession();
+
+    return (
+      <Navigate
+        to={
+          adminSession?.accessToken
+            ? "/admin"
+            : "/admin-login"
+        }
+        replace
+      />
     );
   }
 

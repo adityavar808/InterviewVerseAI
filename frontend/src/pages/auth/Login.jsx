@@ -25,7 +25,11 @@ const Login = () => {
 
       localStorage.setItem("accessToken", response.data.accessToken);
 
-      navigate("/dashboard");
+      navigate(
+        response.data.user?.role === "admin"
+          ? "/admin-login"
+          : "/dashboard",
+      );
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     }
