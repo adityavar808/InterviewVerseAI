@@ -1,41 +1,21 @@
 import { Navigate } from "react-router-dom";
 
-import { useSelector }
-from "react-redux";
-import {
-  getStoredAdminSession,
-} from "../admin/utils/adminHelpers";
+import { useSelector } from "react-redux";
+import { getStoredAdminSession } from "../admin/utils/adminHelpers";
 
-const ProtectedRoute = ({
-  children,
-}) => {
-
-  const {
-    isAuthenticated,
-    user,
-  } = useSelector(
-    (state) => state.auth
-  );
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   if (!isAuthenticated) {
-
-    return (
-      <Navigate to="/login" />
-    );
+    return <Navigate to="/login" />;
   }
 
   if (user?.role === "admin") {
-
-    const adminSession =
-      getStoredAdminSession();
+    const adminSession = getStoredAdminSession();
 
     return (
       <Navigate
-        to={
-          adminSession?.accessToken
-            ? "/admin"
-            : "/admin-login"
-        }
+        to={adminSession?.accessToken ? "/admin" : "/admin-login"}
         replace
       />
     );
