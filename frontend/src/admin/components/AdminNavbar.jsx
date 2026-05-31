@@ -1,11 +1,24 @@
 import { LogOut, Menu } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import useAdminSidebar from "../hooks/useAdminSidebar";
-import { formatDate, getAdminProfile } from "../utils/adminHelpers";
+import { formatDate, formatDateTime, getAdminProfile } from "../utils/adminHelpers";
 
 const AdminNavbar = ({ onMenuClick, onLogout, isLoggingOut }) => {
   const { pageTitle, pageDescription } = useAdminSidebar();
   const admin = getAdminProfile() || {};
+
+  const [currentTime, setCurrentTime] = useState(
+    new Date().toLocaleTimeString()
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-white/10 bg-slate-950/70 px-6 backdrop-blur-xl">
@@ -27,6 +40,14 @@ const AdminNavbar = ({ onMenuClick, onLogout, isLoggingOut }) => {
       </div>
 
       <div className="flex items-center gap-4">
+        <div className="hidden rounded-[22px] border border-white/10 bg-white/5 px-4 py-3 md:block">
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+            Time
+          </p>
+          <p className="mt-1 text-sm font-medium text-white">
+            {currentTime}
+          </p>
+        </div>
         <div className="hidden rounded-[22px] border border-white/10 bg-white/5 px-4 py-3 md:block">
           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
             Today

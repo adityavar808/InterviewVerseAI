@@ -175,7 +175,7 @@ const Interviews = () => {
         overview?.totalInterviews,
       ),
       growth:
-        overview?.interviewGrowth || 0,
+        overview?.interviewGrowth ?? 0,
       subtitle: "total interview tracks",
       icon: BriefcaseBusiness,
       accent: "cyan",
@@ -186,7 +186,7 @@ const Interviews = () => {
         overview?.publishedInterviews,
       ),
       growth:
-        overview?.interviewGrowth || 0,
+        overview?.interviewGrowth ?? 0,
       subtitle: "live interview templates",
       icon: Rocket,
       accent: "emerald",

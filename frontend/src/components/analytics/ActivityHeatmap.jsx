@@ -7,7 +7,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const weeks = [
+const defaultWeeks = [
   [1, 2, 0, 4, 3, 2, 1],
   [0, 3, 2, 1, 4, 2, 0],
   [2, 4, 3, 2, 1, 0, 1],
@@ -32,7 +32,9 @@ const getColor = (level) => {
   }
 };
 
-const ActivityHeatmap = () => {
+const ActivityHeatmap = ({ data = defaultWeeks }) => {
+  const weeks = data && data.length > 0 ? data : defaultWeeks;
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}

@@ -18,6 +18,7 @@ import {
   updateInterview,
   deleteInterview,
   getCodingQuestions,
+  getCodingQuestionById,
   createCodingQuestion,
   updateCodingQuestion,
   deleteCodingQuestion,
@@ -75,6 +76,7 @@ router
 
 router
   .route("/coding-questions/:questionId")
+  .get(getCodingQuestionById)
   .put(updateCodingQuestion)
   .delete(deleteCodingQuestion);
 

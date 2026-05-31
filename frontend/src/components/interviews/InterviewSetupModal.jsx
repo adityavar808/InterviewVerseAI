@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import {
   X,
@@ -7,20 +9,75 @@ import {
   Brain,
   Clock3,
   Sparkles,
-  ShieldCheck,
-  Upload,
   Globe,
+  AlertCircle,
 } from "lucide-react";
 
 const difficulties = ["Easy", "Medium", "Hard"];
 const durations = ["15 Min", "30 Min", "45 Min", "60 Min"];
 const experiences = ["Fresher", "1-2 Years", "3+ Years"];
 const languages = ["English", "Hindi", "Hinglish"];
+const roles = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Data Analyst",
+  "Machine Learning Engineer",
+  "HR Interview",
+  "System Design",
+];
 
 const InterviewSetupModal = ({ open, onClose }) => {
+  const navigate = useNavigate();
+  
+  // State Management
+  const [selectedDifficulty, setSelectedDifficulty] = useState("");
+  const [selectedDuration, setSelectedDuration] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedExperience, setSelectedExperience] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   if (!open) return null;
 
-  const navigate = useNavigate();
+  // Handle form submission
+  const handleStartInterview = async () => {
+    // Validation
+    if (
+      !selectedDifficulty ||
+      !selectedDuration ||
+      !selectedRole ||
+      !selectedExperience ||
+      !selectedLanguage
+    ) {
+      toast.error("Please select all interview parameters");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Prepare interview configuration
+      const interviewConfig = {
+        difficulty: selectedDifficulty,
+        duration: selectedDuration,
+        role: selectedRole,
+        experience: selectedExperience,
+        language: selectedLanguage,
+        startTime: new Date().toISOString(),
+      };
+
+      // Navigate to interview session with state
+      navigate("/interview-session", {
+        state: { config: interviewConfig },
+      });
+
+      onClose();
+    } catch (error) {
+      toast.error("Failed to start interview");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div
       className="
@@ -123,12 +180,17 @@ const InterviewSetupModal = ({ open, onClose }) => {
                 {difficulties.map((item) => (
                   <button
                     key={item}
-                    className="
-                      px-4 py-2 rounded-full text-xs
-                      bg-white/5 hover:bg-cyan-500/10
-                      border border-white/10 hover:border-cyan-500/25
-                      text-slate-300 transition-all
-                    "
+                    onClick={() => setSelectedDifficulty(item)}
+                    className={`
+                      px-4 py-2 rounded-full text-xs font-medium
+                      transition-all duration-200
+                      ${
+                        selectedDifficulty === item
+                          ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
+                          : "bg-white/5 hover:bg-cyan-500/10 border-white/10 hover:border-cyan-500/25 text-slate-300"
+                      }
+                      border
+                    `}
                   >
                     {item}
                   </button>
@@ -142,18 +204,21 @@ const InterviewSetupModal = ({ open, onClose }) => {
                 Interview Role
               </p>
               <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
                 className="
                   w-full px-4 py-3 rounded-xl text-sm
-                  bg-white/5 border border-white/10
-                  text-slate-300 outline-none
+                  bg-white/5 border border-white/10 hover:border-cyan-500/25
+                  text-slate-300 focus:bg-white/8 focus:border-cyan-500/50
+                  outline-none transition-all cursor-pointer
                 "
               >
-                <option>Frontend Developer</option>
-                <option>Backend Developer</option>
-                <option>Data Analyst</option>
-                <option>Machine Learning Engineer</option>
-                <option>HR Interview</option>
-                <option>System Design</option>
+                <option value="">Select a role...</option>
+                {roles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -166,12 +231,16 @@ const InterviewSetupModal = ({ open, onClose }) => {
                 {experiences.map((item) => (
                   <button
                     key={item}
-                    className="
-                      w-full text-left px-4 py-3 rounded-xl text-sm
-                      bg-white/5 hover:bg-white/8
-                      border border-white/10
-                      text-slate-300 transition-all
-                    "
+                    onClick={() => setSelectedExperience(item)}
+                    className={`
+                      w-full text-left px-4 py-3 rounded-xl text-sm font-medium
+                      border transition-all duration-200
+                      ${
+                        selectedExperience === item
+                          ? "bg-cyan-500/20 border-cyan-500/50 text-white"
+                          : "bg-white/5 hover:bg-white/8 border-white/10 text-slate-300"
+                      }
+                    `}
                   >
                     {item}
                   </button>
@@ -192,12 +261,17 @@ const InterviewSetupModal = ({ open, onClose }) => {
                 {durations.map((item) => (
                   <button
                     key={item}
-                    className="
-                      px-4 py-2 rounded-full text-xs
-                      bg-white/5 hover:bg-violet-500/10
-                      border border-white/10 hover:border-violet-500/25
-                      text-slate-300 transition-all
-                    "
+                    onClick={() => setSelectedDuration(item)}
+                    className={`
+                      px-4 py-2 rounded-full text-xs font-medium
+                      transition-all duration-200
+                      ${
+                        selectedDuration === item
+                          ? "bg-violet-500/20 border-violet-500/50 text-violet-300"
+                          : "bg-white/5 hover:bg-violet-500/10 border-white/10 hover:border-violet-500/25 text-slate-300"
+                      }
+                      border
+                    `}
                   >
                     {item}
                   </button>
@@ -217,12 +291,17 @@ const InterviewSetupModal = ({ open, onClose }) => {
                 {languages.map((item) => (
                   <button
                     key={item}
-                    className="
-                      px-4 py-2 rounded-full text-xs
-                      bg-white/5 hover:bg-emerald-500/10
-                      border border-white/10 hover:border-emerald-500/25
-                      text-slate-300 transition-all
-                    "
+                    onClick={() => setSelectedLanguage(item)}
+                    className={`
+                      px-4 py-2 rounded-full text-xs font-medium
+                      transition-all duration-200
+                      ${
+                        selectedLanguage === item
+                          ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"
+                          : "bg-white/5 hover:bg-emerald-500/10 border-white/10 hover:border-emerald-500/25 text-slate-300"
+                      }
+                      border
+                    `}
                   >
                     {item}
                   </button>
@@ -288,12 +367,7 @@ const InterviewSetupModal = ({ open, onClose }) => {
         >
           {/* SESSION INFO */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-[10px] text-slate-500">Estimated Questions</p>
-              <p className="text-white font-semibold text-sm mt-0.5">
-                12 Questions
-              </p>
-            </div>
+            
             <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10">
               <p className="text-[10px] text-slate-500">AI Evaluation</p>
               <p className="text-emerald-400 font-semibold text-sm mt-0.5">
@@ -306,30 +380,36 @@ const InterviewSetupModal = ({ open, onClose }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
+              disabled={isLoading}
               className="
                 px-4 py-2.5 rounded-xl text-sm
-                bg-white/5 hover:bg-white/10
+                bg-white/5 hover:bg-white/10 disabled:opacity-50
                 border border-white/10
-                text-slate-300 transition-all
+                text-slate-300 transition-all font-medium
               "
             >
               Cancel
             </button>
             <button
-              onClick={() => navigate("/interview-session")}
-              className="
-    px-6 py-2.5 rounded-xl
-    font-semibold text-sm
-    text-[#020617]
-    transition-all
-  "
+              onClick={handleStartInterview}
+              disabled={isLoading}
+              className={`
+                px-6 py-2.5 rounded-xl
+                font-semibold text-sm
+                text-[#020617]
+                transition-all
+                ${isLoading ? "opacity-75 cursor-not-allowed" : "hover:shadow-lg"}
+              `}
               style={{
-                background: "linear-gradient(135deg, #06b6d4, #0891b2)",
-
-                boxShadow: "0 0 20px rgba(6,182,212,0.25)",
+                background: isLoading
+                  ? "linear-gradient(135deg, #059669, #047857)"
+                  : "linear-gradient(135deg, #06b6d4, #0891b2)",
+                boxShadow: isLoading
+                  ? "0 0 15px rgba(5,150,105,0.2)"
+                  : "0 0 20px rgba(6,182,212,0.25)",
               }}
             >
-              Start Interview
+              {isLoading ? "Starting..." : "Start Interview"}
             </button>
           </div>
         </div>

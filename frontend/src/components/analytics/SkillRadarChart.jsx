@@ -16,7 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const data = [
+const defaultData = [
   {
     subject: "DSA",
     score: 92,
@@ -43,7 +43,17 @@ const data = [
   },
 ];
 
-const SkillRadarChart = () => {
+const SkillRadarChart = ({ data = defaultData }) => {
+  const chartData = data && data.length > 0 ? data : defaultData;
+  
+  // Calculate best and weak skills
+  const bestSkill = chartData.reduce((max, current) => 
+    current.score > max.score ? current : max
+  );
+  const weakSkill = chartData.reduce((min, current) => 
+    current.score < min.score ? current : min
+  );
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -98,7 +108,7 @@ const SkillRadarChart = () => {
           
           <ResponsiveContainer width="100%" height="100%">
             
-            <RadarChart data={data}>
+            <RadarChart data={chartData}>
               
               <PolarGrid stroke="rgba(255,255,255,0.1)" />
 
@@ -130,7 +140,7 @@ const SkillRadarChart = () => {
             </p>
 
             <h3 className="text-cyan-400 font-semibold">
-              Problem Solving
+              {bestSkill.subject}
             </h3>
           </div>
 
@@ -140,7 +150,7 @@ const SkillRadarChart = () => {
             </p>
 
             <h3 className="text-red-400 font-semibold">
-              System Design
+              {weakSkill.subject}
             </h3>
           </div>
 

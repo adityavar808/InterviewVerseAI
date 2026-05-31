@@ -72,7 +72,7 @@ const Dashboard = () => {
       value: formatCompactNumber(
         overview.totalUsers,
       ),
-      growth: overview.userGrowth || 0,
+      growth: overview.userGrowth ?? 0,
       subtitle: "new learner growth",
       icon: UsersRound,
       accent: "cyan",
@@ -82,7 +82,7 @@ const Dashboard = () => {
       value: formatCompactNumber(
         overview.activeUsers,
       ),
-      growth: overview.userGrowth || 0,
+      growth: overview.userGrowth ?? 0,
       subtitle: "engaged accounts",
       icon: Activity,
       accent: "sky",
@@ -93,7 +93,7 @@ const Dashboard = () => {
         overview.totalInterviews,
       ),
       growth:
-        overview.interviewGrowth || 0,
+        overview.interviewGrowth ?? 0,
       subtitle: "template inventory",
       icon: ShieldCheck,
       accent: "amber",
@@ -104,7 +104,7 @@ const Dashboard = () => {
         overview.totalCodingQuestions,
       ),
       growth:
-        overview.questionGrowth || 0,
+        overview.questionGrowth ?? 0,
       subtitle: "question bank growth",
       icon: Code2,
       accent: "emerald",

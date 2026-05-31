@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   setCredentials,
@@ -14,6 +14,8 @@ import api from "../../services/api";
 const AuthLoader = () => {
 
   const dispatch = useDispatch();
+  
+  const accessToken = useSelector((state) => state.auth.accessToken);
 
   useEffect(() => {
 
@@ -23,12 +25,7 @@ const AuthLoader = () => {
 
         dispatch(setAuthLoading(true));
 
-        const token =
-          localStorage.getItem(
-            "accessToken"
-          );
-
-        if (!token) {
+        if (!accessToken) {
 
           dispatch(logout());
 
@@ -37,13 +34,7 @@ const AuthLoader = () => {
 
         const response =
           await api.get(
-            "/auth/me",
-            {
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-              },
-            }
+            "/auth/me"
           );
 
         dispatch(
@@ -52,7 +43,7 @@ const AuthLoader = () => {
               response.data.user,
 
             accessToken:
-              token,
+              accessToken,
           })
         );
 
@@ -78,7 +69,7 @@ const AuthLoader = () => {
 
     loadUser();
 
-  }, [dispatch]);
+  }, [dispatch, accessToken]);
 
   return null;
 };

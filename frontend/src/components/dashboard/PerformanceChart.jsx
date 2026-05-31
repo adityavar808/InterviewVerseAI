@@ -11,7 +11,7 @@ import {
   AreaChart,
 } from "recharts";
 
-const data = [
+const defaultData = [
   { day: "Mon", score: 65 },
   { day: "Tue", score: 72 },
   { day: "Wed", score: 68 },
@@ -45,9 +45,10 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const PerformanceChart = () => {
-  const latest = data[data.length - 1].score;
-  const prev = data[data.length - 2].score;
+const PerformanceChart = ({ data = defaultData }) => {
+  const chartData = data && data.length > 0 ? data : defaultData;
+  const latest = chartData[chartData.length - 1]?.score || 0;
+  const prev = chartData[chartData.length - 2]?.score || 0;
   const delta = latest - prev;
 
   return (
@@ -118,7 +119,7 @@ const PerformanceChart = () => {
       {/* Chart */}
       <div className="relative h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.25} />
@@ -165,13 +166,13 @@ const PerformanceChart = () => {
 
       {/* Bottom week label */}
       <div className="flex justify-between items-center mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        {data.map((d, i) => (
+        {chartData.map((d, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <div
               className="w-1.5 h-1.5 rounded-full"
               style={{
-                background: i === data.length - 1 ? "#22d3ee" : "rgba(100,116,139,0.3)",
-                boxShadow: i === data.length - 1 ? "0 0 6px rgba(6,182,212,0.8)" : "none",
+                background: i === chartData.length - 1 ? "#22d3ee" : "rgba(100,116,139,0.3)",
+                boxShadow: i === chartData.length - 1 ? "0 0 6px rgba(6,182,212,0.8)" : "none",
               }}
             />
           </div>

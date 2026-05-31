@@ -1597,6 +1597,34 @@ const getCodingQuestions = async (
     });
   }
 };
+const getCodingQuestionById = async (
+  req,
+  res,
+) => {
+  try {
+    const question =
+      await CodingQuestion.findById(
+        req.params.questionId,
+      ).lean();
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Coding question not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: sanitizeCodingQuestion(question),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 const createCodingQuestion = async (
   req,
@@ -2038,6 +2066,7 @@ export {
   updateInterview,
   deleteInterview,
   getCodingQuestions,
+  getCodingQuestionById,
   createCodingQuestion,
   updateCodingQuestion,
   deleteCodingQuestion,

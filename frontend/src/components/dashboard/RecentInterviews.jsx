@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, ExternalLink } from "lucide-react";
 
-const interviews = [
+const defaultInterviews = [
   {
     role: "Frontend Developer",
     score: 84,
@@ -26,18 +26,47 @@ const interviews = [
 ];
 
 const scoreColor = (score) => {
-  if (score >= 90) return { text: "#4ade80", bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.2)" };
-  if (score >= 75) return { text: "#22d3ee", bg: "rgba(6,182,212,0.12)", border: "rgba(6,182,212,0.2)" };
-  return { text: "#fb923c", bg: "rgba(251,146,60,0.12)", border: "rgba(251,146,60,0.2)" };
+  if (score >= 90) {
+    return {
+      text: "#4ade80",
+      bg: "rgba(34,197,94,0.12)",
+      border: "rgba(34,197,94,0.2)",
+    };
+  }
+
+  if (score >= 75) {
+    return {
+      text: "#22d3ee",
+      bg: "rgba(6,182,212,0.12)",
+      border: "rgba(6,182,212,0.2)",
+    };
+  }
+
+  return {
+    text: "#fb923c",
+    bg: "rgba(251,146,60,0.12)",
+    border: "rgba(251,146,60,0.2)",
+  };
 };
 
-const RecentInterviews = () => {
+const RecentInterviews = ({ interviews = defaultInterviews }) => {
+  const displayInterviews =
+    interviews && interviews.length > 0 ? interviews : defaultInterviews;
+
+  const avgScore =
+    displayInterviews.length > 0
+      ? Math.round(
+          displayInterviews.reduce((acc, item) => acc + (item.score || 0), 0) /
+            displayInterviews.length,
+        )
+      : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="relative rounded-2xl p-6 overflow-hidden"
+      className="relative overflow-hidden rounded-2xl p-6"
       style={{
         background: "rgba(255,255,255,0.04)",
         backdropFilter: "blur(24px)",
@@ -48,7 +77,8 @@ const RecentInterviews = () => {
       <div
         className="absolute top-0 left-8 right-8 h-px"
         style={{
-          background: "linear-gradient(90deg, transparent, rgba(74,222,128,0.45), transparent)",
+          background:
+            "linear-gradient(90deg, transparent, rgba(74,222,128,0.45), transparent)",
         }}
       />
 
@@ -56,24 +86,34 @@ const RecentInterviews = () => {
       <div
         className="absolute pointer-events-none"
         style={{
-          width: "250px", height: "250px",
-          top: "-60px", right: "-60px",
-          background: "radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)",
+          width: "250px",
+          height: "250px",
+          top: "-60px",
+          right: "-60px",
+          background:
+            "radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)",
         }}
       />
 
       {/* Header */}
-      <div className="relative flex items-start justify-between mb-6">
+      <div className="relative mb-6 flex items-start justify-between">
         <div>
           <p
-            className="font-mono uppercase tracking-widest mb-1"
-            style={{ fontSize: "9px", color: "rgba(100,116,139,0.7)" }}
+            className="mb-1 font-mono uppercase tracking-widest"
+            style={{
+              fontSize: "9px",
+              color: "rgba(100,116,139,0.7)",
+            }}
           >
             History
           </p>
-          <h2 className="text-lg font-semibold text-slate-100">Recent Interviews</h2>
+
+          <h2 className="text-lg font-semibold text-slate-100">
+            Recent Interviews
+          </h2>
         </div>
-        <button className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors mt-1">
+
+        <button className="mt-1 flex items-center gap-1 text-xs text-cyan-400 transition-colors hover:text-cyan-300">
           View all <ArrowRight size={12} />
         </button>
       </div>
@@ -82,10 +122,14 @@ const RecentInterviews = () => {
       <div className="relative overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              {["Role", "Score", "Date", "Status", ""].map((h, i) => (
+            <tr
+              style={{
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {["Role", "Score", "Date", "Status", ""].map((heading, index) => (
                 <th
-                  key={i}
+                  key={index}
                   className="pb-3 text-left"
                   style={{
                     fontSize: "9px",
@@ -97,37 +141,46 @@ const RecentInterviews = () => {
                     paddingRight: "16px",
                   }}
                 >
-                  {h}
+                  {heading}
                 </th>
               ))}
             </tr>
           </thead>
+
           <tbody>
-            {interviews.map((interview, index) => {
+            {displayInterviews.map((interview, index) => {
               const sc = scoreColor(interview.score);
+
               return (
                 <motion.tr
                   key={index}
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
-                  className="group transition-all cursor-pointer"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                  whileHover={{
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                  }}
+                  className="group cursor-pointer transition-all"
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
                 >
                   {/* Role */}
                   <td className="py-4 pr-4">
                     <div>
-                      <p className="text-sm font-medium text-slate-200">{interview.role}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {interview.tech.map((t, i) => (
+                      <p className="text-sm font-medium text-slate-200">
+                        {interview.role}
+                      </p>
+
+                      <div className="mt-1 flex items-center gap-1.5">
+                        {(interview.tech || []).map((tech, i) => (
                           <span
                             key={i}
-                            className="text-xs px-1.5 py-0.5 rounded-md"
+                            className="rounded-md px-1.5 py-0.5 text-xs"
                             style={{
                               background: "rgba(255,255,255,0.06)",
                               color: "rgba(148,163,184,0.7)",
                               fontSize: "10px",
                             }}
                           >
-                            {t}
+                            {tech}
                           </span>
                         ))}
                       </div>
@@ -138,8 +191,12 @@ const RecentInterviews = () => {
                   <td className="py-4 pr-4">
                     <div className="flex items-center gap-2">
                       <span
-                        className="text-sm font-bold px-2.5 py-1 rounded-lg"
-                        style={{ background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}
+                        className="rounded-lg px-2.5 py-1 text-sm font-bold"
+                        style={{
+                          background: sc.bg,
+                          color: sc.text,
+                          border: `1px solid ${sc.border}`,
+                        }}
                       >
                         {interview.score}%
                       </span>
@@ -150,7 +207,9 @@ const RecentInterviews = () => {
                   <td className="py-4 pr-4">
                     <span
                       className="text-xs font-mono"
-                      style={{ color: "rgba(100,116,139,0.75)" }}
+                      style={{
+                        color: "rgba(100,116,139,0.75)",
+                      }}
                     >
                       {interview.date}
                     </span>
@@ -160,13 +219,14 @@ const RecentInterviews = () => {
                   <td className="py-4 pr-4">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ background: "#4ade80", boxShadow: "0 0 6px rgba(74,222,128,0.7)" }}
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{
+                          background: "#4ade80",
+                          boxShadow: "0 0 6px rgba(74,222,128,0.7)",
+                        }}
                       />
-                      <span
-                        className="text-xs"
-                        style={{ color: "#4ade80" }}
-                      >
+
+                      <span className="text-xs" style={{ color: "#4ade80" }}>
                         {interview.status}
                       </span>
                     </div>
@@ -174,9 +234,7 @@ const RecentInterviews = () => {
 
                   {/* Action */}
                   <td className="py-4">
-                    <button
-                      className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300"
-                    >
+                    <button className="flex items-center gap-1 text-xs text-cyan-400 opacity-0 transition-opacity hover:text-cyan-300 group-hover:opacity-100">
                       Review <ExternalLink size={11} />
                     </button>
                   </td>
@@ -187,22 +245,57 @@ const RecentInterviews = () => {
         </table>
       </div>
 
-      {/* Footer summary */}
+      {/* Footer */}
       <div
-        className="flex items-center justify-between mt-5 pt-4"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+        className="mt-5 flex items-center justify-between pt-4"
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+        }}
       >
-        <p style={{ fontSize: "11px", color: "rgba(100,116,139,0.6)" }}>
-          Showing <span style={{ color: "rgba(226,232,240,0.7)" }}>3</span> of{" "}
-          <span style={{ color: "rgba(226,232,240,0.7)" }}>24</span> interviews
-        </p>
-        <div className="flex items-center gap-1.5">
-          <span style={{ fontSize: "11px", color: "rgba(100,116,139,0.6)" }}>Avg score:</span>
+        <p
+          style={{
+            fontSize: "11px",
+            color: "rgba(100,116,139,0.6)",
+          }}
+        >
+          Showing{" "}
           <span
-            className="text-xs font-bold px-2 py-0.5 rounded-md"
-            style={{ background: "rgba(6,182,212,0.12)", color: "#22d3ee", border: "1px solid rgba(6,182,212,0.2)" }}
+            style={{
+              color: "rgba(226,232,240,0.7)",
+            }}
           >
-            {Math.round(interviews.reduce((a, b) => a + b.score, 0) / interviews.length)}%
+            {displayInterviews.length}
+          </span>{" "}
+          of{" "}
+          <span
+            style={{
+              color: "rgba(226,232,240,0.7)",
+            }}
+          >
+            24
+          </span>{" "}
+          interviews
+        </p>
+
+        <div className="flex items-center gap-1.5">
+          <span
+            style={{
+              fontSize: "11px",
+              color: "rgba(100,116,139,0.6)",
+            }}
+          >
+            Avg score:
+          </span>
+
+          <span
+            className="rounded-md px-2 py-0.5 text-xs font-bold"
+            style={{
+              background: "rgba(6,182,212,0.12)",
+              color: "#22d3ee",
+              border: "1px solid rgba(6,182,212,0.2)",
+            }}
+          >
+            {avgScore}%
           </span>
         </div>
       </div>

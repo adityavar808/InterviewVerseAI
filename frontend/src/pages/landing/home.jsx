@@ -1,5 +1,12 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useSpring,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -12,21 +19,25 @@ import {
   Database,
   FileText,
   LayoutDashboard,
+  Menu,
   Mic,
   ShieldCheck,
   Sparkles,
   Target,
   Users,
+  X,
   Zap,
 } from "lucide-react";
 
+// ─── Motion Variants ─────────────────────────────────────────────────────────
 const fadeInUp = {
   initial: { opacity: 0, y: 28 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
+  viewport: { once: true, amount: 0.15 },
   transition: { duration: 0.55, ease: "easeOut" },
 };
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const navItems = [
   { label: "Overview", href: "#overview" },
   { label: "Workflow", href: "#workflow" },
@@ -83,12 +94,6 @@ const featureShowcase = [
   },
 ];
 
-const metrics = [
-  { label: "Prep modes", value: "4+" },
-  { label: "Core workflows", value: "Resume → Interview → Code" },
-  { label: "Student focus", value: "Single workspace" },
-];
-
 const adminCards = [
   {
     icon: Users,
@@ -116,846 +121,1031 @@ const adminCards = [
   },
 ];
 
+// ─── Scroll Progress Bar ──────────────────────────────────────────────────────
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30 });
+  return (
+    <motion.div
+      style={{ scaleX, transformOrigin: "left" }}
+      className="fixed top-0 left-0 right-0 z-[100] h-[2px] bg-gradient-to-r from-cyan-400 via-cyan-300 to-emerald-400"
+    />
+  );
+}
+
+// ─── Mobile Nav ───────────────────────────────────────────────────────────────
+function MobileMenu({ open, onClose }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 32 }}
+            className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-slate-900 border-l border-white/10 p-6 flex flex-col"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 flex items-center justify-center rounded-xl bg-cyan-400 text-slate-950">
+                  <Sparkles size={14} />
+                </div>
+                <span className="text-sm font-semibold text-white">
+                  InterviewVerse
+                </span>
+              </div>
+              <button
+                onClick={onClose}
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-white/10 text-slate-400 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <nav className="flex flex-col gap-1">
+              {navItems.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+
+            <div className="mt-auto flex flex-col gap-3 pt-6 border-t border-white/10">
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-center text-slate-200 hover:bg-white/5 transition"
+              >
+                Student Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="w-full rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-center text-slate-950 hover:bg-cyan-300 transition"
+              >
+                Register Free
+              </Link>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { scrollY } = useScroll();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
 
-  const parallaxSpring = {
-    stiffness: 110,
-    damping: 24,
-    mass: 0.3,
-  };
+  // Defined once — not inside render
+  const parallaxConfig = { stiffness: 110, damping: 24, mass: 0.3 };
+  const heroY = useSpring(
+    useTransform(scrollY, [0, 700], [0, -20]),
+    parallaxConfig,
+  );
+  const panelY = useSpring(
+    useTransform(scrollY, [0, 700], [0, 28]),
+    parallaxConfig,
+  );
+  const ctaY = useSpring(
+    useTransform(scrollY, [900, 2600], [0, -20]),
+    parallaxConfig,
+  );
 
-  const heroY = useSpring(useTransform(scrollY, [0, 700], [0, -24]), parallaxSpring);
-  const panelY = useSpring(useTransform(scrollY, [0, 700], [0, 30]), parallaxSpring);
-  const ctaY = useSpring(useTransform(scrollY, [900, 2600], [0, -24]), parallaxSpring);
+  // Active section tracking for nav highlight
+  useEffect(() => {
+    const sections = navItems.map((n) => n.href.replace("#", ""));
+    const observers = sections.map((id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveSection(id);
+        },
+        { rootMargin: "-40% 0px -55% 0px" },
+      );
+      obs.observe(el);
+      return obs;
+    });
+    return () => observers.forEach((o) => o?.disconnect());
+  }, []);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-slate-950 text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(15,23,42,0.35),transparent_30%),linear-gradient(to_bottom,rgba(15,23,42,0.2),rgba(2,6,23,0.96))]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] bg-[size:72px_72px]" />
+    <>
+      {/* Skip to content — accessibility */}
+      <a
+        href="#overview"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:rounded-xl focus:bg-cyan-400 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-slate-950"
+      >
+        Skip to content
+      </a>
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/75 backdrop-blur-2xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)]">
-              <Sparkles size={18} />
-            </div>
+      <ScrollProgress />
 
-            <div>
-              <p className="text-base font-semibold tracking-tight text-white">
-                InterviewVerse AI
-              </p>
-              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                Career Prep Workspace
-              </p>
-            </div>
-          </Link>
+      <div className="relative min-h-screen overflow-x-hidden bg-slate-950 text-white">
+        {/* Background layers */}
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_-10%_-10%,rgba(34,211,238,0.10),transparent),radial-gradient(ellipse_60%_40%_at_110%_10%,rgba(99,102,241,0.06),transparent)]" />
+        <div className="pointer-events-none fixed inset-0 opacity-[0.035] bg-[linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] bg-[size:72px_72px]" />
 
-          <nav className="hidden items-center gap-8 text-sm text-slate-300 lg:flex">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="transition-colors hover:text-white"
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="hidden rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/5 md:inline-flex"
-            >
-              Student Login
-            </Link>
-
-            <Link
-              to="/register"
-              className="inline-flex rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              Register Free
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="relative z-10">
-        <section className="mx-auto max-w-7xl pb-20 lg:pb-16 lg:pt-12">
-          <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_0.98fr]">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: "easeOut" }}
-              style={{ y: heroY }}
-            >
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-200">
-                <Zap size={16} />
-                Built for students preparing for placements
+        {/* ── Header ────────────────────────────────────────────────────────── */}
+        <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-slate-950/80 backdrop-blur-2xl">
+          <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 md:px-8">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3 shrink-0">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+                <Sparkles size={16} />
               </div>
-
-              <h1 className="mt-6 max-w-4xl text-5xl font-bold leading-[1.02] tracking-tight text-white sm:text-6xl xl:text-[4.4rem]">
-                One place to practice interviews, improve resumes, and prepare for coding rounds.
-              </h1>
-
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-                InterviewVerse AI helps students move from resume fixing to mock interviews to coding preparation inside one focused workflow that keeps progress visible.
-              </p>
-
-              <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-                <Link
-                  to="/register"
-                  className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-slate-950 transition hover:bg-cyan-300"
-                >
-                  Create Student Account
-                  <ArrowRight
-                    size={18}
-                    className="transition group-hover:translate-x-1"
-                  />
-                </Link>
-
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-7 py-4 text-base font-medium text-white transition hover:bg-white/10"
-                >
-                  Student Login
-                </Link>
-
-                <Link
-                  to="/admin-login"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-7 py-4 text-base font-medium text-slate-200 transition hover:bg-slate-800"
-                >
-                  Admin Login
-                </Link>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.985 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-              style={{ y: panelY }}
-            >
-              <div className="rounded-[32px] border border-white/10 bg-slate-900/70 p-4 shadow-[0_30px_100px_rgba(2,6,23,0.55)] backdrop-blur-xl">
-                <div className="overflow-hidden rounded-[28px] border border-white/10 bg-slate-950">
-                  <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-                      </div>
-                      <p className="text-sm font-medium text-slate-300">
-                        Student Preparation Dashboard
-                      </p>
-                    </div>
-
-                    <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-                      Live progress
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 p-5 lg:grid-cols-[1.05fr_0.95fr]">
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                              Next recommended session
-                            </p>
-                            <h3 className="mt-3 text-2xl font-semibold text-white">
-                              Frontend interview practice
-                            </h3>
-                            <p className="mt-3 max-w-md text-sm leading-7 text-slate-400">
-                              Continue with React, JavaScript, APIs, and project explanation questions based on recent activity.
-                            </p>
-                          </div>
-
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10">
-                            <Brain size={22} className="text-cyan-200" />
-                          </div>
-                        </div>
-
-                        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                          {[
-                            ["Confidence", "78%"],
-                            ["Weak area", "Problem solving"],
-                            ["Streak", "6 days"],
-                          ].map(([label, value]) => (
-                            <div
-                              key={label}
-                              className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-4"
-                            >
-                              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                                {label}
-                              </p>
-                              <p className="mt-2 text-sm font-semibold text-slate-100">
-                                {value}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                          <div className="flex items-center gap-3">
-                            <FileText size={18} className="text-emerald-300" />
-                            <p className="text-sm font-semibold text-white">
-                              Resume score
-                            </p>
-                          </div>
-                          <p className="mt-4 text-4xl font-bold text-white">84</p>
-                          <p className="mt-2 text-sm text-emerald-300">
-                            +9 improvement this week
-                          </p>
-                          <div className="mt-5 h-2 rounded-full bg-white/10">
-                            <div className="h-2 w-[84%] rounded-full bg-emerald-400" />
-                          </div>
-                        </div>
-
-                        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                          <div className="flex items-center gap-3">
-                            <Code2 size={18} className="text-violet-300" />
-                            <p className="text-sm font-semibold text-white">
-                              Coding progress
-                            </p>
-                          </div>
-                          <p className="mt-4 text-4xl font-bold text-white">27</p>
-                          <p className="mt-2 text-sm text-slate-400">
-                            problems practiced across key topics
-                          </p>
-                          <div className="mt-5 flex gap-2">
-                            {["bg-violet-400", "bg-violet-400", "bg-violet-400", "bg-violet-400/40", "bg-violet-400/20"].map(
-                              (bar, idx) => (
-                                <span
-                                  key={idx}
-                                  className={`h-14 flex-1 rounded-full ${bar}`}
-                                />
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-white">
-                            Preparation tracks
-                          </p>
-                          <LayoutDashboard size={18} className="text-slate-400" />
-                        </div>
-
-                        <div className="mt-5 space-y-3">
-                          {[
-                            {
-                              title: "Frontend track",
-                              copy: "React, JavaScript, DOM, projects",
-                              tone: "bg-cyan-400/10 text-cyan-200",
-                            },
-                            {
-                              title: "HR interview",
-                              copy: "Communication, confidence, storytelling",
-                              tone: "bg-emerald-400/10 text-emerald-200",
-                            },
-                            {
-                              title: "Coding rounds",
-                              copy: "DSA, logic, test cases, review",
-                              tone: "bg-violet-400/10 text-violet-200",
-                            },
-                          ].map((item) => (
-                            <div
-                              key={item.title}
-                              className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-white">
-                                    {item.title}
-                                  </p>
-                                  <p className="mt-1 text-sm leading-6 text-slate-400">
-                                    {item.copy}
-                                  </p>
-                                </div>
-                                <span
-                                  className={`rounded-full px-3 py-1 text-xs font-medium ${item.tone}`}
-                                >
-                                  Active
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-white/10 bg-cyan-400/[0.06] p-5">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-400/10">
-                            <Target size={18} className="text-cyan-200" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-white">
-                              Daily next step
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-slate-300">
-                              Finish one frontend mock interview, improve two missing resume keywords, and solve one medium-level coding question.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                        <div className="flex items-center gap-3">
-                          <Mic size={18} className="text-amber-300" />
-                          <p className="text-sm font-semibold text-white">
-                            Communication practice
-                          </p>
-                        </div>
-                        <p className="mt-4 text-sm leading-7 text-slate-400">
-                          Voice-based sessions help students rehearse answers with more clarity before actual interviews.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        <section
-          id="overview"
-          className="mx-auto max-w-7xl scroll-mt-28 px-6 py-12 lg:py-16"
-        >
-          <motion.div
-            {...fadeInUp}
-            className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"
-          >
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-cyan-200">
-                Product overview
-              </p>
-              <h2 className="mt-4 text-4xl font-bold tracking-tight text-white md:text-5xl">
-                A clearer story from first visit to first practice session
-              </h2>
-            </div>
-
-            <p className="max-w-3xl text-lg leading-8 text-slate-300">
-              The page is designed to make one message obvious: students do not need separate tools for resumes, interviews, coding, and progress tracking when the full preparation flow already lives here.
-            </p>
-          </motion.div>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <motion.div
-              {...fadeInUp}
-              className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8"
-            >
-              <div className="flex items-center gap-3 text-cyan-200">
-                <Brain size={20} />
-                <p className="text-sm font-medium uppercase tracking-[0.2em]">
-                  Main value
+              <div>
+                <p className="text-sm font-semibold leading-none tracking-tight text-white">
+                  InterviewVerse AI
+                </p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  Career Prep
                 </p>
               </div>
-              <h3 className="mt-6 max-w-2xl text-3xl font-semibold text-white md:text-[2.2rem]">
-                Interview prep feels easier when the workflow stays connected.
-              </h3>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-                A student can review their resume, start a mock interview, practice coding, and return to track improvement without losing context or bouncing across different products.
-              </p>
+            </Link>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {[
-                  {
-                    label: "Resume",
-                    copy: "See ATS score, keyword gaps, and role alignment.",
-                  },
-                  {
-                    label: "Interview",
-                    copy: "Practice technical and behavioral sessions with feedback.",
-                  },
-                  {
-                    label: "Code",
-                    copy: "Solve problems with tests and AI review support.",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
-                  >
-                    <p className="text-sm font-semibold text-white">{item.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
-                      {item.copy}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div className="grid gap-6" {...fadeInUp}>
-              {[
-                {
-                  title: "Visible progress keeps students returning",
-                  copy:
-                    "Streaks, recommendations, weak-area signals, and trend summaries create a stronger reason to come back.",
-                  icon: BarChart3,
-                },
-                {
-                  title: "The product value is understandable in one scroll",
-                  copy:
-                    "The structure reduces confusion by explaining what the student can do before asking them to register.",
-                  icon: Sparkles,
-                },
-              ].map((item) => {
-                const Icon = item.icon;
+            {/* Desktop nav */}
+            <nav className="hidden items-center gap-1 lg:flex">
+              {navItems.map((item) => {
+                const id = item.href.replace("#", "");
+                const isActive = activeSection === id;
                 return (
-                  <div
-                    key={item.title}
-                    className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6"
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={`relative rounded-lg px-4 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "text-white"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
                   >
-                    <Icon size={20} className="text-slate-200" />
-                    <h3 className="mt-5 text-2xl font-semibold text-white">
-                      {item.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-400">
-                      {item.copy}
-                    </p>
-                  </div>
+                    {isActive && (
+                      <motion.span
+                        layoutId="nav-active"
+                        className="absolute inset-0 rounded-lg bg-white/8"
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                    <span className="relative">{item.label}</span>
+                  </a>
                 );
               })}
-            </motion.div>
-          </div>
-        </section>
+            </nav>
 
-        <section
-          id="workflow"
-          className="mx-auto max-w-7xl scroll-mt-28 px-6 py-12 lg:py-16"
-        >
-          <div className="grid gap-12 lg:grid-cols-[0.86fr_1.14fr]">
-            <motion.div {...fadeInUp} className="lg:sticky lg:top-28 lg:self-start">
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-emerald-200">
-                Workflow
-              </p>
-              <h2 className="mt-4 text-4xl font-bold tracking-tight text-white md:text-5xl">
-                A student journey that feels complete
-              </h2>
-              <p className="mt-6 text-lg leading-8 text-slate-300">
-                Instead of isolated features, the platform should feel like one preparation system that helps users move from confusion to measurable readiness.
-              </p>
-
-              <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-                <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-                  Core promise
-                </p>
-                <p className="mt-4 text-base leading-7 text-slate-200">
-                  Students should feel they can start quickly, understand what to improve next, and keep returning because progress is visible.
-                </p>
-              </div>
-            </motion.div>
-
-            <div className="space-y-6">
-              {[
-                {
-                  step: "01",
-                  title: "Create an account and choose a preparation track",
-                  text:
-                    "The first screen should make the use case obvious so registration feels like the natural next action.",
-                },
-                {
-                  step: "02",
-                  title: "Move across resume, interview, and coding workflows",
-                  text:
-                    "The experience should keep context connected instead of sending the student into separate disconnected tools.",
-                },
-                {
-                  step: "03",
-                  title: "Return because the platform shows momentum",
-                  text:
-                    "Recommendations, analytics, and streak-style progress make the product feel useful beyond a single practice session.",
-                },
-              ].map((item) => (
-                <motion.div
-                  key={item.step}
-                  {...fadeInUp}
-                  className="rounded-[30px] border border-white/10 bg-white/[0.04] p-7"
-                >
-                  <div className="flex items-start gap-5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-400/10 text-sm font-semibold text-emerald-200">
-                      {item.step}
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-semibold text-white">
-                        {item.title}
-                      </h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-400">
-                        {item.text}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+            {/* Desktop CTAs */}
+            <div className="hidden items-center gap-2 md:flex">
+              <Link
+                to="/login"
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.2)]"
+              >
+                Get started free
+              </Link>
             </div>
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 hover:text-white transition md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu size={18} />
+            </button>
           </div>
-        </section>
+        </header>
 
-        <section
-          id="features"
-          className="mx-auto max-w-7xl scroll-mt-28 px-6 py-12 lg:py-16"
-        >
-          <motion.div {...fadeInUp} className="max-w-3xl">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-violet-200">
-              Feature showcase
-            </p>
-            <h2 className="mt-4 text-4xl font-bold tracking-tight text-white md:text-5xl">
-              The landing page should demonstrate the product, not just list it
-            </h2>
-            <p className="mt-6 text-lg leading-8 text-slate-300">
-              These sections work better as large product-led showcases so visitors can understand both capability and usefulness in the same glance.
-            </p>
-          </motion.div>
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
 
-          <div className="mt-12 space-y-6">
-            {featureShowcase.map((feature, index) => {
-              const Icon = feature.icon;
-
-              return (
-                <motion.div
-                  key={feature.id}
-                  {...fadeInUp}
-                  transition={{ ...fadeInUp.transition, delay: index * 0.06 }}
-                  className="grid gap-6 rounded-[34px] border border-white/10 bg-white/[0.04] p-6 lg:grid-cols-[0.88fr_1.12fr] lg:p-8"
-                >
-                  <div className="flex h-full flex-col justify-between rounded-[28px] border border-white/10 bg-slate-950/70 p-6">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5">
-                          <Icon size={22} className="text-slate-100" />
-                        </div>
-                        <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-                          Feature {feature.id}
-                        </p>
-                      </div>
-
-                      <h3 className="mt-6 text-3xl font-semibold text-white">
-                        {feature.title}
-                      </h3>
-                      <p className="mt-4 text-sm leading-7 text-slate-400">
-                        {feature.description}
-                      </p>
-                    </div>
-
-                    <div className="mt-8 space-y-3">
-                      {feature.points.map((point) => (
-                        <div
-                          key={point}
-                          className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                        >
-                          <CheckCircle2
-                            size={18}
-                            className="mt-0.5 shrink-0 text-cyan-200"
-                          />
-                          <p className="text-sm text-slate-200">{point}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[28px] border border-white/10 bg-gradient-to-br from-slate-900 to-slate-950 p-5">
-                    {feature.id === "01" && (
-                      <div className="grid h-full gap-4 md:grid-cols-[1fr_0.9fr]">
-                        <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-white">
-                              Mock interview session
-                            </p>
-                            <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-                              Adaptive
-                            </span>
-                          </div>
-                          <div className="mt-5 space-y-3">
-                            {[
-                              "Explain virtual DOM in React.",
-                              "How would you optimize a slow component tree?",
-                              "Describe one real project challenge you solved.",
-                            ].map((q) => (
-                              <div
-                                key={q}
-                                className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300"
-                              >
-                                {q}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="rounded-[24px] border border-white/10 bg-cyan-400/[0.05] p-5">
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            Feedback snapshot
-                          </p>
-                          <div className="mt-5 space-y-4">
-                            {[
-                              ["Technical depth", "Strong"],
-                              ["Communication", "Improving"],
-                              ["Confidence", "Good"],
-                            ].map(([label, value]) => (
-                              <div
-                                key={label}
-                                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                              >
-                                <p className="text-sm text-slate-300">{label}</p>
-                                <p className="text-sm font-semibold text-white">
-                                  {value}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {feature.id === "02" && (
-                      <div className="grid h-full gap-4 md:grid-cols-[0.95fr_1.05fr]">
-                        <div className="rounded-[24px] border border-white/10 bg-emerald-400/[0.05] p-5">
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            ATS score movement
-                          </p>
-                          <div className="mt-5 flex items-end gap-3">
-                            {[58, 66, 74, 84].map((h, idx) => (
-                              <div key={idx} className="flex-1">
-                                <div
-                                  className="rounded-t-full bg-emerald-400"
-                                  style={{ height: `${h}px` }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-4 flex justify-between text-xs text-slate-500">
-                            <span>v1</span>
-                            <span>v2</span>
-                            <span>v3</span>
-                            <span>Current</span>
-                          </div>
-                        </div>
-
-                        <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-                          <p className="text-sm font-semibold text-white">
-                            Missing keyword insights
-                          </p>
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            {[
-                              "REST APIs",
-                              "System design",
-                              "MongoDB",
-                              "Testing",
-                              "Performance",
-                            ].map((tag) => (
-                              <span
-                                key={tag}
-                                className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-
-                          <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                              Recommendation
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-slate-300">
-                              Add stronger backend project wording and include role-specific technical keywords in experience bullets.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {feature.id === "03" && (
-                      <div className="grid h-full gap-4 md:grid-cols-[1.1fr_0.9fr]">
-                        <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-white">
-                              Coding workspace
-                            </p>
-                            <span className="rounded-full bg-violet-400/10 px-3 py-1 text-xs text-violet-200">
-                              Practice-ready
-                            </span>
-                          </div>
-                          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/70 p-4 font-mono text-sm leading-7 text-slate-300">
-                            <p>{`function twoSum(nums, target) {`}</p>
-                            <p className="pl-4">{`const map = new Map();`}</p>
-                            <p className="pl-4">{`for (let i = 0; i < nums.length; i++) {`}</p>
-                            <p className="pl-8">{`const diff = target - nums[i];`}</p>
-                            <p className="pl-8">{`if (map.has(diff)) return [map.get(diff), i];`}</p>
-                            <p className="pl-8">{`map.set(nums[i], i);`}</p>
-                            <p className="pl-4">{`}`}</p>
-                            <p>{`}`}</p>
-                          </div>
-                        </div>
-
-                        <div className="rounded-[24px] border border-white/10 bg-violet-400/[0.05] p-5">
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            Test results
-                          </p>
-                          <div className="mt-5 space-y-3">
-                            {[
-                              ["Case 1", "Passed"],
-                              ["Case 2", "Passed"],
-                              ["Case 3", "Passed"],
-                              ["Complexity", "O(n)"],
-                            ].map(([label, value]) => (
-                              <div
-                                key={label}
-                                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                              >
-                                <p className="text-sm text-slate-300">{label}</p>
-                                <p className="text-sm font-semibold text-white">
-                                  {value}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section
-          id="admin"
-          className="mx-auto max-w-7xl scroll-mt-28 px-6 py-12 lg:py-16"
-        >
-          <div className="overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(17,24,39,0.92))] p-8 shadow-[0_30px_120px_rgba(2,6,23,0.45)] md:p-10">
-            <div className="grid gap-10 lg:grid-cols-[0.84fr_1.16fr] lg:items-start">
-              <motion.div {...fadeInUp}>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200">
-                  <ShieldCheck size={16} />
-                  Admin access
+        <main className="relative z-10">
+          {/* ── Hero ──────────────────────────────────────────────────────────── */}
+          <section className="mx-auto max-w-7xl px-5 pb-16 pt-12 md:px-8 lg:pb-20 lg:pt-14">
+            <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr]">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                style={{ y: heroY }}
+              >
+                {/* Pill badge */}
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/8 px-4 py-1.5 text-sm text-cyan-300">
+                  <Zap size={13} />
+                  Built for placement preparation
                 </div>
 
-                <h2 className="mt-5 text-4xl font-bold tracking-tight text-white md:text-5xl">
-                  Separate admin visibility without breaking the student flow
-                </h2>
+                <h1 className="mt-5 max-w-2xl text-4xl font-bold leading-[1.06] tracking-[-0.02em] text-white sm:text-5xl lg:text-6xl">
+                  One place to practice, improve, and get placement-ready.
+                </h1>
 
-                <p className="mt-6 text-lg leading-8 text-slate-300">
-                  The student experience should stay simple, but the platform still needs a direct operational path for admins managing users, interview activity, and question libraries.
+                <p className="mt-5 max-w-xl text-base leading-7 text-slate-400">
+                  InterviewVerse AI connects resume review, mock interviews, and
+                  coding practice into one workflow — so progress is always
+                  visible and the next step is always clear.
                 </p>
 
-                <div className="mt-8 space-y-3">
-                  {[
-                    "Direct admin login entry.",
-                    "Cleaner product structure for institutions and teams.",
-                    "Operational visibility separated from onboarding.",
-                  ].map((point) => (
-                    <div
-                      key={point}
-                      className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-200"
+                {/* Social proof pills — was defined but never rendered */}
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {proofPoints.map((pt) => (
+                    <span
+                      key={pt}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300"
                     >
-                      <CheckCircle2
-                        size={18}
-                        className="mt-0.5 shrink-0 text-cyan-200"
-                      />
-                      <p>{point}</p>
-                    </div>
+                      <CheckCircle2 size={11} className="text-cyan-400" />
+                      {pt}
+                    </span>
                   ))}
                 </div>
 
-                <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                  <Link
-                    to="/admin-login"
-                    className="inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-950 transition hover:bg-slate-200"
-                  >
-                    Open Admin Login
-                  </Link>
-
+                <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     to="/register"
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-7 py-4 text-base font-medium text-white transition hover:bg-white/[0.08]"
+                    className="group inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 shadow-[0_0_24px_rgba(34,211,238,0.22)]"
                   >
-                    Student Registration
+                    Create free account
+                    <ArrowRight
+                      size={15}
+                      className="transition group-hover:translate-x-1"
+                    />
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-medium text-slate-200 transition hover:bg-white/8"
+                  >
+                    Sign in
                   </Link>
                 </div>
               </motion.div>
 
-              <div className="grid gap-5 md:grid-cols-2">
-                {adminCards.map((feature, index) => {
-                  const Icon = feature.icon;
+              {/* Hero dashboard card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+                style={{ y: panelY }}
+                className="relative"
+              >
+                <div className="absolute inset-0 -z-10 rounded-[28px] bg-cyan-400/10 blur-3xl scale-90" />
+                <div className="rounded-[22px] border border-white/10 bg-slate-900/80 p-2.5 shadow-[0_24px_60px_rgba(2,6,23,0.5)] backdrop-blur-xl">
+                  <div className="overflow-hidden rounded-[18px] border border-white/[0.08] bg-slate-950">
+                    {/* Window chrome */}
+                    <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-rose-400/70" />
+                          <span className="h-2 w-2 rounded-full bg-amber-300/70" />
+                          <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                        </div>
+                        <p className="text-xs font-medium text-slate-400">
+                          Student Dashboard
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-cyan-400/20 bg-cyan-400/8 px-2.5 py-1 text-[10px] text-cyan-300">
+                        Live
+                      </span>
+                    </div>
 
-                  return (
-                    <motion.div
-                      key={feature.title}
-                      {...fadeInUp}
-                      transition={{ ...fadeInUp.transition, delay: index * 0.06 }}
-                      className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6"
+                    {/* Dashboard content */}
+                    <div className="p-3 space-y-2">
+                      {/* Recommended session */}
+                      <div className="rounded-[14px] border border-white/[0.08] bg-white/[0.03] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                              Next session
+                            </p>
+                            <h3 className="mt-1.5 text-base font-semibold text-white">
+                              Frontend interview practice
+                            </h3>
+                            <p className="mt-1.5 text-xs leading-5 text-slate-400">
+                              React, JavaScript, APIs and project walkthrough.
+                            </p>
+                          </div>
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-400/10">
+                            <Brain size={18} className="text-cyan-300" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Prep tracks */}
+                      <div className="rounded-[14px] border border-white/[0.08] bg-white/[0.03] p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-xs font-semibold text-white">
+                            Preparation tracks
+                          </p>
+                          <LayoutDashboard
+                            size={14}
+                            className="text-slate-500"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            {
+                              title: "Frontend track",
+                              copy: "React, JS, DOM, projects",
+                              color: "text-cyan-300 bg-cyan-400/10",
+                            },
+                            {
+                              title: "HR interview",
+                              copy: "Communication & storytelling",
+                              color: "text-emerald-300 bg-emerald-400/10",
+                            },
+                            {
+                              title: "Coding rounds",
+                              copy: "DSA, logic, test cases",
+                              color: "text-violet-300 bg-violet-400/10",
+                            },
+                          ].map((item) => (
+                            <div
+                              key={item.title}
+                              className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-slate-950/60 px-3 py-2.5"
+                            >
+                              <div>
+                                <p className="text-xs font-medium text-white">
+                                  {item.title}
+                                </p>
+                                <p className="mt-0.5 text-[10px] text-slate-500">
+                                  {item.copy}
+                                </p>
+                              </div>
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${item.color}`}
+                              >
+                                Active
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ── Overview ──────────────────────────────────────────────────────── */}
+          <section
+            id="overview"
+            className="mx-auto max-w-7xl scroll-mt-24 px-5 py-14 md:px-8 lg:py-20"
+          >
+            <motion.div
+              {...fadeInUp}
+              className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"
+            >
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-400">
+                  Product overview
+                </p>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                  One workspace. Complete preparation.
+                </h2>
+              </div>
+              <p className="text-lg leading-8 text-slate-400">
+                Students don't need separate tools for resumes, interviews,
+                coding, and progress tracking — the full preparation flow lives
+                here, connected and context-aware.
+              </p>
+            </motion.div>
+
+            <div className="mt-10 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+              <motion.div
+                {...fadeInUp}
+                className="group rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-7 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
+              >
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <Brain size={17} />
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em]">
+                    Core value
+                  </p>
+                </div>
+                <h3 className="mt-5 text-2xl font-semibold text-white md:text-3xl">
+                  Interview prep is easier when the workflow stays connected.
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-400">
+                  Review resume → start mock interview → practice coding → track
+                  improvement, all without losing context between tools.
+                </p>
+
+                <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                  {[
+                    {
+                      label: "Resume",
+                      copy: "ATS score, keyword gaps, role alignment.",
+                    },
+                    {
+                      label: "Interview",
+                      copy: "Technical and behavioral with structured feedback.",
+                    },
+                    {
+                      label: "Code",
+                      copy: "Problems, test execution, and AI review.",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl border border-white/[0.08] bg-slate-950/60 p-4"
                     >
-                      <Icon size={22} className="text-slate-100" />
-                      <h3 className="mt-6 text-2xl font-semibold text-white">
-                        {feature.title}
-                      </h3>
-                      <p className="mt-4 text-sm leading-7 text-slate-400">
-                        {feature.description}
+                      <p className="text-sm font-semibold text-white">
+                        {item.label}
                       </p>
-                    </motion.div>
+                      <p className="mt-1.5 text-xs leading-5 text-slate-500">
+                        {item.copy}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              <motion.div className="grid gap-5" {...fadeInUp}>
+                {[
+                  {
+                    title: "Visible progress keeps students returning",
+                    copy: "Streaks, recommendations, weak-area signals, and trend summaries create a stronger reason to come back.",
+                    icon: BarChart3,
+                  },
+                  {
+                    title: "Understand the product in one scroll",
+                    copy: "The structure explains what students can do before asking them to register — reducing confusion at the critical moment.",
+                    icon: Sparkles,
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.title}
+                      className="group rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-6 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+                        <Icon size={17} className="text-slate-300" />
+                      </div>
+                      <h3 className="mt-4 text-xl font-semibold text-white">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-7 text-slate-400">
+                        {item.copy}
+                      </p>
+                    </div>
                   );
                 })}
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ── Workflow ───────────────────────────────────────────────────────── */}
+          <section
+            id="workflow"
+            className="mx-auto max-w-7xl scroll-mt-24 px-5 py-14 md:px-8 lg:py-20"
+          >
+            <div className="grid gap-12 lg:grid-cols-[0.86fr_1.14fr]">
+              <motion.div
+                {...fadeInUp}
+                className="lg:sticky lg:top-28 lg:self-start"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-400">
+                  Workflow
+                </p>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                  A journey that feels complete
+                </h2>
+                <p className="mt-5 text-base leading-7 text-slate-400">
+                  Instead of isolated features, the platform feels like one
+                  preparation system that helps students move from confusion to
+                  measurable readiness.
+                </p>
+
+                <div className="mt-7 rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600">
+                    Core promise
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-slate-300">
+                    Students should feel they can start quickly, understand what
+                    to improve next, and keep returning because progress is
+                    visible.
+                  </p>
+                </div>
+              </motion.div>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    step: "01",
+                    title: "Create an account and choose a track",
+                    text: "The first screen makes the use case obvious so registration feels like the natural next action.",
+                    color: "bg-cyan-400/10 text-cyan-300 border-cyan-400/20",
+                  },
+                  {
+                    step: "02",
+                    title: "Move across resume, interview, and coding",
+                    text: "The experience keeps context connected instead of sending the student into separate, disconnected tools.",
+                    color:
+                      "bg-emerald-400/10 text-emerald-300 border-emerald-400/20",
+                  },
+                  {
+                    step: "03",
+                    title: "Return because the platform shows momentum",
+                    text: "Recommendations, analytics, and streak-style progress make the product feel useful beyond a single session.",
+                    color:
+                      "bg-violet-400/10 text-violet-300 border-violet-400/20",
+                  },
+                ].map((item) => (
+                  <motion.div
+                    key={item.step}
+                    {...fadeInUp}
+                    className="group rounded-[22px] border border-white/[0.08] bg-white/[0.03] p-6 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xs font-bold ${item.color}`}
+                      >
+                        {item.step}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 text-sm leading-7 text-slate-400">
+                          {item.text}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-24 pt-8 lg:pb-32">
-          <motion.div
-            {...fadeInUp}
-            style={{ y: ctaY }}
-            className="overflow-hidden rounded-[36px] border border-white/10 bg-cyan-400/[0.06] p-8 text-center shadow-[0_25px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl md:p-12"
+          {/* ── Features ───────────────────────────────────────────────────────── */}
+          <section
+            id="features"
+            className="mx-auto max-w-7xl scroll-mt-24 px-5 py-14 md:px-8 lg:py-20"
           >
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-cyan-200">
-              Start preparing
-            </p>
+            <motion.div {...fadeInUp} className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-400">
+                Features
+              </p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                Demonstrate the product, not just list it
+              </h2>
+              <p className="mt-5 text-base leading-7 text-slate-400">
+                Each section works as a product-led showcase so visitors
+                understand both capability and usefulness in the same glance.
+              </p>
+            </motion.div>
 
-            <h2 className="mx-auto mt-5 max-w-4xl text-4xl font-bold tracking-tight text-white md:text-5xl">
-              Make the next step obvious as soon as the value is clear
-            </h2>
+            <div className="mt-10 space-y-5">
+              {featureShowcase.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <motion.div
+                    key={feature.id}
+                    {...fadeInUp}
+                    transition={{ ...fadeInUp.transition, delay: index * 0.06 }}
+                    className="grid gap-5 rounded-[28px] border border-white/[0.08] bg-white/[0.02] p-5 lg:grid-cols-[0.88fr_1.12fr] lg:p-7"
+                  >
+                    {/* Left: text */}
+                    <div className="flex flex-col justify-between rounded-[20px] border border-white/[0.08] bg-slate-950/70 p-5">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05]">
+                            <Icon size={19} className="text-slate-200" />
+                          </div>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600">
+                            Feature {feature.id}
+                          </p>
+                        </div>
+                        <h3 className="mt-5 text-xl font-semibold text-white md:text-2xl">
+                          {feature.title}
+                        </h3>
+                        <p className="mt-3 text-sm leading-7 text-slate-400">
+                          {feature.description}
+                        </p>
+                      </div>
+                      <div className="mt-6 space-y-2">
+                        {feature.points.map((point) => (
+                          <div
+                            key={point}
+                            className="flex items-start gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5"
+                          >
+                            <CheckCircle2
+                              size={14}
+                              className="mt-0.5 shrink-0 text-cyan-400"
+                            />
+                            <p className="text-sm text-slate-300">{point}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-300">
-              InterviewVerse AI should help students understand the product fast, trust the workflow, and start preparing without friction.
-            </p>
+                    {/* Right: visual */}
+                    <div className="rounded-[20px] border border-white/[0.08] bg-gradient-to-br from-slate-900 to-slate-950 p-4">
+                      {feature.id === "01" && (
+                        <div className="grid h-full gap-3 md:grid-cols-2">
+                          <div className="rounded-[16px] border border-white/[0.08] bg-white/[0.03] p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-xs font-semibold text-white">
+                                Mock session
+                              </p>
+                              <span className="rounded-full bg-cyan-400/10 px-2.5 py-1 text-[10px] text-cyan-300">
+                                Adaptive
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {[
+                                "Explain virtual DOM in React.",
+                                "How would you optimize a slow component tree?",
+                                "Describe one real project challenge you solved.",
+                              ].map((q) => (
+                                <div
+                                  key={q}
+                                  className="rounded-xl border border-white/[0.08] bg-slate-950/70 p-3 text-xs text-slate-400 leading-5"
+                                >
+                                  {q}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="rounded-[16px] border border-white/[0.08] bg-cyan-400/[0.04] p-4">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600 mb-4">
+                              Feedback
+                            </p>
+                            <div className="space-y-2">
+                              {[
+                                ["Technical depth", "Strong"],
+                                ["Communication", "Improving"],
+                                ["Confidence", "Good"],
+                              ].map(([label, val]) => (
+                                <div
+                                  key={label}
+                                  className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
+                                >
+                                  <p className="text-xs text-slate-400">
+                                    {label}
+                                  </p>
+                                  <p className="text-xs font-semibold text-white">
+                                    {val}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap">
-              <Link
-                to="/register"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-slate-950 transition hover:bg-cyan-300"
-              >
-                Start Registration
-                <ChevronRight
-                  size={18}
-                  className="transition group-hover:translate-x-1"
-                />
-              </Link>
+                      {feature.id === "02" && (
+                        <div className="grid h-full gap-3 md:grid-cols-2">
+                          <div className="rounded-[16px] border border-white/[0.08] bg-emerald-400/[0.04] p-4">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600 mb-4">
+                              ATS score
+                            </p>
+                            <div className="flex items-end gap-2 h-20">
+                              {[
+                                { h: 46, label: "v1" },
+                                { h: 58, label: "v2" },
+                                { h: 72, label: "v3" },
+                                { h: 88, label: "Now" },
+                              ].map((bar) => (
+                                <div
+                                  key={bar.label}
+                                  className="flex flex-1 flex-col items-center gap-1"
+                                >
+                                  <div
+                                    className="w-full rounded-t-lg bg-emerald-400 opacity-80"
+                                    style={{ height: `${bar.h}px` }}
+                                  />
+                                  <span className="text-[9px] text-slate-600">
+                                    {bar.label}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-3 text-xs text-emerald-400 font-medium">
+                              +26 pts improvement
+                            </p>
+                          </div>
+                          <div className="rounded-[16px] border border-white/[0.08] bg-white/[0.03] p-4">
+                            <p className="text-xs font-semibold text-white mb-3">
+                              Missing keywords
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                "REST APIs",
+                                "System design",
+                                "MongoDB",
+                                "Testing",
+                                "Performance",
+                              ].map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded-full border border-white/[0.08] bg-slate-950/70 px-2.5 py-1 text-[11px] text-slate-400"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="mt-4 rounded-xl border border-white/[0.08] bg-slate-950/70 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-600">
+                                Recommendation
+                              </p>
+                              <p className="mt-1.5 text-xs leading-5 text-slate-400">
+                                Add backend project wording and role-specific
+                                keywords in experience bullets.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-7 py-4 text-base font-medium text-white transition hover:bg-white/[0.08]"
-              >
-                Student Login
-              </Link>
-
-              <Link
-                to="/admin-login"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-slate-900 px-7 py-4 text-base font-medium text-slate-200 transition hover:bg-slate-800"
-              >
-                Admin Login
-              </Link>
+                      {feature.id === "03" && (
+                        <div className="grid h-full gap-3 md:grid-cols-2">
+                          <div className="rounded-[16px] border border-white/[0.08] bg-white/[0.03] p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <p className="text-xs font-semibold text-white">
+                                Coding workspace
+                              </p>
+                              <span className="rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-300">
+                                Live
+                              </span>
+                            </div>
+                            <div className="rounded-xl border border-white/[0.08] bg-slate-950/70 p-3 font-mono text-[11px] leading-6 text-slate-400">
+                              <p>{`function twoSum(nums, target) {`}</p>
+                              <p className="pl-3">{`const map = new Map();`}</p>
+                              <p className="pl-3">{`for (let i = 0; i < nums.length; i++) {`}</p>
+                              <p className="pl-6 text-cyan-400">{`const diff = target - nums[i];`}</p>
+                              <p className="pl-6 text-emerald-400">{`if (map.has(diff)) return [map.get(diff), i];`}</p>
+                              <p className="pl-6">{`map.set(nums[i], i);`}</p>
+                              <p className="pl-3">{`}`}</p>
+                              <p>{`}`}</p>
+                            </div>
+                          </div>
+                          <div className="rounded-[16px] border border-white/[0.08] bg-violet-400/[0.04] p-4">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-600 mb-4">
+                              Test results
+                            </p>
+                            <div className="space-y-2">
+                              {[
+                                ["Case 1", "Passed", true],
+                                ["Case 2", "Passed", true],
+                                ["Case 3", "Passed", true],
+                                ["Case 4", "Passed", true],
+                                ["Case 5", "Passed", true],
+                                ["Case 6", "Passed", true],
+                                ["Complexity", "O(n)", false],
+                              ].map(([label, val, pass]) => (
+                                <div
+                                  key={label}
+                                  className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
+                                >
+                                  <p className="text-xs text-slate-400">
+                                    {label}
+                                  </p>
+                                  <p
+                                    className={`text-xs font-semibold ${pass ? "text-emerald-400" : "text-white"}`}
+                                  >
+                                    {val}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
-          </motion.div>
-        </section>
-      </main>
-    </div>
+          </section>
+
+          {/* ── Admin ──────────────────────────────────────────────────────────── */}
+          <section
+            id="admin"
+            className="mx-auto max-w-7xl scroll-mt-24 px-5 py-14 md:px-8 lg:py-20"
+          >
+            <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-slate-900/60 p-7 md:p-10">
+              <div className="grid gap-10 lg:grid-cols-[0.84fr_1.16fr] lg:items-start">
+                <motion.div {...fadeInUp}>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs text-slate-300">
+                    <ShieldCheck size={13} />
+                    Admin access
+                  </div>
+
+                  <h2 className="mt-5 text-3xl font-bold tracking-tight text-white md:text-4xl">
+                    Separate admin visibility without breaking the student flow
+                  </h2>
+
+                  <p className="mt-5 text-base leading-7 text-slate-400">
+                    The student experience stays simple, while admins get a
+                    direct operational path for managing users, interview
+                    activity, and question libraries.
+                  </p>
+
+                  <div className="mt-7 space-y-2.5">
+                    {[
+                      "Direct admin login — no shared entry with students.",
+                      "Cleaner product structure for institutions and teams.",
+                      "Operational visibility separated from onboarding.",
+                    ].map((point) => (
+                      <div
+                        key={point}
+                        className="flex items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-slate-300"
+                      >
+                        <CheckCircle2
+                          size={14}
+                          className="mt-0.5 shrink-0 text-cyan-400"
+                        />
+                        <p>{point}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Clear visual hierarchy — primary vs secondary */}
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <Link
+                      to="/admin-login"
+                      className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                    >
+                      Open Admin Login
+                      <ArrowRight size={14} />
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3 text-sm text-slate-300 transition hover:bg-white/[0.05]"
+                    >
+                      Student Registration
+                    </Link>
+                  </div>
+                </motion.div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {adminCards.map((card, index) => {
+                    const Icon = card.icon;
+                    return (
+                      <motion.div
+                        key={card.title}
+                        {...fadeInUp}
+                        transition={{
+                          ...fadeInUp.transition,
+                          delay: index * 0.06,
+                        }}
+                        className="group rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-5 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
+                      >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04]">
+                          <Icon size={17} className="text-slate-300" />
+                        </div>
+                        <h3 className="mt-4 text-base font-semibold text-white">
+                          {card.title}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {card.description}
+                        </p>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── CTA ────────────────────────────────────────────────────────────── */}
+          <section className="mx-auto max-w-7xl px-5 pb-20 pt-4 md:px-8 lg:pb-28">
+            <motion.div
+              {...fadeInUp}
+              style={{ y: ctaY }}
+              className="relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-cyan-400/[0.05] p-8 text-center md:p-14"
+            >
+              {/* Subtle glow */}
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(34,211,238,0.08),transparent)]" />
+
+              <p className="relative text-xs font-semibold uppercase tracking-[0.24em] text-cyan-400">
+                Get started
+              </p>
+              <h2 className="relative mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight text-white md:text-4xl">
+                Make the next step obvious as soon as the value is clear
+              </h2>
+              <p className="relative mx-auto mt-5 max-w-xl text-base leading-7 text-slate-400">
+                Start with resume review, practice mock interviews, or go
+                straight to coding — the platform meets you where you are.
+              </p>
+
+              {/* Focused CTA — reduced from 3 buttons to 2 */}
+              <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  to="/register"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-7 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 shadow-[0_0_24px_rgba(34,211,238,0.2)]"
+                >
+                  Create free account
+                  <ArrowRight
+                    size={14}
+                    className="transition group-hover:translate-x-1"
+                  />
+                </Link>
+                <Link
+                  to="/admin-login"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-sm font-medium text-slate-300 transition hover:bg-white/[0.08]"
+                >
+                  Admin login
+                </Link>
+              </div>
+
+              <p className="relative mt-4 text-xs text-slate-600">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="text-slate-400 underline underline-offset-2 hover:text-white transition"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </motion.div>
+          </section>
+        </main>
+
+        {/* ── Footer ─────────────────────────────────────────────────────────── */}
+        <footer className="border-t border-white/[0.06] bg-slate-950/80">
+          <div className="mx-auto max-w-7xl px-5 py-8 md:px-8">
+            <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-400 text-slate-950">
+                  <Sparkles size={13} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    InterviewVerse AI
+                  </p>
+                  <p className="text-[10px] text-slate-600">
+                    Career Prep Workspace
+                  </p>
+                </div>
+              </div>
+
+              <nav className="flex flex-wrap gap-x-6 gap-y-2">
+                {navItems.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className="text-xs text-slate-600 hover:text-slate-300 transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+
+              <div className="flex gap-3">
+                <Link
+                  to="/login"
+                  className="rounded-lg border border-white/[0.08] px-3.5 py-2 text-xs text-slate-400 hover:text-white transition"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/register"
+                  className="rounded-lg bg-cyan-400/10 border border-cyan-400/20 px-3.5 py-2 text-xs text-cyan-300 hover:bg-cyan-400/15 transition"
+                >
+                  Register
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-white/[0.05] pt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[11px] text-slate-700">
+                © {new Date().getFullYear()} InterviewVerse AI. All rights
+                reserved.
+              </p>
+              <p className="text-[11px] text-slate-700">
+                Built for students preparing for placements.
+              </p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }

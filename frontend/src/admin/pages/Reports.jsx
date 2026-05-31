@@ -63,7 +63,7 @@ const Reports = () => {
   const statCards = [
     {
       title: "Verification rate",
-      value: `${summary.verificationRate || 0}%`,
+      value: `${summary.verificationRate ?? 0}%`,
       growth: 0,
       subtitle: "learner activation",
       icon: ShieldCheck,
@@ -71,7 +71,7 @@ const Reports = () => {
     },
     {
       title: "Publish rate",
-      value: `${summary.publishRate || 0}%`,
+      value: `${summary.publishRate ?? 0}%`,
       growth: 0,
       subtitle: "content live status",
       icon: FileStack,

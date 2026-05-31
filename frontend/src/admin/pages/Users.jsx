@@ -166,7 +166,7 @@ const Users = () => {
       value: formatCompactNumber(
         overview?.totalUsers,
       ),
-      growth: overview?.userGrowth || 0,
+      growth: overview?.userGrowth ?? 0,
       subtitle: "current learner base",
       icon: UsersRound,
       accent: "cyan",
@@ -176,7 +176,7 @@ const Users = () => {
       value: formatCompactNumber(
         overview?.verifiedUsers,
       ),
-      growth: overview?.userGrowth || 0,
+      growth: overview?.userGrowth ?? 0,
       subtitle: "ready to use platform",
       icon: UserCheck,
       accent: "emerald",

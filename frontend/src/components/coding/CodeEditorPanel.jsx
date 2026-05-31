@@ -27,7 +27,7 @@ const defaultCode = `function twoSum(nums, target) {
     }
 };`;
 
-const CodeEditorPanel = () => {
+const CodeEditorPanel = ({question}) => {
   return (
     <motion.div
       initial={{ opacity: 0, x: 15 }}
@@ -139,7 +139,7 @@ const CodeEditorPanel = () => {
         <Editor
           height="100%"
           defaultLanguage="javascript"
-          defaultValue={defaultCode}
+          defaultValue={question.starterCode}
           theme="vs-dark"
           options={{
             fontSize: 15,

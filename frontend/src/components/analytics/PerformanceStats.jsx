@@ -9,7 +9,7 @@ import {
   Mic,
 } from "lucide-react";
 
-const stats = [
+const defaultStats = [
   {
     title: "Total Interviews",
     value: "148",
@@ -48,11 +48,31 @@ const stats = [
   },
 ];
 
-const PerformanceStats = () => {
+const iconMap = {
+  Trophy,
+  Brain,
+  Code2,
+  Mic,
+};
+
+const PerformanceStats = ({ stats = defaultStats }) => {
+  const displayStats = stats && stats.length > 0 ? stats.map((stat, index) => {
+    const iconName = stat.icon || ["Trophy", "Brain", "Code2", "Mic"][index];
+    const Icon = typeof stat.icon === "string" ? iconMap[stat.icon] : stat.icon || iconMap[iconName];
+    
+    return {
+      ...stat,
+      icon: Icon || Trophy,
+      color: stat.color || defaultStats[index]?.color,
+      bg: stat.bg || defaultStats[index]?.bg,
+      border: stat.border || defaultStats[index]?.border,
+    };
+  }) : defaultStats;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
       
-      {stats.map((item, index) => {
+      {displayStats.map((item, index) => {
         const Icon = item.icon;
 
         return (

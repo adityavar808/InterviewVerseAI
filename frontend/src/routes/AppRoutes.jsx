@@ -10,6 +10,7 @@ import ResetPassword from "../pages/auth/ResetPassword";
 import Interviews from "../pages/interviews/Interviews";
 import ResumeAnalyzer from "../pages/resume/ResumeAnalyzer";
 import CodingPractice from "../pages/coding/CodingPractice";
+import CodingQuestions from "../pages/coding/CodingQuestions";
 import Analytics from "../pages/analytics/Analytics";
 import Profile from "../pages/profile/Profile";
 import Settings from "../pages/settings/Settings";
@@ -57,7 +58,7 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Interviews */}
+        {/* AI Interviews */}
 
         <Route
           path="/interviews"
@@ -83,6 +84,15 @@ const AppRoutes = () => {
 
         <Route
           path="/coding"
+          element={
+            <ProtectedRoute>
+              <CodingQuestions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/coding/:id"
           element={
             <ProtectedRoute>
               <CodingPractice />

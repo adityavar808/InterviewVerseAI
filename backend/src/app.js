@@ -8,6 +8,7 @@ import passport from "./config/passport.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import studentRoutes from "./routes/student.routes.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use(passport.session());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/student", studentRoutes);
 
 
 // Test Route

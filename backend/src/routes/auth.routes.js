@@ -12,6 +12,9 @@ import {
     verifyOTP,
     resendOTP,
     googleAuthSuccess,
+    studentDashboard,
+    getStudentInterviews,
+    getStudentCodingQuestions,
 } from "../controllers/auth.controller.js";
 
 import protect from "../middleware/auth.middleware.js";
@@ -38,8 +41,14 @@ router.post("/forgot-password", forgotPassword);
 router.put("/reset-password/:token", resetPassword);
 
 
-// Protected Route
+// Protected Routes
 router.get("/me", protect, getMe);
+
+router.get("/dashboard", protect, studentDashboard);
+
+router.get("/interviews", protect, getStudentInterviews);
+
+router.get("/coding-questions", protect, getStudentCodingQuestions);
 
 // ================= GOOGLE AUTH =================
 

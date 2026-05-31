@@ -9,7 +9,7 @@ import {
   Brain,
 } from "lucide-react";
 
-const weaknesses = [
+const defaultWeaknesses = [
   {
     title: "System Design",
     issue:
@@ -42,7 +42,27 @@ const weaknesses = [
   },
 ];
 
-const WeaknessAnalysis = () => {
+const getSeverityStyles = (severity) => {
+  switch(severity) {
+    case "High":
+      return { color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" };
+    case "Medium":
+      return { color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" };
+    case "Low":
+      return { color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" };
+    default:
+      return { color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" };
+  }
+};
+
+const WeaknessAnalysis = ({ weaknesses = defaultWeaknesses }) => {
+  const displayWeaknesses = weaknesses && weaknesses.length > 0 ? weaknesses : defaultWeaknesses;
+  
+  const processedWeaknesses = displayWeaknesses.map(w => ({
+    ...w,
+    ...(w.severity ? getSeverityStyles(w.severity) : getSeverityStyles("Medium"))
+  }));
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -95,7 +115,7 @@ const WeaknessAnalysis = () => {
         {/* Weakness Cards */}
         <div className="space-y-5">
           
-          {weaknesses.map((item, index) => (
+          {processedWeaknesses.map((item, index) => (
             <motion.div
               key={index}
               whileHover={{ y: -3 }}
