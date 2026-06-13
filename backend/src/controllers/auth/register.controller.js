@@ -7,6 +7,7 @@ import PlatformSetting from "../../models/platformSetting.model.js";
 
 import generateOTP from "../../utils/generateOTP.js";
 import sendEmail from "../../services/email.service.js";
+import getFrontendUrl from "../../utils/frontendUrl.js";
 
 const registerUser = async (req, res) => {
   try {
@@ -103,7 +104,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Reset URL
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${getFrontendUrl()}/reset-password/${resetToken}`;
 
     // Message
     const message = `

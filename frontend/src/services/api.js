@@ -3,6 +3,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 import store from "../app/store";
+import {
+  API_BASE_URL,
+} from "../config/urls";
 
 import {
   setCredentials,
@@ -10,7 +13,7 @@ import {
 } from "../redux/slices/authSlice";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_BASE_URL,
 
   withCredentials: true,
 });
@@ -62,7 +65,7 @@ api.interceptors.response.use(
 
         const response =
           await axios.get(
-            "http://localhost:5000/api/auth/refresh-token",
+            `${API_BASE_URL}/auth/refresh-token`,
 
             {
               withCredentials: true,

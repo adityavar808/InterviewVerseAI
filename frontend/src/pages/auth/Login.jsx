@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 
 import api from "../../services/api";
+import {
+  BACKEND_ORIGIN,
+} from "../../config/urls";
 import { setCredentials } from "../../redux/slices/authSlice";
 
 // ─── Google SVG ───────────────────────────────────────────────────────────────
@@ -180,7 +183,9 @@ const Login = () => {
           {/* Google */}
           <button
             type="button"
-            onClick={() => { window.location.href = "http://localhost:5000/api/auth/google"; }}
+            onClick={() => {
+              window.location.href = `${BACKEND_ORIGIN}/api/auth/google`;
+            }}
             className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 text-[13px] text-slate-300 transition hover:border-white/[0.14] hover:bg-white/[0.07] hover:text-white"
           >
             <GoogleIcon />

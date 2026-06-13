@@ -5,6 +5,17 @@ import User from "../../models/user.model.js";
 
 import generateAccessToken from "../../utils/generateToken.js";
 import generateRefreshToken from "../../utils/generateRefreshToken.js";
+import getFrontendUrl from "../../utils/frontendUrl.js";
+
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite:
+    process.env.NODE_ENV === "production"
+      ? "none"
+      : "strict",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 const refreshAccessToken = async (req, res) => {
   try {
@@ -120,13 +131,7 @@ const loginUser = async (req, res) => {
 
     // Store Refresh Token in Cookie
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-
-      secure: false,
-
-      sameSite: "strict",
-
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...refreshCookieOptions,
     });
 
     res.status(200).json({
@@ -195,7 +200,7 @@ const googleAuthSuccess = async (req, res) => {
 
     if (user.role === "admin") {
       return res.redirect(
-        `${process.env.CLIENT_URL}/admin-login`,
+        `${getFrontendUrl()}/admin-login`,
       );
     }
 
@@ -214,18 +219,12 @@ const googleAuthSuccess = async (req, res) => {
 
     // Store cookie
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-
-      secure: false,
-
-      sameSite: "strict",
-
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...refreshCookieOptions,
     });
 
     // Redirect frontend
     res.redirect(
-      `${process.env.CLIENT_URL}/oauth-success?token=${accessToken}`,
+      `${getFrontendUrl()}/oauth-success?token=${accessToken}`,
     );
   } catch (error) {
     res.status(500).json({

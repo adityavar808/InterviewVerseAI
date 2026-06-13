@@ -6,9 +6,12 @@ import {
   getAdminAccessToken,
   saveStoredAdminSession,
 } from "../utils/adminHelpers";
+import {
+  ADMIN_API_BASE_URL,
+} from "../../config/urls";
 
 const adminApi = axios.create({
-  baseURL: "http://localhost:5000/api/admin",
+  baseURL: ADMIN_API_BASE_URL,
   withCredentials: true,
 });
 
@@ -53,7 +56,7 @@ adminApi.interceptors.response.use(
       try {
         const response =
           await axios.get(
-            "http://localhost:5000/api/admin/refresh-token",
+            `${ADMIN_API_BASE_URL}/refresh-token`,
             {
               withCredentials: true,
             },
