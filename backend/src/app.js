@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 
 import passport from "./config/passport.js";
+import getFrontendUrl from "./utils/frontendUrl.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
@@ -15,6 +16,7 @@ const app = express();
 const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.FRONTEND_URL,
+  getFrontendUrl(),
   "http://localhost:5173",
   "http://localhost:4173",
 ].filter(Boolean);
