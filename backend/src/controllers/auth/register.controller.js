@@ -61,10 +61,15 @@ const registerUser = async (req, res) => {
 
     const html = otpEmailTemplate(user.name, otp);
 
-    await sendEmail({
+    void sendEmail({
       email: user.email,
       subject: "ðŸ” Verify Your Email - InterviewVerse AI",
       html,
+    }).catch((emailError) => {
+      console.error(
+        "Registration email failed:",
+        emailError.message || emailError,
+      );
     });
 
     res.status(201).json({
