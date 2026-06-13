@@ -18,3 +18,10 @@ app.add_middleware(
 )
 
 app.include_router(interview_router)
+
+@app.get("/")
+async def root():
+    return {
+        "success": True,
+        "message": "AI Services are running successfully 🚀"
+    }
