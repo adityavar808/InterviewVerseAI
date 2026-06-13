@@ -9,7 +9,7 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { useNavigate } from "react-router-dom";
 
@@ -27,6 +27,16 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
+
+  const user = useSelector((state) => state.auth.user || {});
+
+  const getUserInitials = (name) =>
+    (name || "").
+      split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "ST";
 
   // CLOSE DROPDOWN ON OUTSIDE CLICK
 
@@ -173,19 +183,19 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
                 boxShadow: "0 0 16px rgba(6,182,212,0.3)",
               }}
             >
-              A
+              {getUserInitials(user.name)}
             </div>
 
             {/* Name + role — hidden on mobile */}
             <div className="hidden md:block text-left">
               <p className="text-slate-200 text-sm font-medium leading-none">
-                Aditya
+                {user.name || "Student"}
               </p>
               <p
                 className="text-slate-500 font-mono uppercase tracking-widest mt-0.5"
                 style={{ fontSize: "9px" }}
               >
-                Pro User
+                {user.role === "student" ? "Student" : user.role || "Learner"}
               </p>
             </div>
           </button>
@@ -216,10 +226,12 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
               {/* USER INFO */}
 
               <div className="px-3 py-2.5 mb-1">
-                <p className="text-sm font-medium text-white">Aditya</p>
+                <p className="text-sm font-medium text-white">
+                  {user.name || "Student"}
+                </p>
 
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  aditya@example.com
+                  {user.email || "student@example.com"}
                 </p>
               </div>
 
@@ -229,6 +241,10 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
                 {/* PROFILE */}
 
                 <button
+                  onClick={() => {
+                    navigate("/profile");
+                    setOpen(false);
+                  }}
                   className="
           w-full
           flex
@@ -250,6 +266,10 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
                 {/* SETTINGS */}
 
                 <button
+                  onClick={() => {
+                    navigate("/settings");
+                    setOpen(false);
+                  }}
                   className="
           w-full
           flex

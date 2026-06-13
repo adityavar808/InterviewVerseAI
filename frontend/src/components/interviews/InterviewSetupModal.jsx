@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import studentService from "../../services/studentApi";
 
 import {
   X,
@@ -66,14 +67,26 @@ const InterviewSetupModal = ({ open, onClose }) => {
         startTime: new Date().toISOString(),
       };
 
-      // Navigate to interview session with state
+      const response = await studentService.startAIInterview(interviewConfig);
+      const sessionId = response?.sessionId;
+      const questions = response?.questions || [];
+
+      if (!sessionId) {
+        throw new Error("Unable to create interview session");
+      }
+
       navigate("/interview-session", {
-        state: { config: interviewConfig },
+        state: { config: interviewConfig, sessionId, questions },
       });
 
       onClose();
     } catch (error) {
-      toast.error("Failed to start interview");
+      console.error(error);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to start interview";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

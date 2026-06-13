@@ -1,5 +1,6 @@
 // src/components/profile/SocialLinksCard.jsx
 
+import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 
 import {
@@ -47,6 +48,9 @@ const socialLinks = [
 ];
 
 const SocialLinksCard = () => {
+  const user = useSelector((state) => state.auth.user || {});
+  const actualEmail = user.email || "aditya@example.com";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -138,7 +142,7 @@ const SocialLinksCard = () => {
                       </h3>
 
                       <p className="text-sm text-gray-400">
-                        {item.username}
+                        {item.title === "Email" ? actualEmail : item.username}
                       </p>
                     </div>
                   </div>

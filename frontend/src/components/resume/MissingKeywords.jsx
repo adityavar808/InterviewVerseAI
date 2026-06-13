@@ -1,14 +1,13 @@
-// src/components/resume/MissingKeywords.jsx
-
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
+  BadgeCheck,
   Plus,
   Sparkles,
   Target,
 } from "lucide-react";
 
-const missingKeywords = [
+const defaultMissingKeywords = [
   "Docker",
   "AWS",
   "CI/CD",
@@ -17,83 +16,129 @@ const missingKeywords = [
   "Kubernetes",
 ];
 
-const MissingKeywords = () => {
+const MissingKeywords = ({
+  missingKeywords = defaultMissingKeywords,
+  selectedRole = "Target role",
+  matchedKeywords = [],
+  totalKeywords = 0,
+}) => {
+  const keywords = missingKeywords.length ? missingKeywords : [];
+  const coverageText = totalKeywords
+    ? `${matchedKeywords.length}/${totalKeywords} keywords already covered`
+    : "Coverage appears once analysis is ready";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-6"
+      className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/70 p-6 backdrop-blur-xl"
     >
-      {/* Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-purple-500/5 pointer-events-none"></div>
+      <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(244,63,94,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.1),transparent_34%)]" />
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        
-        <div className="flex items-center gap-4">
-          
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-            <AlertTriangle className="text-red-400" size={26} />
-          </div>
-
+      <div className="relative space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold text-white">
-              Missing Keywords
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              Keyword Gaps
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              The role-specific terms still missing from your draft
             </h2>
-
-            <p className="text-sm text-gray-400">
-              Important ATS keywords missing from your resume
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+              ATS systems often scan for proof of relevance before they care about nuance. These are the terms you should consider weaving into skills, project bullets, and experience highlights.
             </p>
           </div>
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-100">
+            <Sparkles size={15} />
+            AI suggestions
+          </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm">
-          <Sparkles size={16} />
-          AI Suggestions
-        </div>
-      </div>
+        {keywords.length ? (
+          <>
+            <div className="rounded-[28px] border border-rose-400/18 bg-rose-500/10 p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-rose-400/18 bg-rose-500/10">
+                  <AlertTriangle className="text-rose-100" size={18} />
+                </div>
 
-      {/* Keywords */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        {missingKeywords.map((keyword, index) => (
-          <motion.div
-            key={index}
-            whileHover={{ scale: 1.05 }}
-            className="group relative flex items-center gap-3 px-5 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 hover:border-red-400/40 transition-all duration-300 cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-              <Plus size={16} className="text-red-300" />
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.26em] text-rose-100/70">
+                    Focus Area
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">
+                    {keywords.length} missing terms for {selectedRole}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-rose-50/80">
+                    Start with the terms below and add them only where they are true and supported by your actual experience.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <span className="text-red-200 font-medium">
-              {keyword}
-            </span>
+            <div className="flex flex-wrap gap-3">
+              {keywords.map((keyword, index) => (
+                <motion.div
+                  key={keyword}
+                  whileHover={{ y: -2 }}
+                  className="group relative flex items-center gap-3 rounded-[22px] border border-rose-400/18 bg-black/20 px-4 py-3"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-400/18 bg-rose-500/10">
+                    <Plus size={16} className="text-rose-100" />
+                  </div>
 
-            {/* Hover Glow */}
-            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-red-500/5 to-purple-500/5 transition-all duration-300"></div>
-          </motion.div>
-        ))}
-      </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{keyword}</p>
+                    <p className="text-xs text-slate-500">Priority #{index + 1}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="rounded-[30px] border border-emerald-400/18 bg-emerald-500/10 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl border border-emerald-400/18 bg-emerald-500/10">
+                <BadgeCheck className="text-emerald-100" size={22} />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.26em] text-emerald-100/70">
+                  Strong coverage
+                </p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">
+                  No urgent keyword gaps found
+                </h3>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-50/80">
+                  Your resume is already hitting the key role terms we expected. The next improvements should focus on stronger proof, clearer outcomes, and sharper storytelling.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* ATS Recommendation */}
-      <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-white/10 rounded-3xl p-5">
-        
-        <div className="flex items-start gap-4">
-          
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-            <Target className="text-cyan-400" size={22} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+                <Target className="text-cyan-100" size={18} />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-500">
+                  Coverage
+                </p>
+                <p className="mt-2 text-sm text-slate-300">{coverageText}</p>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              ATS Optimization Tip
-            </h3>
-
-            <p className="text-gray-300 leading-relaxed text-sm">
-              Adding these keywords naturally inside your project
-              descriptions, skills section, and work experience can
-              significantly improve ATS ranking for MERN and Full Stack
-              Developer roles.
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+            <p className="text-[11px] uppercase tracking-[0.26em] text-slate-500">
+              Best Places To Add Them
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Summary paragraph, skills matrix, project tech stack, and measurable bullet points are usually the safest places to add these terms naturally.
             </p>
           </div>
         </div>

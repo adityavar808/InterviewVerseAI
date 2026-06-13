@@ -20,6 +20,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import studentService from "../../services/studentApi";
 import {
   Mic, MicOff, Video, VideoOff, Send, CheckCircle2, Clock,
   AlertCircle, ShieldAlert, Maximize, XCircle, Activity,
@@ -777,7 +778,7 @@ const InterviewTimeline = memo(({ questions, activeQ, answered, scores }) => (
             </div>
             <div style={tl.content}>
               <div style={tl.qnum}>Q{i + 1} <span style={{ ...tl.cat, color: CAT_COLORS[q.category] || "#6366f1" }}>{q.category}</span></div>
-              <div style={tl.qtxt}>{q.text.slice(0, 42)}…</div>
+              <div style={tl.qtxt}>{(q?.text || q?.question || "").slice(0, 42)}…</div>
               {score && <div style={{ ...tl.score, color: score.score >= 75 ? "#22c55e" : score.score >= 55 ? "#f59e0b" : "#ef4444" }}>
                 {score.score}%
               </div>}
@@ -900,6 +901,15 @@ const CandidatePanel = memo(({ config, analytics }) => (
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
+const normalizeQuestions = (items = []) =>
+  Array.isArray(items)
+    ? items.map((item, index) => ({
+        ...item,
+        question: item.question || item.text || item.prompt || item.title || `Question ${index + 1}`,
+        text: item.text || item.question || item.prompt || item.title || `Question ${index + 1}`,
+      }))
+    : [];
+
 const InterviewSession = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -907,6 +917,10 @@ const InterviewSession = () => {
     role: "Frontend Developer", difficulty: "Intermediate",
     duration: "30 Min", experience: "2-4 Years", language: "English",
   };
+  const [sessionId, setSessionId] = useState(location.state?.sessionId || null);
+  const [questions, setQuestions] = useState(normalizeQuestions(location.state?.questions || []));
+
+  const questionList = questions.length > 0 ? questions : QUESTIONS;
 
   // Gate / fullscreen
   const [gateOpen, setGateOpen] = useState(true);
@@ -1011,6 +1025,34 @@ const InterviewSession = () => {
     else toast.error("Please allow fullscreen and try again.");
   };
 
+  const saveInterviewHistory = async (status = "Completed") => {
+    const tags = Array.from(
+      new Set(
+        answered
+          .map((qId) => questionList[qId]?.category || QUESTIONS[qId]?.category)
+          .filter(Boolean),
+      ),
+    );
+
+    try {
+      await studentService.addInterviewHistory({
+        sessionId: sessionId || undefined,
+        title: `${config.role} Interview`,
+        role: config.role || "Practice Interview",
+        score: analytics.data.avgScore || 0,
+        duration: config.duration || "30 mins",
+        status,
+        difficulty: config.difficulty || "Medium",
+        tags,
+        tech: tags,
+        notes: "",
+        completedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Unable to save interview history:", error);
+    }
+  };
+
   const handleSubmit = async () => {
     const text = userInput.trim();
     if (!text) { toast.error("Please type or speak your answer."); return; }
@@ -1022,10 +1064,37 @@ const InterviewSession = () => {
     setAiThinking(true);
 
     try {
-      const [scores, followUp] = await Promise.all([
-        aiInterviewService.scoreAnswer(QUESTIONS[activeQ].text, text),
-        Math.random() > 0.5 ? aiInterviewService.generateFollowUp(QUESTIONS[activeQ].text, text, config.role) : Promise.resolve(null),
-      ]);
+const currentQuestion = questionList[activeQ] || QUESTIONS[activeQ];
+      let evaluation = null;
+      let followUp = null;
+      let scores = null;
+
+      if (sessionId && currentQuestion) {
+        evaluation = await studentService.submitInterviewResponse(sessionId, {
+          questionIndex: activeQ,
+          answer: text,
+        });
+
+        scores = {
+          score: evaluation.score ?? 0,
+          communication: evaluation.communication ?? 0,
+          technical: evaluation.technical ?? 0,
+          confidence: evaluation.confidence ?? 0,
+        };
+        followUp = evaluation.followUp || null;
+
+        if (evaluation.feedback) {
+          toast.success(`AI Feedback: ${evaluation.feedback}`);
+        }
+      } else {
+        const [aiScores, aiFollowUp] = await Promise.all([
+          aiInterviewService.scoreAnswer(currentQuestion?.question || QUESTIONS[activeQ].question, text),
+          Math.random() > 0.5 ? aiInterviewService.generateFollowUp(currentQuestion?.question || QUESTIONS[activeQ].question, text, config.role) : Promise.resolve(null),
+        ]);
+        scores = aiScores;
+        followUp = aiFollowUp;
+      }
+
       analytics.recordAnswer(activeQ, text, scores);
 
       if (followUp && !followUpMode) {
@@ -1038,15 +1107,23 @@ const InterviewSession = () => {
         setFollowUpMode(false);
         setFollowUpQ("");
         setAnswered(p => [...new Set([...p, activeQ])]);
-        const next = activeQ < QUESTIONS.length - 1 ? activeQ + 1 : activeQ;
+        const isLastQuestion = activeQ >= questionList.length - 1;
         setAiThinking(false);
         setAiSpeaking(true);
+        if (isLastQuestion) {
+          setTimeout(() => setAiSpeaking(false), 3000);
+          await handleFinish();
+          return;
+        }
+
+        const next = activeQ < questionList.length - 1 ? activeQ + 1 : activeQ;
         setActiveQ(next);
         setTimeout(() => setAiSpeaking(false), 3000);
       }
       toast.success("Answer submitted!");
-    } catch {
+    } catch (error) {
       setAiThinking(false);
+      console.error(error);
       toast.error("AI service unavailable. Your answer was saved.");
       setAnswered(p => [...new Set([...p, activeQ])]);
     }
@@ -1055,6 +1132,13 @@ const InterviewSession = () => {
   const handleFinish = async () => {
     if (speech.active) speech.stop();
     await exitFS();
+    if (sessionId) {
+      try {
+        await studentService.endInterviewSession(sessionId);
+      } catch (error) {
+        console.error("Failed to close interview session:", error);
+      }
+    }
     toast.success("Interview completed! Results are being processed.");
     navigate("/interviews", { replace: true });
   };
@@ -1062,6 +1146,13 @@ const InterviewSession = () => {
   const handleTerminate = async () => {
     if (speech.active) speech.stop();
     await exitFS();
+    if (sessionId) {
+      try {
+        await studentService.endInterviewSession(sessionId);
+      } catch (error) {
+        console.error("Failed to close interview session:", error);
+      }
+    }
     toast.error("Interview terminated due to repeated violations.");
     navigate("/interviews", { replace: true });
   };
@@ -1073,9 +1164,9 @@ const InterviewSession = () => {
   };
 
   const answeredCount = answered.length;
-  const pct = Math.round((answeredCount / QUESTIONS.length) * 100);
+  const pct = Math.round((answeredCount / questionList.length) * 100);
   const isLow = timeLeft !== null && timeLeft < 120;
-  const currentQ = followUpMode ? { text: followUpQ, category: "Follow-Up", difficulty: "Medium", id: "fu" } : QUESTIONS[activeQ];
+  const currentQ = followUpMode ? { text: followUpQ, category: "Follow-Up", difficulty: "Medium", id: "fu" } : questionList[activeQ] || QUESTIONS[activeQ];
 
   return (
     <div style={s.root}>
@@ -1139,7 +1230,7 @@ const InterviewSession = () => {
             violationLog={proctor.log} cameraStatus={camera.status} micStatus={mic.status}
           />
           <div style={{ height: 1, background: "#1e293b", margin: "6px 0" }} />
-          <AnalyticsPanel data={analytics.data} answered={answeredCount} total={QUESTIONS.length} timeLeft={timeLeft} />
+          <AnalyticsPanel data={analytics.data} answered={answeredCount} total={questionList.length} timeLeft={timeLeft} />
         </aside>
 
         {/* CENTER MAIN */}
@@ -1173,7 +1264,7 @@ const InterviewSession = () => {
               <div style={s.questionCard}>
                 <div style={s.questionMeta}>
                   <span style={s.questionNum}>
-                    {followUpMode ? "FOLLOW-UP" : `Question ${activeQ + 1} of ${QUESTIONS.length}`}
+                    {followUpMode ? "FOLLOW-UP" : `Question ${activeQ + 1} of ${questionList.length}`}
                   </span>
                   <span style={{ ...s.catBadge, background: CAT_COLORS[currentQ.category] + "22", color: CAT_COLORS[currentQ.category] || "#6366f1" }}>
                     {currentQ.category}
@@ -1218,7 +1309,7 @@ const InterviewSession = () => {
 
           {/* Timeline */}
           <InterviewTimeline
-            questions={QUESTIONS} activeQ={activeQ}
+            questions={questionList} activeQ={activeQ}
             answered={answered} scores={analytics.data.scores}
           />
         </main>
@@ -1233,7 +1324,7 @@ const InterviewSession = () => {
           </div>
           <div style={s.statChip}>
             <Clock size={13} color="#f59e0b" />
-            <span style={{ color: "#92400e", fontWeight: 600, fontSize: 12 }}>{QUESTIONS.length - answeredCount} Left</span>
+            <span style={{ color: "#92400e", fontWeight: 600, fontSize: 12 }}>{questionList.length - answeredCount} Left</span>
           </div>
           {violationCount > 0 && (
             <div style={{ ...s.statChip, background: "#1c0a0a", borderColor: "#7f1d1d" }}>

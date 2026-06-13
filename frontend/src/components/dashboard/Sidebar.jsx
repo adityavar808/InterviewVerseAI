@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const navItems = [
   {
@@ -59,6 +60,9 @@ const Sidebar = ({
   collapsed,
   setSidebarOpen,
 }) => {
+  const user = useSelector((state) => state.auth.user || {});
+  const displayName = user.name || "Student";
+  const displayEmail = user.email || "student@example.com";
 
   return (
 
@@ -396,7 +400,7 @@ const Sidebar = ({
             }}
           >
 
-            A
+            {displayName.charAt(0).toUpperCase()}
 
           </div>
 
@@ -408,7 +412,7 @@ const Sidebar = ({
 
               <p className="text-slate-200 text-sm font-medium truncate">
 
-                Aditya
+                {displayName}
 
               </p>
 
@@ -419,7 +423,7 @@ const Sidebar = ({
                 }}
               >
 
-                aditya@example.com
+                {displayEmail}
 
               </p>
 

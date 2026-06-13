@@ -34,22 +34,36 @@ export const studentService = {
     return unwrapPayload(response);
   },
 
+  addInterviewHistory: async (payload) => {
+    const response = await api.post("/auth/interview-history", payload);
+    return unwrapPayload(response);
+  },
+
   // Start a new AI interview session
   startAIInterview: async (config) => {
     const response = await api.post("/auth/interview-session", config);
-    return response.data;
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || "Failed to start AI interview");
+    }
+    return unwrapPayload(response);
   },
 
   // Submit interview response
-  submitInterviewResponse: async (sessionId, response) => {
-    const result = await api.post(`/auth/interview-session/${sessionId}/response`, response);
-    return result.data;
+  submitInterviewResponse: async (sessionId, payload) => {
+    const response = await api.post(`/auth/interview-session/${sessionId}/response`, payload);
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || "Failed to submit interview response");
+    }
+    return unwrapPayload(response);
   },
 
   // End interview session
   endInterviewSession: async (sessionId) => {
     const response = await api.post(`/auth/interview-session/${sessionId}/end`);
-    return response.data;
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || "Failed to complete the interview session");
+    }
+    return unwrapPayload(response);
   },
 
   getCodingQuestionById: async (id) => {
@@ -60,6 +74,14 @@ export const studentService = {
   // Get available coding questions
   getCodingQuestions: async (params = {}) => {
     const response = await api.get("/auth/coding-questions", { params });
+    return unwrapPayload(response);
+  },
+
+  getInterviewSession: async (sessionId) => {
+    const response = await api.get(`/auth/interview-session/${sessionId}`);
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || "Failed to load interview session");
+    }
     return unwrapPayload(response);
   },
 };

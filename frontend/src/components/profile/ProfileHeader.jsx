@@ -1,5 +1,6 @@
 // src/components/profile/ProfileHeader.jsx
 
+import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 
 import {
@@ -10,7 +11,26 @@ import {
   BriefcaseBusiness,
 } from "lucide-react";
 
+const getInitials = (name) =>
+  (name || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "ST";
+
 const ProfileHeader = () => {
+  const user = useSelector((state) => state.auth.user || {});
+  const displayName = user.name || "Student Name";
+  const displayRole =
+    user.role === "student" ? "Student" : user.role || "Learner";
+  const displayLocation = user.location || "Remote";
+  const displayBio =
+    user.bio ||
+    "Passionate learner tracking interview performance, coding progress, and career readiness with AI-powered insights.";
+  const skills = user.skills || ["React", "Node.js", "MongoDB", "AI/ML", "Tailwind CSS"];
+  const initials = getInitials(displayName);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -15 }}
@@ -40,7 +60,7 @@ const ProfileHeader = () => {
             <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-cyan-500 to-purple-500 p-[3px]">
               
               <div className="w-full h-full rounded-3xl bg-[#0B1120] flex items-center justify-center text-4xl font-bold text-white">
-                AV
+                {initials}
               </div>
             </div>
 
@@ -54,7 +74,7 @@ const ProfileHeader = () => {
             <div className="flex flex-wrap items-center gap-3 mb-3">
               
               <h1 className="text-4xl font-bold text-white">
-                Aditya Varshney
+                {displayName}
               </h1>
 
               <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-sm">
@@ -71,34 +91,25 @@ const ProfileHeader = () => {
                 
                 <BriefcaseBusiness size={18} />
 
-                <span>MERN Stack Developer</span>
+                <span>{displayRole}</span>
               </div>
 
               <div className="flex items-center gap-2">
                 
                 <MapPin size={18} />
 
-                <span>India</span>
+                <span>{displayLocation}</span>
               </div>
             </div>
 
             <p className="max-w-2xl text-gray-300 leading-relaxed">
-              Passionate full stack developer focused on
-              building AI-powered SaaS applications, scalable
-              web platforms, and modern interview preparation
-              systems using MERN Stack and AI technologies.
+              {displayBio}
             </p>
 
             {/* Skills */}
             <div className="flex flex-wrap gap-3 mt-5">
               
-              {[
-                "React",
-                "Node.js",
-                "MongoDB",
-                "AI/ML",
-                "Tailwind CSS",
-              ].map((skill, index) => (
+              {skills.map((skill, index) => (
                 <div
                   key={index}
                   className="

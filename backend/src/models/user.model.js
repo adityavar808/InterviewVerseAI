@@ -45,6 +45,48 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    interviewHistory: {
+      type: [
+        {
+          sessionId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "InterviewSession",
+          },
+          title: { type: String, trim: true, default: "AI Interview" },
+          role: { type: String, trim: true, default: "Interview" },
+          score: { type: Number, default: 0 },
+          duration: { type: String, default: "0 mins" },
+          status: {
+            type: String,
+            enum: ["Completed", "In Progress", "Abandoned"],
+            default: "Completed",
+          },
+          difficulty: {
+            type: String,
+            enum: ["Easy", "Medium", "Hard", "Advanced"],
+            default: "Medium",
+          },
+          tags: {
+            type: [String],
+            default: [],
+          },
+          tech: {
+            type: [String],
+            default: [],
+          },
+          notes: {
+            type: String,
+            default: "",
+          },
+          completedAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+
     streak: {
       type: Number,
       default: 0,

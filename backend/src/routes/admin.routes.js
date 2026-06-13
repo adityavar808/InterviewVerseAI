@@ -3,29 +3,39 @@ import express from "express";
 import protect from "../middleware/auth.middleware.js";
 import authorizeRoles from "../middleware/role.middleware.js";
 import {
-  loginAdmin,
-  refreshAdminToken,
-  logoutAdmin,
-  getAdminMe,
   adminDashboard,
+  getReports,
+} from "../controllers/admin/dashboard.controller.js";
+import {
   getUsers,
   createUser,
   updateUser,
   updateUserStatus,
   deleteUser,
+} from "../controllers/admin/user.controller.js";
+import {
   getInterviews,
   createInterview,
   updateInterview,
   deleteInterview,
+} from "../controllers/admin/interview.controller.js";
+import {
   getCodingQuestions,
   getCodingQuestionById,
   createCodingQuestion,
   updateCodingQuestion,
   deleteCodingQuestion,
-  getReports,
+} from "../controllers/admin/codingQuestion.controller.js";
+import {
   getSettings,
   updateSettings,
-} from "../controllers/admin.controller.js";
+} from "../controllers/admin/settings.controller.js";
+import {
+  loginAdmin,
+  refreshAdminToken,
+  logoutAdmin,
+  getAdminMe,
+} from "../controllers/admin/auth.controller.js";
 
 const router = express.Router();
 

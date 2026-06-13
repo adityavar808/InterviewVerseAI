@@ -1,14 +1,7 @@
-// src/components/resume/ResumeImprovementRoadmap.jsx
-
 import { motion } from "framer-motion";
-import {
-  Rocket,
-  CheckCircle2,
-  ArrowRight,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Rocket, Sparkles } from "lucide-react";
 
-const roadmapSteps = [
+const defaultRoadmapSteps = [
   {
     title: "Add Cloud Technologies",
     description:
@@ -35,109 +28,105 @@ const roadmapSteps = [
   },
 ];
 
-const ResumeImprovementRoadmap = () => {
+const statusStyles = {
+  "High Impact": "border-rose-400/18 bg-rose-500/10 text-rose-100",
+  Recommended: "border-cyan-400/18 bg-cyan-500/10 text-cyan-100",
+  Important: "border-amber-400/18 bg-amber-500/10 text-amber-100",
+  "Boost ATS": "border-emerald-400/18 bg-emerald-500/10 text-emerald-100",
+};
+
+const ResumeImprovementRoadmap = ({ steps = defaultRoadmapSteps }) => {
+  const roadmapSteps = steps.length ? steps : defaultRoadmapSteps;
+  const [primaryStep, ...secondarySteps] = roadmapSteps;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-6"
+      className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/70 p-6 backdrop-blur-xl"
     >
-      {/* Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 pointer-events-none"></div>
+      <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.1),transparent_32%)]" />
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        
-        <div className="flex items-center gap-4">
-          
-          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-            <Rocket className="text-cyan-400" size={26} />
-          </div>
-
+      <div className="relative space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold text-white">
-              Improvement Roadmap
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              Improvement Plan
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              A cleaner path from good draft to stronger resume
             </h2>
-
-            <p className="text-sm text-gray-400">
-              AI-generated steps to improve your resume
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+              We rank the fixes by likely impact so you can spend time on the edits that should improve ATS performance first, instead of guessing where to start.
             </p>
           </div>
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-100">
+            <Sparkles size={15} />
+            AI coach
+          </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm">
-          <Sparkles size={16} />
-          AI Coach
-        </div>
-      </div>
-
-      {/* Steps */}
-      <div className="space-y-6">
-        
-        {roadmapSteps.map((step, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.12 }}
-            whileHover={{ y: -3 }}
-            className="relative bg-white/5 border border-white/10 hover:border-cyan-500/20 transition-all duration-300 rounded-3xl p-5 overflow-hidden"
-          >
-            {/* Background Glow */}
-            <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-all duration-300 bg-gradient-to-r from-cyan-500/5 to-purple-500/5"></div>
-
-            <div className="relative flex gap-5">
-              
-              {/* Step Icon */}
-              <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                <CheckCircle2
-                  className="text-cyan-400"
-                  size={24}
-                />
+        {primaryStep && (
+          <div className="rounded-[30px] border border-cyan-400/18 bg-cyan-500/10 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-white">
+                  Highest leverage change
+                </div>
+                <h3 className="mt-4 text-2xl font-semibold text-white">{primaryStep.title}</h3>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-cyan-50/80">
+                  {primaryStep.description}
+                </p>
               </div>
 
-              {/* Content */}
-              <div className="flex-1">
-                
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3">
-                  
-                  <h3 className="text-lg font-semibold text-white">
-                    {step.title}
-                  </h3>
-
-                  <div className="px-4 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs w-fit">
-                    {step.status}
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  {step.description}
-                </p>
-
-                {/* Action */}
-                <button className="mt-5 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-all duration-300 text-sm font-medium">
-                  Improve Now
-                  <ArrowRight size={16} />
-                </button>
+              <div className="flex h-14 w-14 items-center justify-center rounded-3xl border border-cyan-300/20 bg-cyan-400/10">
+                <Rocket className="text-cyan-100" size={22} />
               </div>
             </div>
-          </motion.div>
-        ))}
-      </div>
 
-      {/* Bottom CTA */}
-      <div className="mt-8 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-white/10 rounded-3xl p-5">
-        
-        <h3 className="text-lg font-semibold text-white mb-2">
-          AI Resume Coaching
-        </h3>
+            <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cyan-100">
+              Recommended as your first edit pass
+              <ArrowRight size={16} />
+            </div>
+          </div>
+        )}
 
-        <p className="text-sm text-gray-300 leading-relaxed">
-          Following these recommendations can significantly increase
-          your ATS score, improve recruiter visibility, and strengthen
-          your placement opportunities for modern software engineering
-          roles.
-        </p>
+        <div className="grid gap-4">
+          {secondarySteps.map((step, index) => (
+            <motion.div
+              key={`${step.title}-${index}`}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.08 }}
+              className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5"
+            >
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/20">
+                  <CheckCircle2 className="text-white" size={18} />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-white">{step.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">{step.description}</p>
+                    </div>
+
+                    <span
+                      className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                        statusStyles[step.status] || "border-white/10 bg-white/[0.04] text-slate-200"
+                      }`}
+                    >
+                      {step.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
