@@ -5,9 +5,11 @@ const DEFAULT_FRONTEND_URL =
 
 const getFrontendUrl = () =>
   (
-    process.env.FRONTEND_URL ||
-    process.env.CLIENT_URL ||
-    DEFAULT_FRONTEND_URL
+    process.env.NODE_ENV === "production"
+      ? DEFAULT_FRONTEND_URL
+      : process.env.FRONTEND_URL ||
+        process.env.CLIENT_URL ||
+        DEFAULT_FRONTEND_URL
   ).replace(/\/+$/, "");
 
 export default getFrontendUrl;
