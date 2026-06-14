@@ -5,9 +5,8 @@ import User from "../../models/user.model.js";
 import PendingUser from "../../models/pendingUser.model.js";
 import PlatformSetting from "../../models/platformSetting.model.js";
 
-import generateOTP from "../../utils/generateOTP.js";
-import sendEmail from "../../services/email.service.js";
 import getFrontendUrl from "../../utils/frontendUrl.js";
+import { createOrRefreshVerificationEntry } from "../../services/verification.service.js";
 
 const registerUser = async (req, res) => {
   try {
@@ -42,39 +41,11 @@ const registerUser = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate OTP
-    const otp = generateOTP();
-
-    await PendingUser.deleteMany({
-      email: normalizedEmail,
-    });
-
-    // Create user
-    const user = await PendingUser.create({
+    await createOrRefreshVerificationEntry({
       name,
-
       email: normalizedEmail,
-
       password: hashedPassword,
-
-      otp,
-
-      otpExpiry: Date.now() + 10 * 60 * 1000,
-    });
-
-    const otpEmailTemplate = (name, otp) => ` <!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Verify Your Email</title> </head> <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;"> <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f3f4f6;padding:40px 0;"> <tr> <td align="center"> <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;"> <tr> <td style="padding:32px 40px;border-bottom:1px solid #e5e7eb;"> <h1 style=" margin:0; font-size:28px; font-weight:700; color:#111827; "> InterviewVerse AI </h1> <p style=" margin:8px 0 0; font-size:14px; color:#6b7280; "> AI-Powered Interview Preparation Platform </p> </td> </tr> <tr> <td style="padding:40px;"> <h2 style=" margin:0 0 24px; font-size:30px; font-weight:700; color:#111827; "> Verify your email address </h2> <p style=" margin:0 0 16px; font-size:16px; line-height:1.7; color:#374151; "> Hello <strong>${name || "User"}</strong>, </p> <p style=" margin:0 0 24px; font-size:16px; line-height:1.7; color:#374151; "> Thank you for signing up for InterviewVerse AI. To complete your registration, please enter the verification code below. </p> <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"> <tr> <td align="center"> <div style=" display:inline-block; padding:24px 32px; border:1px solid #d1d5db; border-radius:12px; background:#f9fafb; "> <p style=" margin:0; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#6b7280; "> Verification Code </p> <h1 style=" margin:12px 0 0; font-size:42px; font-weight:700; letter-spacing:10px; color:#111827; "> ${otp} </h1> </div> </td> </tr> </table> <p style=" margin:28px 0 0; font-size:15px; line-height:1.7; color:#374151; "> This verification code will expire in <strong>10 minutes</strong>. </p> <p style=" margin:12px 0 0; font-size:15px; line-height:1.7; color:#374151; "> For your security, never share this code with anyone. InterviewVerse AI will never ask for your verification code. </p> <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style=" margin-top:28px; background:#eff6ff; border-left:4px solid #2563eb; border-radius:6px; "> <tr> <td style="padding:16px;"> <p style=" margin:0; font-size:14px; line-height:1.6; color:#1e40af; "> If you did not create an account with InterviewVerse AI, you can safely ignore this email. </p> </td> </tr> </table> </td> </tr> <tr> <td style=" padding:24px 40px; background:#fafafa; border-top:1px solid #e5e7eb; "> <p style=" margin:0; font-size:13px; color:#9ca3af; text-align:center; "> Â© ${new Date().getFullYear()} InterviewVerse AI. All rights reserved. </p> <p style=" margin:8px 0 0; font-size:12px; color:#9ca3af; text-align:center; "> This is an automated message. Please do not reply to this email. </p> </td> </tr> </table> </td> </tr> </table> </body> </html> `;
-
-    const html = otpEmailTemplate(user.name, otp);
-
-    void sendEmail({
-      email: user.email,
-      subject: "ðŸ” Verify Your Email - InterviewVerse AI",
-      html,
-    }).catch((emailError) => {
-      console.error(
-        "Registration email failed:",
-        emailError.message || emailError,
-      );
+      subject: "📧 Verify Your Email - InterviewVerse AI",
     });
 
     res.status(201).json({
