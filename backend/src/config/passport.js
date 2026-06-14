@@ -85,6 +85,20 @@ passport.use(
                             "Your account has been suspended",
                     });
                 }
+                else if (!user.isVerified) {
+                    return done(null, false, {
+                        message:
+                            "Please verify your email first",
+                    });
+                }
+                else if (
+                    resolveUserStatus(user) !== "active"
+                ) {
+                    return done(null, false, {
+                        message:
+                            "Your account is inactive. Please contact support.",
+                    });
+                }
 
 
                 done(null, user);

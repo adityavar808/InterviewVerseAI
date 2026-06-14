@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 
 import User from "../models/user.model.js";
+import { resolveUserStatus } from "../utils/adminHelpers.js";
 
 const protect = async (req, res, next) => {
 
@@ -51,6 +52,22 @@ const protect = async (req, res, next) => {
             return res.status(403).json({
                 success: false,
                 message: "This account has been suspended",
+            });
+        }
+
+        if (req.user.isVerified === false) {
+
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email first",
+            });
+        }
+
+        if (resolveUserStatus(req.user) !== "active") {
+
+            return res.status(403).json({
+                success: false,
+                message: "Your account is inactive. Please contact support.",
             });
         }
 

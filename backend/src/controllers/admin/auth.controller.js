@@ -55,6 +55,22 @@ const loginAdmin = async (req, res) => {
       });
     }
 
+    if (!admin.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Please verify your email first",
+      });
+    }
+
+    if (resolveUserStatus(admin) !== "active") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "This admin account is inactive",
+      });
+    }
+
     const isMatch =
       await bcrypt.compare(
         password,
@@ -153,6 +169,30 @@ const refreshAdminToken = async (
       return res.status(403).json({
         success: false,
         message: "This admin account is suspended",
+      });
+    }
+
+    if (!admin.isVerified) {
+      admin.adminRefreshToken = "";
+      await admin.save();
+      res.clearCookie("adminRefreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message:
+          "Please verify your email first",
+      });
+    }
+
+    if (resolveUserStatus(admin) !== "active") {
+      admin.adminRefreshToken = "";
+      await admin.save();
+      res.clearCookie("adminRefreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message:
+          "This admin account is inactive",
       });
     }
 

@@ -313,7 +313,7 @@ const AdminLogin = () => {
           </form>
 
           {/* Default credentials card */}
-          <div className="mt-6 rounded-[16px] border border-white/[0.07] bg-white/[0.025] p-4">
+          {/* <div className="mt-6 rounded-[16px] border border-white/[0.07] bg-white/[0.025] p-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-semibold text-slate-300">Default credentials</p>
               <span className="rounded-full border border-amber-400/15 bg-amber-400/8 px-2 py-0.5 font-mono text-[9px] text-amber-400 uppercase tracking-wider">
@@ -331,7 +331,7 @@ const AdminLogin = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Back to student login */}
           <div className="mt-6 text-center">

@@ -131,15 +131,21 @@ const createUser = async (req, res) => {
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
+    const normalizedIsVerified =
+      Boolean(isVerified);
+    const normalizedStatus =
+      normalizedIsVerified
+        ? status
+        : "inactive";
+
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase(),
       password: hashedPassword,
       role,
-      status,
+      status: normalizedStatus,
       skills: toArray(skills),
-      isVerified:
-        Boolean(isVerified),
+      isVerified: normalizedIsVerified,
       profileSetupDone: false,
     });
 
@@ -264,6 +270,13 @@ const updateUser = async (req, res) => {
       );
     }
 
+    if (
+      user.isVerified === false &&
+      user.status !== "suspended"
+    ) {
+      user.status = "inactive";
+    }
+
     await user.save();
 
     return res.status(200).json({
@@ -296,6 +309,17 @@ const updateUserStatus = async (
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    if (
+      status === "active" &&
+      user.isVerified === false
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please verify the user first",
       });
     }
 

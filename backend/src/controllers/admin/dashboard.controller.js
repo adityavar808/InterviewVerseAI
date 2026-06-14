@@ -185,8 +185,8 @@ const adminDashboard = async (
         user.lastActiveAt &&
         new Date(user.lastActiveAt) >=
           activeBoundary &&
-        resolveUserStatus(user) !==
-          "suspended",
+        resolveUserStatus(user) ===
+          "active",
     );
 
     const verifiedStudents =

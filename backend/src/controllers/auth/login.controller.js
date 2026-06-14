@@ -55,6 +55,32 @@ const refreshAccessToken = async (req, res) => {
       });
     }
 
+    if (!user.isVerified) {
+      user.refreshToken = "";
+
+      await user.save();
+
+      res.clearCookie("refreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email first",
+      });
+    }
+
+    if (resolveUserStatus(user) !== "active") {
+      user.refreshToken = "";
+
+      await user.save();
+
+      res.clearCookie("refreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message: "Your account is inactive. Please contact support.",
+      });
+    }
+
     if (user.role === "admin") {
       user.refreshToken = "";
 
@@ -110,10 +136,17 @@ const loginUser = async (req, res) => {
       });
     }
 
-    if (resolveUserStatus(user) !== "active") {
+    if (!user.isVerified) {
       return res.status(401).json({
         success: false,
         message: "Please verify your email first",
+      });
+    }
+
+    if (resolveUserStatus(user) !== "active") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is inactive. Please contact support.",
       });
     }
 
@@ -222,6 +255,22 @@ const googleAuthSuccess = async (req, res) => {
 
       return res.redirect(
         `${getFrontendUrl()}/login?error=${encodeURIComponent("Your account has been suspended")}`,
+      );
+    }
+
+    if (!user.isVerified) {
+      res.clearCookie("refreshToken");
+
+      return res.redirect(
+        `${getFrontendUrl()}/login?error=${encodeURIComponent("Please verify your email first")}`,
+      );
+    }
+
+    if (resolveUserStatus(user) !== "active") {
+      res.clearCookie("refreshToken");
+
+      return res.redirect(
+        `${getFrontendUrl()}/login?error=${encodeURIComponent("Your account is inactive. Please contact support.")}`,
       );
     }
 

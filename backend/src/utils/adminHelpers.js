@@ -25,8 +25,17 @@ const toArray = (value) => {
 const buildRegex = (value) =>
   new RegExp(value.trim(), "i");
 
-const resolveUserStatus = (user) =>
-  user.status || (user.isVerified ? "active" : "inactive");
+const resolveUserStatus = (user) => {
+  if (user.status === "suspended") {
+    return "suspended";
+  }
+
+  if (user.isVerified === false) {
+    return "inactive";
+  }
+
+  return user.status || "active";
+};
 
 const sanitizeUser = (user) => ({
   _id: user._id,
