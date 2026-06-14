@@ -6,6 +6,7 @@ import User from "../../models/user.model.js";
 import generateAccessToken from "../../utils/generateToken.js";
 import generateRefreshToken from "../../utils/generateRefreshToken.js";
 import getFrontendUrl from "../../utils/frontendUrl.js";
+import { resolveUserStatus } from "../../utils/adminHelpers.js";
 
 const refreshCookieOptions = {
   httpOnly: true,
@@ -38,6 +39,19 @@ const refreshAccessToken = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: "Invalid refresh token",
+      });
+    }
+
+    if (resolveUserStatus(user) === "suspended") {
+      user.refreshToken = "";
+
+      await user.save();
+
+      res.clearCookie("refreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended",
       });
     }
 
@@ -84,7 +98,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    if (user.status === "suspended") {
+    if (resolveUserStatus(user) === "suspended") {
       return res.status(403).json({
         success: false,
         message: "Your account has been suspended",
@@ -197,6 +211,14 @@ const getMe = async (req, res) => {
 const googleAuthSuccess = async (req, res) => {
   try {
     const user = req.user;
+
+    if (resolveUserStatus(user) === "suspended") {
+      res.clearCookie("refreshToken");
+
+      return res.redirect(
+        `${getFrontendUrl()}/login?error=${encodeURIComponent("Your account has been suspended")}`,
+      );
+    }
 
     if (user.role === "admin") {
       return res.redirect(

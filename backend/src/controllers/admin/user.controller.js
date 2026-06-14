@@ -11,6 +11,11 @@ import {
   toArray,
 } from "../../utils/adminHelpers.js";
 
+const clearAuthSessions = (user) => {
+  user.refreshToken = "";
+  user.adminRefreshToken = "";
+};
+
 const getUsers = async (req, res) => {
   try {
     const page = Math.max(
@@ -234,6 +239,10 @@ const updateUser = async (req, res) => {
       }
 
       user.status = req.body.status;
+
+      if (req.body.status === "suspended") {
+        clearAuthSessions(user);
+      }
     }
 
     if (req.body.skills) {
@@ -303,6 +312,11 @@ const updateUserStatus = async (
     }
 
     user.status = status;
+
+    if (status === "suspended") {
+      clearAuthSessions(user);
+    }
+
     await user.save();
 
     return res.status(200).json({

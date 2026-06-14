@@ -145,6 +145,17 @@ const refreshAdminToken = async (
       });
     }
 
+    if (resolveUserStatus(admin) === "suspended") {
+      admin.adminRefreshToken = "";
+      await admin.save();
+      res.clearCookie("adminRefreshToken");
+
+      return res.status(403).json({
+        success: false,
+        message: "This admin account is suspended",
+      });
+    }
+
     const accessToken =
       generateAccessToken(admin);
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -45,6 +45,24 @@ const Login = () => {
   const dispatch  = useDispatch();
   const [showPw, setShowPw]         = useState(false);
   const [focused, setFocused]       = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+
+    if (error) {
+      toast.error(error);
+
+      params.delete("error");
+
+      const queryString = params.toString();
+      const nextUrl = queryString
+        ? `${window.location.pathname}?${queryString}`
+        : window.location.pathname;
+
+      window.history.replaceState({}, "", nextUrl);
+    }
+  }, []);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
 

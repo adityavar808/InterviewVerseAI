@@ -7,6 +7,7 @@ import { Strategy as GoogleStrategy }
 from "passport-google-oauth20";
 
 import User from "../models/user.model.js";
+import { resolveUserStatus } from "../utils/adminHelpers.js";
 
 const defaultBackendUrl =
     process.env.RENDER_EXTERNAL_URL ||
@@ -39,9 +40,18 @@ passport.use(
         ) => {
 
             try {
+                const email =
+                    profile.emails?.[0]?.value?.toLowerCase();
+
+                if (!email) {
+                    return done(null, false, {
+                        message:
+                            "Google account email is missing",
+                    });
+                }
 
                 let user = await User.findOne({
-                    email: profile.emails[0].value,
+                    email,
                 });
 
 
@@ -50,9 +60,11 @@ passport.use(
 
                     user = await User.create({
 
-                        name: profile.displayName,
+                        name:
+                            profile.displayName ||
+                            email,
 
-                        email: profile.emails[0].value,
+                        email,
 
                         password: "googleoauth",
 
@@ -61,7 +73,16 @@ passport.use(
                         profileSetupDone: false,
 
                         profileImage:
-                            profile.photos[0].value,
+                            profile.photos?.[0]?.value ||
+                            "",
+                    });
+                }
+                else if (
+                    resolveUserStatus(user) === "suspended"
+                ) {
+                    return done(null, false, {
+                        message:
+                            "Your account has been suspended",
                     });
                 }
 

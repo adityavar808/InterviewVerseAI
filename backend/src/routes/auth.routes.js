@@ -1,5 +1,6 @@
 import express from "express";
 import passport from "../config/passport.js";
+import getFrontendUrl from "../utils/frontendUrl.js";
 
 import {
   refreshAccessToken,
@@ -73,11 +74,44 @@ router.get(
 
     "/google/callback",
 
-    passport.authenticate("google", {
-        session: false,
-    }),
+    (req, res, next) => {
+        passport.authenticate("google", {
+            session: false,
+        }, (error, user, info) => {
+            if (error) {
+                return res.redirect(
+                    `${getFrontendUrl()}/login?error=${encodeURIComponent("Google sign-in failed")}`
+                );
+            }
 
-    googleAuthSuccess
+            if (!user) {
+                const message =
+                    info?.message ||
+                    "Google sign-in failed";
+
+                if (
+                    message ===
+                    "Your account has been suspended"
+                ) {
+                    res.clearCookie(
+                        "refreshToken"
+                    );
+                }
+
+                return res.redirect(
+                    `${getFrontendUrl()}/login?error=${encodeURIComponent(message)}`
+                );
+            }
+
+            req.user = user;
+
+            return googleAuthSuccess(
+                req,
+                res,
+                next
+            );
+        })(req, res, next);
+    }
 );
 
 router.use(protect);
