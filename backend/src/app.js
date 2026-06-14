@@ -13,6 +13,8 @@ import studentRoutes from "./routes/student.routes.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.FRONTEND_URL,

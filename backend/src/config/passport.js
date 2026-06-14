@@ -8,6 +8,17 @@ from "passport-google-oauth20";
 
 import User from "../models/user.model.js";
 
+const defaultBackendUrl =
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.BACKEND_URL ||
+    (process.env.NODE_ENV === "production"
+        ? "https://interviewverseai.onrender.com"
+        : "http://localhost:5000");
+
+const googleCallbackURL =
+    process.env.GOOGLE_CALLBACK_URL ||
+    `${defaultBackendUrl.replace(/\/+$/, "")}/api/auth/google/callback`;
+
 passport.use(
 
     new GoogleStrategy(
@@ -17,8 +28,7 @@ passport.use(
 
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 
-            callbackURL:
-                "/api/auth/google/callback",
+            callbackURL: googleCallbackURL,
         },
 
         async (
