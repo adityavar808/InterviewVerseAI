@@ -6,6 +6,7 @@ import PendingUser from "../../models/pendingUser.model.js";
 import PlatformSetting from "../../models/platformSetting.model.js";
 
 import getFrontendUrl from "../../utils/frontendUrl.js";
+import sendEmail from "../../services/email.service.js";
 import { createOrRefreshVerificationEntry } from "../../services/verification.service.js";
 
 const registerUser = async (req, res) => {
@@ -249,42 +250,22 @@ const resendOTP = async (req, res) => {
       .trim()
       .toLowerCase();
 
-    // Find user
-    const user = await PendingUser.findOne({
+    const pendingUser = await PendingUser.findOne({
       email: normalizedEmail,
     });
 
-    if (!user) {
+    if (!pendingUser) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
 
-    // Generate new OTP
-    const otp = generateOTP();
-
-    user.otp = otp;
-
-    user.otpExpiry = Date.now() + 10 * 60 * 1000;
-
-    await user.save();
-
-    // Send email
-    const message = `
-Your new InterviewVerse AI OTP is:
-
-${otp}
-
-This OTP will expire in 10 minutes.
-`;
-
-    await sendEmail({
-      email: user.email,
-
+    await createOrRefreshVerificationEntry({
+      name: pendingUser.name,
+      email: pendingUser.email,
+      password: pendingUser.password,
       subject: "InterviewVerse AI New OTP",
-
-      message,
     });
 
     res.status(200).json({
