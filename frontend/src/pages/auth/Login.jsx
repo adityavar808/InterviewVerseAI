@@ -73,6 +73,7 @@ const Login = () => {
       const res = await api.post("/auth/login", data);
 
       if (res.data?.requiresVerification) {
+        sessionStorage.setItem("verificationEmail", data.email);
         navigate("/verify-otp", {
           state: { email: data.email },
           replace: true,
@@ -108,6 +109,7 @@ const Login = () => {
         err.response?.status === 401;
 
       if (requiresVerification) {
+        sessionStorage.setItem("verificationEmail", data.email);
         navigate("/verify-otp", {
           state: { email: data.email },
           replace: true,
