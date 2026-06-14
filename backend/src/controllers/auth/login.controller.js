@@ -110,18 +110,18 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (resolveUserStatus(user) !== "active") {
+      return res.status(401).json({
+        success: false,
+        message: "Please verify your email first",
+      });
+    }
+
     if (user.role === "admin") {
       return res.status(403).json({
         success: false,
         message:
           "This account belongs to an admin. Please use the admin login portal.",
-      });
-    }
-
-    if (!user.isVerified) {
-      return res.status(401).json({
-        success: false,
-        message: "Please verify your email first",
       });
     }
 
