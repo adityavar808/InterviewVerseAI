@@ -39,6 +39,14 @@ import requireProfileSetup from "../middleware/profile.middleware.js";
 const router = express.Router();
 
 // Public Routes
+router.get("/login", (req, res) => {
+  res.redirect(`${getFrontendUrl()}/login`);
+});
+
+router.get("/register", (req, res) => {
+  res.redirect(`${getFrontendUrl()}/register`);
+});
+
 router.post("/register", registerUser);
 
 router.post("/login", loginUser);
