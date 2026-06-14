@@ -87,9 +87,14 @@ const refreshAccessToken = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = `${email || ""}`
+      .trim()
+      .toLowerCase();
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (!user) {
       return res.status(400).json({
@@ -169,7 +174,7 @@ const logoutUser = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (refreshToken) {
-      const user = await User.findOne({ refreshToken });
+    const user = await User.findOne({ refreshToken });
 
       if (user) {
         user.refreshToken = "";

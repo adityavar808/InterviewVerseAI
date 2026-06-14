@@ -49,12 +49,22 @@ api.interceptors.response.use(
 
     const originalRequest =
       error.config;
+    const requestUrl =
+      originalRequest?.url || "";
+    const isPublicAuthRequest =
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/register") ||
+      requestUrl.includes("/auth/verify-otp") ||
+      requestUrl.includes("/auth/resend-otp") ||
+      requestUrl.includes("/auth/forgot-password") ||
+      requestUrl.includes("/auth/reset-password");
 
     // ACCESS TOKEN EXPIRED
 
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isPublicAuthRequest
     ) {
 
       originalRequest._retry = true;

@@ -12,6 +12,9 @@ import getFrontendUrl from "../../utils/frontendUrl.js";
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = `${email || ""}`
+      .trim()
+      .toLowerCase();
 
     const settings = await PlatformSetting.findOne({
       key: "default",
@@ -25,7 +28,9 @@ const registerUser = async (req, res) => {
     }
 
     // Check existing user
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(400).json({
@@ -41,14 +46,14 @@ const registerUser = async (req, res) => {
     const otp = generateOTP();
 
     await PendingUser.deleteMany({
-      email,
+      email: normalizedEmail,
     });
 
     // Create user
     const user = await PendingUser.create({
       name,
 
-      email,
+      email: normalizedEmail,
 
       password: hashedPassword,
 
@@ -87,9 +92,14 @@ const registerUser = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    const normalizedEmail = `${email || ""}`
+      .trim()
+      .toLowerCase();
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -187,11 +197,14 @@ const resetPassword = async (req, res) => {
 const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    const normalizedEmail = `${email || ""}`
+      .trim()
+      .toLowerCase();
 
     // Find pending user
 
     const pendingUser = await PendingUser.findOne({
-      email,
+      email: normalizedEmail,
 
       otp,
 
@@ -213,7 +226,7 @@ const verifyOTP = async (req, res) => {
     // Check existing real user
 
     const existingUser = await User.findOne({
-      email,
+      email: normalizedEmail,
     });
 
     if (existingUser) {
@@ -241,7 +254,7 @@ const verifyOTP = async (req, res) => {
     // Delete pending user
 
     await PendingUser.deleteOne({
-      email,
+      email: normalizedEmail,
     });
 
     res.status(200).json({
@@ -261,10 +274,13 @@ const verifyOTP = async (req, res) => {
 const resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
+    const normalizedEmail = `${email || ""}`
+      .trim()
+      .toLowerCase();
 
     // Find user
     const user = await PendingUser.findOne({
-      email,
+      email: normalizedEmail,
     });
 
     if (!user) {
