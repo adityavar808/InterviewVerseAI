@@ -17,7 +17,7 @@ const VerifyOTP = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate("/register");
+      navigate("/login", { replace: true });
     }
   }, [email, navigate]);
 

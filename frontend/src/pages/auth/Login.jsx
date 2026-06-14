@@ -86,7 +86,18 @@ const Login = () => {
         { replace: true }
       );
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed");
+      const message = err.response?.data?.message;
+
+      if (message?.toLowerCase() === "please verify your email first") {
+        navigate("/verify-otp", {
+          state: { email: data.email },
+          replace: true,
+        });
+        toast.error(message);
+        return;
+      }
+
+      toast.error(message || "Login failed");
     }
   };
 
