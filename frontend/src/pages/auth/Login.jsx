@@ -71,6 +71,21 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       const res = await api.post("/auth/login", data);
+
+      if (res.data?.requiresVerification) {
+        navigate("/verify-otp", {
+          state: { email: data.email },
+          replace: true,
+        });
+        toast.error(res.data.message || "Please verify your email first");
+        return;
+      }
+
+      if (!res.data?.success) {
+        toast.error(res.data?.message || "Login failed");
+        return;
+      }
+
       toast.success("Welcome back!");
       dispatch(setCredentials({ user: res.data.user, accessToken: res.data.accessToken }));
       localStorage.setItem("accessToken", res.data.accessToken);
@@ -87,13 +102,17 @@ const Login = () => {
       );
     } catch (err) {
       const message = err.response?.data?.message;
+      const requiresVerification =
+        err.response?.data?.requiresVerification ||
+        message?.toLowerCase() === "please verify your email first" ||
+        err.response?.status === 401;
 
-      if (message?.toLowerCase() === "please verify your email first") {
+      if (requiresVerification) {
         navigate("/verify-otp", {
           state: { email: data.email },
           replace: true,
         });
-        toast.error(message);
+        toast.error(message || "Please verify your email first");
         return;
       }
 

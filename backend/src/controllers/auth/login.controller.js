@@ -137,9 +137,11 @@ const loginUser = async (req, res) => {
     }
 
     if (!user.isVerified) {
-      return res.status(401).json({
+      return res.status(200).json({
         success: false,
+        requiresVerification: true,
         message: "Please verify your email first",
+        email: normalizedEmail,
       });
     }
 
