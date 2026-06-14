@@ -4,6 +4,7 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import VerifyOTP from "../pages/auth/VerifyOTP";
 import OAuthSuccess from "../pages/auth/OAuthSuccess";
+import CompleteProfile from "../pages/auth/CompleteProfile";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 
@@ -47,6 +48,14 @@ const AppRoutes = () => {
 
         {/* OAuth */}
         <Route path="/oauth-success" element={<OAuthSuccess />} />
+        <Route
+          path="/complete-profile"
+          element={
+            <ProtectedRoute>
+              <CompleteProfile />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User Dashboard */}
         <Route

@@ -234,6 +234,8 @@ const verifyOTP = async (req, res) => {
       password: pendingUser.password,
 
       isVerified: true,
+
+      profileSetupDone: false,
     });
 
     // Delete pending user

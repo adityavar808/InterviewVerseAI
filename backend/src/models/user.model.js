@@ -45,6 +45,28 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    bio: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    location: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    headline: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    profileSetupDone: {
+      type: Boolean,
+    },
+
     interviewHistory: {
       type: [
         {

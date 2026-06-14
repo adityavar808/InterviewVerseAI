@@ -54,7 +54,17 @@ const Login = () => {
       toast.success("Welcome back!");
       dispatch(setCredentials({ user: res.data.user, accessToken: res.data.accessToken }));
       localStorage.setItem("accessToken", res.data.accessToken);
-      navigate(res.data.user?.role === "admin" ? "/admin-login" : "/dashboard");
+      if (res.data.user?.role === "admin") {
+        navigate("/admin-login", { replace: true });
+        return;
+      }
+
+      navigate(
+        res.data.user?.profileSetupDone === false
+          ? "/complete-profile"
+          : "/dashboard",
+        { replace: true }
+      );
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
     }

@@ -19,7 +19,7 @@ export const studentService = {
   // Update student profile
   updateProfile: async (payload) => {
     const response = await api.put("/auth/me", payload);
-    return response.data;
+    return unwrapPayload(response);
   },
 
   // Get available interview templates (legacy - kept for backward compatibility)

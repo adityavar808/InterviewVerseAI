@@ -135,6 +135,7 @@ const createUser = async (req, res) => {
       skills: toArray(skills),
       isVerified:
         Boolean(isVerified),
+      profileSetupDone: false,
     });
 
     return res.status(201).json({
@@ -239,6 +240,10 @@ const updateUser = async (req, res) => {
       user.skills = toArray(
         req.body.skills,
       );
+    }
+
+    if (req.body.profileSetupDone !== undefined) {
+      user.profileSetupDone = Boolean(req.body.profileSetupDone);
     }
 
     if (

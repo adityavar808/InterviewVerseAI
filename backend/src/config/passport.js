@@ -58,6 +58,8 @@ passport.use(
 
                         isVerified: true,
 
+                        profileSetupDone: false,
+
                         profileImage:
                             profile.photos[0].value,
                     });

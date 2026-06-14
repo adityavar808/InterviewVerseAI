@@ -37,11 +37,11 @@ const PublicRoute = () => {
     );
   }
 
-  return isAuthenticated ? (
-    <Navigate to="/dashboard" replace />
-  ) : (
-    <Outlet />
-  );
+  if (isAuthenticated && user?.role === "student" && user?.profileSetupDone === false) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Outlet />;
 };
 
 export default PublicRoute;
