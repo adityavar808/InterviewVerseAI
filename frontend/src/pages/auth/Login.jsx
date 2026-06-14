@@ -19,7 +19,7 @@ import api from "../../services/api";
 import {
   BACKEND_ORIGIN,
 } from "../../config/urls";
-import { setCredentials } from "../../redux/slices/authSlice";
+import { setCredentials, logout } from "../../redux/slices/authSlice";
 
 // ─── Google SVG ───────────────────────────────────────────────────────────────
 const GoogleIcon = () => (
@@ -51,6 +51,8 @@ const Login = () => {
     const error = params.get("error");
 
     if (error) {
+      localStorage.removeItem("accessToken");
+      dispatch(logout());
       toast.error(error);
 
       params.delete("error");

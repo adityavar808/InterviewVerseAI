@@ -1,14 +1,15 @@
 import { useEffect } from "react";
 
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import { useDispatch } from "react-redux";
 
 import toast from "react-hot-toast";
 
-import { setCredentials }
+import { setCredentials, logout }
 from "../../redux/slices/authSlice";
-import api from "../../services/api";
+import { API_BASE_URL } from "../../config/urls";
 
 
 const OAuthSuccess = () => {
@@ -31,18 +32,20 @@ const OAuthSuccess = () => {
                 return;
             }
 
-            localStorage.setItem("accessToken", token);
-
-            dispatch(
-                setCredentials({
-                    accessToken: token,
-                    user: null,
-                })
-            );
-
             try {
-                const response = await api.get("/auth/me");
+                const response = await axios.get(
+                    `${API_BASE_URL}/auth/me`,
+                    {
+                        withCredentials: true,
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
                 const user = response.data.user;
+
+                localStorage.setItem("accessToken", token);
 
                 dispatch(
                     setCredentials({
@@ -59,8 +62,10 @@ const OAuthSuccess = () => {
                 );
             } catch (error) {
                 localStorage.removeItem("accessToken");
+                dispatch(logout());
                 toast.error(
                     error.response?.data?.message ||
+                        error.message ||
                         "Unable to complete Google sign in"
                 );
                 navigate("/login", { replace: true });
