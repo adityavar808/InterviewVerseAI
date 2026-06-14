@@ -1,8 +1,19 @@
+import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
+dotenv.config();
+
+export const normalizeEmailCredential = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  return String(value).trim().replace(/\s+/g, "");
+};
+
 const sendEmail = async (options) => {
-  const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS;
+  const emailUser = normalizeEmailCredential(process.env.EMAIL_USER);
+  const emailPass = normalizeEmailCredential(process.env.EMAIL_PASS);
 
   if (!emailUser || !emailPass) {
     throw new Error(
@@ -31,7 +42,7 @@ const sendEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: `"InterviewVerse AI" <${process.env.EMAIL_USER}>`,
+    from: `"InterviewVerse AI" <${emailUser}>`,
     to: options.email,
     subject: options.subject,
     text: options.message || "",

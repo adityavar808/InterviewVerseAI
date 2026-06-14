@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs";
 
 import User from "../../models/user.model.js";
+import PendingUser from "../../models/pendingUser.model.js";
 
+import sendEmail from "../../services/email.service.js";
 import {
   ADMIN_USER_FIELDS,
   DEFAULT_PAGE_SIZE,
@@ -10,6 +12,7 @@ import {
   sanitizeUser,
   toArray,
 } from "../../utils/adminHelpers.js";
+import generateOTP from "../../utils/generateOTP.js";
 
 const clearAuthSessions = (user) => {
   user.refreshToken = "";
@@ -138,9 +141,44 @@ const createUser = async (req, res) => {
         ? status
         : "inactive";
 
+    const normalizedEmail = email.toLowerCase();
+
+    if (!normalizedIsVerified) {
+      const otp = generateOTP();
+      await PendingUser.deleteMany({
+        email: normalizedEmail,
+      });
+
+      await PendingUser.create({
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        otp,
+        otpExpiry: Date.now() + 10 * 60 * 1000,
+      });
+
+      const message = `
+Your InterviewVerse AI OTP is:
+
+${otp}
+
+This OTP will expire in 10 minutes.
+`;
+
+      try {
+        await sendEmail({
+          email: normalizedEmail,
+          subject: "InterviewVerse AI Verification OTP",
+          message,
+        });
+      } catch (emailError) {
+        console.error("Admin-created user verification email failed:", emailError.message || emailError);
+      }
+    }
+
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       password: hashedPassword,
       role,
       status: normalizedStatus,
