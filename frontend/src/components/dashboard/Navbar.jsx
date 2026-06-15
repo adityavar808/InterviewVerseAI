@@ -21,6 +21,7 @@ import { logout } from "../../redux/slices/authSlice";
 
 const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
   const [open, setOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -176,14 +177,23 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
             className="flex items-center gap-2.5"
           >
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-sm flex-shrink-0"
+              className="w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden"
               style={{
                 background: "linear-gradient(135deg, #06b6d4, #0891b2)",
                 color: "#020617",
                 boxShadow: "0 0 16px rgba(6,182,212,0.3)",
               }}
             >
-              {getUserInitials(user.name)}
+              {user.profileImage && !imageError ? (
+                <img
+                  src={user.profileImage}
+                  alt={user.name || "User profile"}
+                  className="w-full h-full object-cover"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                getUserInitials(user.name)
+              )}
             </div>
 
             {/* Name + role — hidden on mobile */}

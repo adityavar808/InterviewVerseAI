@@ -1,5 +1,6 @@
 // src/components/profile/ProfileHeader.jsx
 
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 
@@ -20,6 +21,7 @@ const getInitials = (name) =>
     .join("") || "ST";
 
 const ProfileHeader = () => {
+  const [imageError, setImageError] = useState(false);
   const user = useSelector((state) => state.auth.user || {});
   const displayName = user.name || "Student Name";
   const displayRole =
@@ -59,8 +61,17 @@ const ProfileHeader = () => {
             
             <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-cyan-500 to-purple-500 p-[3px]">
               
-              <div className="w-full h-full rounded-3xl bg-[#0B1120] flex items-center justify-center text-4xl font-bold text-white">
-                {initials}
+              <div className="w-full h-full rounded-3xl bg-[#0B1120] flex items-center justify-center text-4xl font-bold text-white overflow-hidden">
+                {user.profileImage && !imageError ? (
+                  <img
+                    src={user.profileImage}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  initials
+                )}
               </div>
             </div>
 

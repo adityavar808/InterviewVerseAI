@@ -2,12 +2,17 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 import User from "../../models/user.model.js";
-import PendingUser from "../../models/pendingUser.model.js";
 import PlatformSetting from "../../models/platformSetting.model.js";
 
 import getFrontendUrl from "../../utils/frontendUrl.js";
 import sendEmail from "../../services/email.service.js";
 import { createOrRefreshVerificationEntry } from "../../services/verification.service.js";
+import {
+  createVerifiedUser,
+  deletePendingUser,
+  findPendingUser,
+  findUserByEmail,
+} from "../../services/verificationStore.js";
 
 const registerUser = async (req, res) => {
   try {
@@ -28,9 +33,7 @@ const registerUser = async (req, res) => {
     }
 
     // Check existing user
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await findUserByEmail(normalizedEmail);
 
     if (existingUser) {
       return res.status(400).json({
@@ -42,7 +45,7 @@ const registerUser = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await createOrRefreshVerificationEntry({
+    const verificationResult = await createOrRefreshVerificationEntry({
       name,
       email: normalizedEmail,
       password: hashedPassword,
@@ -52,6 +55,8 @@ const registerUser = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "User registered. OTP sent to email.",
+      email: normalizedEmail,
+      otp: process.env.NODE_ENV !== "production" ? verificationResult.otp : undefined,
     });
   } catch (error) {
     res.status(500).json({
@@ -175,14 +180,9 @@ const verifyOTP = async (req, res) => {
 
     // Find pending user
 
-    const pendingUser = await PendingUser.findOne({
+    const pendingUser = await findPendingUser({
       email: normalizedEmail,
-
       otp,
-
-      otpExpiry: {
-        $gt: Date.now(),
-      },
     });
 
     // Invalid OTP
@@ -197,9 +197,7 @@ const verifyOTP = async (req, res) => {
 
     // Check existing real user
 
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await findUserByEmail(normalizedEmail);
 
     if (existingUser) {
       return res.status(400).json({
@@ -211,23 +209,16 @@ const verifyOTP = async (req, res) => {
 
     // Create verified real user
 
-    await User.create({
+    await createVerifiedUser({
       name: pendingUser.name,
-
       email: pendingUser.email,
-
       password: pendingUser.password,
-
-      isVerified: true,
-
       profileSetupDone: false,
     });
 
     // Delete pending user
 
-    await PendingUser.deleteOne({
-      email: normalizedEmail,
-    });
+    await deletePendingUser(normalizedEmail);
 
     res.status(200).json({
       success: true,
@@ -250,7 +241,7 @@ const resendOTP = async (req, res) => {
       .trim()
       .toLowerCase();
 
-    const pendingUser = await PendingUser.findOne({
+    const pendingUser = await findPendingUser({
       email: normalizedEmail,
     });
 
@@ -261,7 +252,7 @@ const resendOTP = async (req, res) => {
       });
     }
 
-    await createOrRefreshVerificationEntry({
+    const verificationResult = await createOrRefreshVerificationEntry({
       name: pendingUser.name,
       email: pendingUser.email,
       password: pendingUser.password,
@@ -271,6 +262,8 @@ const resendOTP = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "OTP resent successfully",
+      email: pendingUser.email,
+      otp: process.env.NODE_ENV !== "production" ? verificationResult.otp : undefined,
     });
   } catch (error) {
     res.status(500).json({

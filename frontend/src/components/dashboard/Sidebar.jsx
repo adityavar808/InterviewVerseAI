@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   LayoutDashboard,
   Brain,
@@ -60,6 +62,7 @@ const Sidebar = ({
   collapsed,
   setSidebarOpen,
 }) => {
+  const [imageError, setImageError] = useState(false);
   const user = useSelector((state) => state.auth.user || {});
   const displayName = user.name || "Student";
   const displayEmail = user.email || "student@example.com";
@@ -391,7 +394,7 @@ const Sidebar = ({
           {/* AVATAR */}
 
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden"
             style={{
               background:
                 "linear-gradient(135deg, #06b6d4, #0891b2)",
@@ -399,8 +402,16 @@ const Sidebar = ({
               color: "#020617",
             }}
           >
-
-            {displayName.charAt(0).toUpperCase()}
+            {user.profileImage && !imageError ? (
+              <img
+                src={user.profileImage}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              displayName.charAt(0).toUpperCase()
+            )}
 
           </div>
 

@@ -78,7 +78,6 @@ const Register = () => {
         password: data.password,
       };
       const response = await api.post("/auth/register", payload);
-      sessionStorage.setItem("verificationEmail", data.email);
       toast.success(response.data.message || "Account created successfully");
       navigate("/verify-otp", { state: { email: data.email } });
     } catch (error) {
