@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers.interview_router import router as interview_router
+from routers.resume_router import router as resume_router
+from routers.code_router import router as code_router
 
 app = FastAPI(
     title="InterviewVerse AI Service",
@@ -18,6 +20,8 @@ app.add_middleware(
 )
 
 app.include_router(interview_router)
+app.include_router(resume_router)
+app.include_router(code_router)
 
 @app.get("/")
 async def root():

@@ -32,54 +32,68 @@ const getColor = (level) => {
   }
 };
 
-const ActivityHeatmap = ({ data = defaultWeeks }) => {
+const ActivityHeatmap = ({ data = defaultWeeks, streak = 0 }) => {
   const weeks = data && data.length > 0 ? data : defaultWeeks;
-  
+
+  // Calculate dynamic stats from the weeks grid
+  const totalActivity = weeks.flat().reduce((a, b) => a + b, 0);
+
+  const daySums = [0, 0, 0, 0, 0, 0, 0];
+  weeks.forEach((week) => {
+    week.forEach((val, idx) => {
+      if (idx < 7) daySums[idx] += val;
+    });
+  });
+  const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const maxDayIdx = daySums.indexOf(Math.max(...daySums));
+  const peakDayName = daySums[maxDayIdx] > 0 ? dayNames[maxDayIdx] : "None";
+
+  const activeDays = weeks.flat().filter(v => v > 0).length;
+  const totalDays = weeks.flat().length || 35;
+  const consistencyRate = activeDays / totalDays;
+  const consistencyLabel = consistencyRate > 0.4 ? "Excellent" : consistencyRate > 0.15 ? "Good" : "Needs Work";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="
-        relative
-        overflow-hidden
-        bg-white/5
-        border
-        border-white/10
-        backdrop-blur-xl
-        rounded-3xl
-        p-6
-      "
+      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
     >
-      {/* Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 pointer-events-none"></div>
+      {/* Glow and top line border */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-cyan-500/[0.06] blur-[50px]" />
+        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-purple-500/[0.06] blur-[50px]" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.5), rgba(139,92,246,0.3), transparent)" }} />
+      </div>
 
       <div className="relative">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 relative">
           
           <div className="flex items-center gap-4">
             
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
               <Flame
                 className="text-cyan-400"
-                size={26}
+                size={24}
               />
             </div>
 
             <div>
-              <h2 className="text-2xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-white tracking-tight">
                 Activity Heatmap
               </h2>
 
-              <p className="text-sm text-gray-400">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Daily coding & interview consistency tracking
               </p>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm">
-            <Sparkles size={16} />
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
+            <Sparkles size={13} />
             Live Activity
           </div>
         </div>
@@ -101,7 +115,7 @@ const ActivityHeatmap = ({ data = defaultWeeks }) => {
               ].map((month, index) => (
                 <div
                   key={index}
-                  className="w-[110px] text-sm text-gray-400"
+                  className="w-[110px] text-sm text-slate-400"
                 >
                   {month}
                 </div>
@@ -112,7 +126,7 @@ const ActivityHeatmap = ({ data = defaultWeeks }) => {
             <div className="flex gap-2">
               
               {/* Days */}
-              <div className="flex flex-col gap-2 mt-1 text-xs text-gray-500">
+              <div className="flex flex-col gap-2 mt-1 text-xs text-slate-500">
                 
                 <span>Mon</span>
                 <span>Wed</span>
@@ -137,7 +151,9 @@ const ActivityHeatmap = ({ data = defaultWeeks }) => {
                           h-7
                           rounded-lg
                           border
-                          border-white/5
+                          border-white/10
+                          hover:border-cyan-400/30
+                          hover:shadow-[0_0_8px_rgba(34,211,238,0.3)]
                           transition-all
                           duration-300
                           ${getColor(day)}
@@ -154,43 +170,43 @@ const ActivityHeatmap = ({ data = defaultWeeks }) => {
         {/* Bottom Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
           
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <p className="text-xs text-gray-400 mb-2">
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.045] transition-all duration-300">
+            <p className="text-xs text-slate-400 mb-1.5">
               Current Streak
             </p>
 
             <h3 className="text-cyan-400 font-semibold">
-              18 Days
+              {streak} Days
             </h3>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <p className="text-xs text-gray-400 mb-2">
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.045] transition-all duration-300">
+            <p className="text-xs text-slate-400 mb-1.5">
               Total Activity
             </p>
 
             <h3 className="text-green-400 font-semibold">
-              248 Sessions
+              {totalActivity} Sessions
             </h3>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <p className="text-xs text-gray-400 mb-2">
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.045] transition-all duration-300">
+            <p className="text-xs text-slate-400 mb-1.5">
               Peak Day
             </p>
 
             <h3 className="text-purple-400 font-semibold">
-              Thursday
+              {peakDayName}
             </h3>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <p className="text-xs text-gray-400 mb-2">
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.045] transition-all duration-300">
+            <p className="text-xs text-slate-400 mb-1.5">
               Consistency
             </p>
 
             <h3 className="text-pink-400 font-semibold">
-              Excellent
+              {consistencyLabel}
             </h3>
           </div>
         </div>

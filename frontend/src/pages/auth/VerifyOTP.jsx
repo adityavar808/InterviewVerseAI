@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-
-import { useLocation } from "react-router-dom";
-
-import { useNavigate } from "react-router-dom";
-
+import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 
 import api from "../../services/api";
+import { setCredentials } from "../../redux/slices/authSlice";
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const location = useLocation();
 
@@ -72,9 +71,16 @@ const VerifyOTP = () => {
         otp: enteredOTP,
       });
 
-      toast.success(response.data.message);
+      const { user, accessToken } = response.data;
+      dispatch(setCredentials({ user, accessToken }));
+      localStorage.setItem("accessToken", accessToken);
 
-      navigate("/login");
+      toast.success(response.data.message || "Email verified & logged in successfully!");
+
+      navigate(
+        user?.profileSetupDone === false ? "/complete-profile" : "/dashboard",
+        { replace: true }
+      );
     } catch (error) {
       toast.error(error.response?.data?.message || "OTP verification failed");
     } finally {

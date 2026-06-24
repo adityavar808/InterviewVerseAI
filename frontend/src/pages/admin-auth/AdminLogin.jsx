@@ -35,6 +35,10 @@ const AdminLogin = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempToken, setTempToken] = useState("");
+  const [otpToken, setOtpToken] = useState("");
+  const [isVerifying2FA, setIsVerifying2FA] = useState(false);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,6 +50,14 @@ const AdminLogin = () => {
         setIsSubmitting(true);
         setError("");
         const response = await adminService.login(formData);
+        
+        if (response.requires2FA) {
+          setTempToken(response.tempToken);
+          setRequires2FA(true);
+          toast.success("Please enter your 2FA verification code.");
+          return;
+        }
+
         saveStoredAdminSession({
           admin: response.admin,
           accessToken: response.accessToken,
@@ -61,6 +73,38 @@ const AdminLogin = () => {
       }
     };
     run();
+  };
+
+  const handle2FAVerify = (e) => {
+    e.preventDefault();
+    if (!otpToken || otpToken.length !== 6) {
+      toast.error("Please enter a 6-digit verification code.");
+      return;
+    }
+
+    const runVerify = async () => {
+      try {
+        setIsVerifying2FA(true);
+        setError("");
+        const response = await adminService.verifyLogin2FA({
+          tempToken,
+          otpToken,
+        });
+        saveStoredAdminSession({
+          admin: response.admin,
+          accessToken: response.accessToken,
+        });
+        toast.success("Admin login successful");
+        navigate("/admin");
+      } catch (err) {
+        const message = err.response?.data?.message || "2FA verification failed";
+        setError(message);
+        toast.error(message);
+      } finally {
+        setIsVerifying2FA(false);
+      }
+    };
+    runVerify();
   };
 
   return (
@@ -215,102 +259,154 @@ const AdminLogin = () => {
             )}
           </AnimatePresence>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                Admin Email
-              </label>
-              <div className={`relative rounded-xl border transition-all duration-200 ${
-                focusedField === "email"
-                  ? "border-amber-400/40 bg-amber-400/[0.04] shadow-[0_0_0_3px_rgba(251,191,36,0.07)]"
-                  : "border-white/[0.08] bg-white/[0.04]"
-              }`}>
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  placeholder="admin@interviewverse.ai"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onFocus={() => setFocusedField("email")}
-                  onBlur={() => setFocusedField(null)}
-                  className="w-full bg-transparent px-4 py-3.5 text-sm text-white outline-none placeholder:text-slate-600"
-                />
+          {requires2FA ? (
+            <form onSubmit={handle2FAVerify} className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-xs text-slate-400">
+                  Please enter the 6-digit verification code from your admin authenticator app.
+                </p>
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                Password
-              </label>
-              <div className={`relative rounded-xl border transition-all duration-200 ${
-                focusedField === "password"
-                  ? "border-amber-400/40 bg-amber-400/[0.04] shadow-[0_0_0_3px_rgba(251,191,36,0.07)]"
-                  : "border-white/[0.08] bg-white/[0.04]"
-              }`}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  autoComplete="current-password"
-                  placeholder="Enter password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onFocus={() => setFocusedField("password")}
-                  onBlur={() => setFocusedField(null)}
-                  className="w-full bg-transparent px-4 py-3.5 pr-12 text-sm text-white outline-none placeholder:text-slate-600"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-400">Authenticator Code</label>
+                <div className={`rounded-xl border transition-all duration-200 ${
+                  focusedField === "otp"
+                    ? "border-amber-400/40 bg-amber-400/[0.04] shadow-[0_0_0_3px_rgba(251,191,36,0.07)]"
+                    : "border-white/[0.08] bg-white/[0.04]"
+                }`}>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    pattern="\d{6}"
+                    placeholder="123456"
+                    value={otpToken}
+                    onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ""))}
+                    onFocus={() => setFocusedField("otp")}
+                    onBlur={() => setFocusedField(null)}
+                    className="w-full bg-transparent px-4 py-3.5 text-center text-lg font-mono tracking-widest text-white outline-none placeholder:text-slate-700"
+                    required
+                    autoFocus
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="group relative mt-2 w-full overflow-hidden rounded-xl bg-amber-400 py-3.5 text-sm font-bold text-slate-950 transition-all hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <AnimatePresence mode="wait">
-                {isSubmitting ? (
-                  <motion.span
-                    key="loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <motion.span
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                      className="inline-block h-4 w-4 rounded-full border-2 border-slate-950/30 border-t-slate-950"
+              <button
+                type="submit"
+                disabled={isVerifying2FA || otpToken.length !== 6}
+                className="group relative mt-2 w-full overflow-hidden rounded-xl bg-amber-400 py-3.5 text-sm font-bold text-slate-950 transition-all hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isVerifying2FA ? "Verifying…" : "Verify Code"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRequires2FA(false);
+                  setTempToken("");
+                  setOtpToken("");
+                }}
+                className="w-full text-center text-[12px] text-slate-500 hover:text-slate-400 transition-colors mt-2"
+              >
+                ← Back to Password Login
+              </button>
+            </form>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                    Admin Email
+                  </label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusedField === "email"
+                      ? "border-amber-400/40 bg-amber-400/[0.04] shadow-[0_0_0_3px_rgba(251,191,36,0.07)]"
+                      : "border-white/[0.08] bg-white/[0.04]"
+                  }`}>
+                    <input
+                      type="email"
+                      name="email"
+                      autoComplete="email"
+                      placeholder="admin@interviewverse.ai"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onFocus={() => setFocusedField("email")}
+                      onBlur={() => setFocusedField(null)}
+                      className="w-full bg-transparent px-4 py-3.5 text-sm text-white outline-none placeholder:text-slate-600"
                     />
-                    Authenticating…
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="idle"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <Lock size={14} />
-                    Access Admin Panel
-                    <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-          </form>
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400">
+                    Password
+                  </label>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focusedField === "password"
+                      ? "border-amber-400/40 bg-amber-400/[0.04] shadow-[0_0_0_3px_rgba(251,191,36,0.07)]"
+                      : "border-white/[0.08] bg-white/[0.04]"
+                  }`}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      autoComplete="current-password"
+                      placeholder="Enter password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      onFocus={() => setFocusedField("password")}
+                      onBlur={() => setFocusedField(null)}
+                      className="w-full bg-transparent px-4 py-3.5 pr-12 text-sm text-white outline-none placeholder:text-slate-600"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group relative mt-2 w-full overflow-hidden rounded-xl bg-amber-400 py-3.5 text-sm font-bold text-slate-950 transition-all hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <AnimatePresence mode="wait">
+                    {isSubmitting ? (
+                      <motion.span
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                          className="inline-block h-4 w-4 rounded-full border-2 border-slate-950/30 border-t-slate-950"
+                        />
+                        Authenticating…
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="idle"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <Lock size={14} />
+                        Access Admin Panel
+                        <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </form>
 
           {/* Default credentials card */}
           {/* <div className="mt-6 rounded-[16px] border border-white/[0.07] bg-white/[0.025] p-4">
@@ -342,9 +438,11 @@ const AdminLogin = () => {
               ← Back to Student Login
             </Link>
           </div>
-        </motion.div>
-      </div>
-    </div>
+        </>
+      )}
+    </motion.div>
+  </div>
+</div>
   );
 };
 

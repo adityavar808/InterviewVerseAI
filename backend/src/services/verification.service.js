@@ -61,7 +61,7 @@ If you did not request this, please ignore this email.
                 <p style="margin:0 0 12px;font-size:16px;line-height:1.6;">Hello ${name || "there"},</p>
                 <p style="margin:0 0 20px;font-size:15px;line-height:1.7;">Use the One-Time Password below to complete your email verification. This code is valid for 10 minutes.</p>
                 <div style="display:inline-block;padding:14px 24px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe;font-size:32px;letter-spacing:6px;font-weight:700;color:#0f172a;">${otp}</div>
-                <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#64748b;">If you didn’t request this verification, you can safely ignore this email.</p>
+                <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#64748b;">If you didn't request this verification, you can safely ignore this email.</p>
               </td>
             </tr>
           </table>

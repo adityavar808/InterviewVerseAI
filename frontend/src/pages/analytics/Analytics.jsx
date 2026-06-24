@@ -1,6 +1,8 @@
 // src/pages/analytics/Analytics.jsx
 
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
+import { studentService } from "../../services/studentApi";
 
 import AnalyticsHeader from "../../components/analytics/AnalyticsHeader";
 import PerformanceStats from "../../components/analytics/PerformanceStats";
@@ -12,6 +14,24 @@ import ActivityHeatmap from "../../components/analytics/ActivityHeatmap";
 import RecentSessionsTable from "../../components/analytics/RecentSessionsTable";
 
 const Analytics = () => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        const res = await studentService.getDashboard();
+        setDashboardData(res);
+      } catch (error) {
+        console.error("Failed to fetch analytics dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="h-full text-white">
@@ -23,7 +43,7 @@ const Analytics = () => {
 
         {/* Stats */}
         <div className="mb-6">
-          <PerformanceStats />
+          <PerformanceStats stats={dashboardData?.charts?.performanceStats} />
         </div>
 
         {/* Charts Section */}
@@ -31,12 +51,12 @@ const Analytics = () => {
           
           {/* Radar Chart */}
           <div className="xl:col-span-5">
-            <SkillRadarChart />
+            <SkillRadarChart data={dashboardData?.charts?.skillRadar} />
           </div>
 
           {/* Progress Chart */}
           <div className="xl:col-span-7">
-            <InterviewProgressChart />
+            <InterviewProgressChart data={dashboardData?.charts?.performanceChart} />
           </div>
         </div>
 
@@ -45,18 +65,18 @@ const Analytics = () => {
           
           {/* Weakness Analysis */}
           <div className="xl:col-span-6">
-            <WeaknessAnalysis />
+            <WeaknessAnalysis weaknesses={dashboardData?.weaknesses} />
           </div>
 
           {/* AI Insights */}
           <div className="xl:col-span-6">
-            <AIInsightsPanel />
+            <AIInsightsPanel stats={dashboardData?.charts?.performanceStats} weaknesses={dashboardData?.weaknesses} />
           </div>
         </div>
 
         {/* Heatmap */}
         <div className="mb-6">
-          <ActivityHeatmap />
+          <ActivityHeatmap data={dashboardData?.charts?.activityHeatmap} streak={dashboardData?.user?.streak} />
         </div>
 
         {/* Recent Sessions */}

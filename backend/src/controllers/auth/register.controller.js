@@ -3,6 +3,8 @@ import crypto from "crypto";
 
 import User from "../../models/user.model.js";
 import PlatformSetting from "../../models/platformSetting.model.js";
+import generateAccessToken from "../../utils/generateToken.js";
+import generateRefreshToken from "../../utils/generateRefreshToken.js";
 
 import getFrontendUrl from "../../utils/frontendUrl.js";
 import sendEmail from "../../services/email.service.js";
@@ -209,7 +211,7 @@ const verifyOTP = async (req, res) => {
 
     // Create verified real user
 
-    await createVerifiedUser({
+    const user = await createVerifiedUser({
       name: pendingUser.name,
       email: pendingUser.email,
       password: pendingUser.password,
@@ -220,10 +222,30 @@ const verifyOTP = async (req, res) => {
 
     await deletePendingUser(normalizedEmail);
 
+    // Generate Tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Save refresh token in DB
+    user.refreshToken = refreshToken;
+    user.lastLoginAt = new Date();
+    user.lastActiveAt = new Date();
+    user.status = "active";
+    await user.save();
+
+    // Store Refresh Token in Cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).json({
       success: true,
-
-      message: "Email verified successfully",
+      message: "Email verified and logged in successfully",
+      accessToken,
+      user,
     });
   } catch (error) {
     res.status(500).json({

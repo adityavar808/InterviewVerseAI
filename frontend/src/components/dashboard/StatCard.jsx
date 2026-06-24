@@ -5,19 +5,13 @@ const StatCard = ({ title, value, icon, color, trend }) => {
     <motion.div
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="relative rounded-2xl p-5 overflow-hidden cursor-default"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-      }}
+      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5 cursor-default transition-all duration-300 hover:border-white/20 active:scale-[0.98]"
     >
-      {/* Top shimmer line */}
+      {/* Top shimmer line based on accent color */}
       <div
-        className="absolute top-0 left-6 right-6 h-px"
+        className="absolute top-0 left-6 right-6 h-[2px] rounded-full"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(6,182,212,0.35), transparent)",
+          background: `linear-gradient(90deg, transparent, ${color.icon}, transparent)`,
         }}
       />
 
@@ -32,39 +26,39 @@ const StatCard = ({ title, value, icon, color, trend }) => {
 
       <div className="relative flex items-start justify-between">
         <div>
-          <p
-            className="text-slate-500 font-mono uppercase tracking-widest mb-2"
-            style={{ fontSize: "10px" }}
-          >
+          <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest mb-1.5">
             {title}
           </p>
-          <h2 className="text-3xl font-bold text-slate-50 leading-none">
+          <h2 className="text-3xl font-bold text-white leading-none tracking-tight">
             {value}
           </h2>
 
           {trend && (
             <div className="flex items-center gap-1.5 mt-2.5">
               <span
-                className="text-xs font-medium px-1.5 py-0.5 rounded-md"
+                className="text-xs font-semibold px-2 py-0.5 rounded-lg border"
                 style={{
                   background: trend.positive
-                    ? "rgba(34,197,94,0.15)"
-                    : "rgba(239,68,68,0.15)",
+                    ? "rgba(34,197,94,0.1)"
+                    : "rgba(239,68,68,0.1)",
                   color: trend.positive ? "#4ade80" : "#f87171",
+                  borderColor: trend.positive
+                    ? "rgba(34,197,94,0.2)"
+                    : "rgba(239,68,68,0.2)",
                 }}
               >
                 {trend.positive ? "↑" : "↓"} {trend.value}
               </span>
-              <span className="text-slate-600 text-xs">{trend.label}</span>
+              <span className="text-slate-500 text-xs font-medium">{trend.label}</span>
             </div>
           )}
         </div>
 
         <div
-          className="p-3 rounded-xl flex-shrink-0"
+          className="p-3 rounded-2xl flex-shrink-0 border"
           style={{
             background: color.bg,
-            border: `1px solid ${color.border}`,
+            borderColor: color.border,
           }}
         >
           <div style={{ color: color.icon }}>{icon}</div>

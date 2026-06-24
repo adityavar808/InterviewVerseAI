@@ -70,6 +70,28 @@ const codingQuestionSchema = new mongoose.Schema(
       default: "",
     },
 
+    testCases: {
+      type: [
+        {
+          input: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          expectedOutput: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          isSample: {
+            type: Boolean,
+            default: false,
+          },
+        },
+      ],
+      default: [],
+    },
+
     usageCount: {
       type: Number,
       default: 0,

@@ -10,7 +10,15 @@ import {
   googleAuthSuccess,
 } from "../controllers/auth/login.controller.js";
 import {
+  setup2FA,
+  verify2FA,
+  disable2FA,
+  verifyLogin2FA,
+} from "../controllers/auth/twoFactor.controller.js";
+import {
   updateProfile,
+  deleteProfile,
+  updatePassword,
 } from "../controllers/auth/profile.controller.js";
 import {
   registerUser,
@@ -50,6 +58,7 @@ router.get("/register", (req, res) => {
 router.post("/register", registerUser);
 
 router.post("/login", loginUser);
+router.post("/login-2fa", verifyLogin2FA);
 
 router.post("/verify-otp", verifyOTP);
 
@@ -126,6 +135,12 @@ router.use(protect);
 
 router.get("/me", getMe);
 router.put("/me", updateProfile);
+router.put("/update-password", updatePassword);
+router.delete("/me", deleteProfile);
+
+router.post("/2fa/setup", setup2FA);
+router.post("/2fa/verify", verify2FA);
+router.post("/2fa/disable", disable2FA);
 
 router.use(requireProfileSetup);
 

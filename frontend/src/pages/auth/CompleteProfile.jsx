@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -44,6 +44,13 @@ const STEPS = [
   },
   {
     id: 4,
+    label: "Social Links",
+    icon: FileText,
+    fields: ["githubUrl", "linkedinUrl", "portfolioUrl"],
+    color: "emerald",
+  },
+  {
+    id: 5,
     label: "Photo",
     icon: ImagePlus,
     fields: ["profileImage"],
@@ -224,6 +231,7 @@ const CompleteProfile = () => {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const hasInitializedRef = useRef(false);
 
   const {
     register,
@@ -239,6 +247,9 @@ const CompleteProfile = () => {
       headline: "",
       bio: "",
       skills: "",
+      githubUrl: "",
+      linkedinUrl: "",
+      portfolioUrl: "",
       profileImage: "",
     },
     mode: "onChange",
@@ -247,18 +258,27 @@ const CompleteProfile = () => {
   const watchedValues = watch();
 
   useEffect(() => {
+    if (!user) return;
+
     if (user?.profileSetupDone !== false && user) {
       navigate("/dashboard", { replace: true });
       return;
     }
-    reset({
-      name: user?.name || "",
-      location: user?.location || "",
-      headline: user?.headline || "",
-      bio: user?.bio || "",
-      skills: Array.isArray(user?.skills) ? user.skills.join(", ") : "",
-      profileImage: user?.profileImage || "",
-    });
+
+    if (!hasInitializedRef.current) {
+      reset({
+        name: user?.name || "",
+        location: user?.location || "",
+        headline: user?.headline || "",
+        bio: user?.bio || "",
+        skills: Array.isArray(user?.skills) ? user.skills.join(", ") : "",
+        githubUrl: user?.githubUrl || "",
+        linkedinUrl: user?.linkedinUrl || "",
+        portfolioUrl: user?.portfolioUrl || "",
+        profileImage: user?.profileImage || "",
+      });
+      hasInitializedRef.current = true;
+    }
   }, [navigate, reset, user]);
 
   const step = STEPS[currentStep];
@@ -279,7 +299,14 @@ const CompleteProfile = () => {
 
   const onSubmit = async (values) => {
     try {
-      const updatedUser = await studentService.updateProfile(values);
+      const payload = {
+        ...values,
+        githubUrl: values.githubUrl?.trim() || "",
+        linkedinUrl: values.linkedinUrl?.trim() || "",
+        portfolioUrl: values.portfolioUrl?.trim() || "",
+      };
+
+      const updatedUser = await studentService.updateProfile(payload);
       dispatch(setCredentials({ user: updatedUser, accessToken }));
       toast.success("Profile completed!");
       navigate("/dashboard", { replace: true });
@@ -440,13 +467,15 @@ const CompleteProfile = () => {
                       {currentStep === 0 && "Who are you?"}
                       {currentStep === 1 && "Where are you based?"}
                       {currentStep === 2 && "What do you know?"}
-                      {currentStep === 3 && "Put a face to your name"}
+                      {currentStep === 3 && "Share your professional links"}
+                      {currentStep === 4 && "Put a face to your name"}
                     </h2>
                     <p className="mt-1 text-xs text-slate-400 leading-relaxed">
                       {currentStep === 0 && "Your name and headline will appear across the platform."}
                       {currentStep === 1 && "Help recruiters and the platform understand your context."}
                       {currentStep === 2 && "List the skills you bring to the table."}
-                      {currentStep === 3 && "Optionally add a profile photo URL. You can skip this."}
+                      {currentStep === 3 && "Add your GitHub, LinkedIn, and portfolio links to stand out."}
+                      {currentStep === 4 && "Optionally add a profile photo URL. You can skip this."}
                     </p>
                   </motion.div>
                 </AnimatePresence>
@@ -576,8 +605,52 @@ const CompleteProfile = () => {
                       </label>
                     )}
 
-                    {/* STEP 4: Photo */}
+                    {/* STEP 4: Social links & certifications */}
                     {currentStep === 3 && (
+                      <div className="space-y-4">
+                        <label className="block">
+                          <span className="mb-1.5 block text-xs font-medium text-slate-400">
+                            GitHub URL <span className="text-rose-400">*</span>
+                          </span>
+                          <input
+                            {...register("githubUrl", { required: "GitHub URL is required" })}
+                            className={inputClass(errors.githubUrl, "emerald")}
+                            placeholder="https://github.com/your-username"
+                          />
+                          {errors.githubUrl && (
+                            <p className="mt-1 text-xs text-rose-400">{errors.githubUrl.message}</p>
+                          )}
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-xs font-medium text-slate-400">
+                            LinkedIn URL <span className="text-rose-400">*</span>
+                          </span>
+                          <input
+                            {...register("linkedinUrl", { required: "LinkedIn URL is required" })}
+                            className={inputClass(errors.linkedinUrl, "emerald")}
+                            placeholder="https://www.linkedin.com/in/your-profile"
+                          />
+                          {errors.linkedinUrl && (
+                            <p className="mt-1 text-xs text-rose-400">{errors.linkedinUrl.message}</p>
+                          )}
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-xs font-medium text-slate-400">
+                            Portfolio URL
+                          </span>
+                          <input
+                            {...register("portfolioUrl")}
+                            className={inputClass(false, "emerald")}
+                            placeholder="https://your-portfolio.com"
+                          />
+                        </label>
+                      </div>
+                    )}
+
+                    {/* STEP 5: Photo */}
+                    {currentStep === 4 && (
                       <div className="space-y-4">
                         <label className="block">
                           <span className="mb-1.5 block text-xs font-medium text-slate-400">

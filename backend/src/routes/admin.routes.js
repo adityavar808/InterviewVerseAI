@@ -32,6 +32,7 @@ import {
 } from "../controllers/admin/settings.controller.js";
 import {
   loginAdmin,
+  verifyAdminLogin2FA,
   refreshAdminToken,
   logoutAdmin,
   getAdminMe,
@@ -40,6 +41,7 @@ import {
 const router = express.Router();
 
 router.post("/login", loginAdmin);
+router.post("/login-2fa", verifyAdminLogin2FA);
 router.get(
   "/refresh-token",
   refreshAdminToken,

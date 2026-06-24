@@ -5,8 +5,14 @@ import requireProfileSetup from "../middleware/profile.middleware.js";
 
 import {
   getCodingQuestions,
-  getCodingQuestionById,
 } from "../controllers/admin.controller.js";
+
+import {
+  submitCodingQuestion,
+  runCodingQuestion,
+  analyzeResume,
+  getStudentCodingQuestionById,
+} from "../controllers/auth/student.controller.js";
 
 const router = express.Router();
 
@@ -20,7 +26,22 @@ router.get(
 
 router.get(
   "/coding-questions/:questionId",
-  getCodingQuestionById,
+  getStudentCodingQuestionById,
+);
+
+router.post(
+  "/coding-questions/:questionId/run",
+  runCodingQuestion
+);
+
+router.post(
+  "/coding-questions/:questionId/submit",
+  submitCodingQuestion
+);
+
+router.post(
+  "/resume/analyze",
+  analyzeResume
 );
 
 export default router;

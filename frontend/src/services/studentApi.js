@@ -22,6 +22,32 @@ export const studentService = {
     return unwrapPayload(response);
   },
 
+  // Delete student profile / account
+  deleteAccount: async () => {
+    const response = await api.delete("/auth/me");
+    return unwrapPayload(response);
+  },
+
+  setup2FA: async () => {
+    const response = await api.post("/auth/2fa/setup");
+    return unwrapPayload(response);
+  },
+
+  verify2FA: async (payload) => {
+    const response = await api.post("/auth/2fa/verify", payload);
+    return unwrapPayload(response);
+  },
+
+  disable2FA: async (payload) => {
+    const response = await api.post("/auth/2fa/disable", payload);
+    return unwrapPayload(response);
+  },
+
+  verifyLogin2FA: async (payload) => {
+    const response = await api.post("/auth/login-2fa", payload);
+    return unwrapPayload(response);
+  },
+
   // Get available interview templates (legacy - kept for backward compatibility)
   getInterviewTemplates: async (params = {}) => {
     const response = await api.get("/auth/interviews", { params });
@@ -82,6 +108,21 @@ export const studentService = {
     if (response.data?.success === false) {
       throw new Error(response.data.message || "Failed to load interview session");
     }
+    return unwrapPayload(response);
+  },
+
+  submitCode: async (questionId, payload = {}) => {
+    const response = await api.post(`/student/coding-questions/${questionId}/submit`, payload);
+    return unwrapPayload(response);
+  },
+
+  runCode: async (questionId, payload = {}) => {
+    const response = await api.post(`/student/coding-questions/${questionId}/run`, payload);
+    return unwrapPayload(response);
+  },
+
+  analyzeResume: async (payload = {}) => {
+    const response = await api.post("/student/resume/analyze", payload);
     return unwrapPayload(response);
   },
 };

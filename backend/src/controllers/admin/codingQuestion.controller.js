@@ -42,11 +42,15 @@ const getCodingQuestions = async (
       ];
     }
 
-    if (
-      req.query.status &&
-      req.query.status !== "all"
-    ) {
-      filters.status = req.query.status;
+    if (req.user && req.user.role !== "admin") {
+      filters.status = "published";
+    } else {
+      if (
+        req.query.status &&
+        req.query.status !== "all"
+      ) {
+        filters.status = req.query.status;
+      }
     }
 
     if (
@@ -106,7 +110,7 @@ const getCodingQuestionById = async (
         req.params.questionId,
       ).lean();
 
-    if (!question) {
+    if (!question || (req.user && req.user.role !== "admin" && question.status !== "published")) {
       return res.status(404).json({
         success: false,
         message: "Coding question not found",
@@ -141,6 +145,7 @@ const createCodingQuestion = async (
       companies,
       constraints,
       starterCode,
+      testCases,
     } = req.body;
 
     if (!title) {
@@ -167,6 +172,7 @@ const createCodingQuestion = async (
           constraints?.trim() || "",
         starterCode:
           starterCode || "",
+        testCases: testCases || [],
         createdBy: req.user._id,
         updatedBy: req.user._id,
       });
@@ -213,6 +219,7 @@ const updateCodingQuestion = async (
       "status",
       "constraints",
       "starterCode",
+      "testCases",
     ].forEach((field) => {
       if (
         req.body[field] !==

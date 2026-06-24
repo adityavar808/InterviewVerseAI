@@ -960,6 +960,63 @@ const InterviewSession = () => {
     onFinal: handleFinalTranscript,
   });
 
+  const handleSubmit = async () => {
+    const text = userInput.trim();
+    if (!text) { toast.error("Please type or speak your answer."); return; }
+    if (speech.active) speech.stop();
+
+    const placeholderScores = { score: 0, communication: 0, technical: 0, confidence: 0 };
+    analytics.recordAnswer(activeQ, text, placeholderScores);
+
+    setUserInput("");
+    setAiThinking(true);
+
+    try {
+      const currentQuestion = questionList[activeQ] || QUESTIONS[activeQ];
+
+      if (sessionId && currentQuestion) {
+        await studentService.submitInterviewResponse(sessionId, {
+          questionIndex: activeQ,
+          answer: text,
+        });
+      }
+
+      analytics.recordAnswer(activeQ, text, placeholderScores);
+
+      setFollowUpMode(false);
+      setFollowUpQ("");
+      setAnswered(p => [...new Set([...p, activeQ])]);
+
+      const isLastQuestion = activeQ >= questionList.length - 1;
+      setAiThinking(false);
+      setAiSpeaking(true);
+
+      if (isLastQuestion) {
+        setTimeout(() => setAiSpeaking(false), 2000);
+        await handleFinish();
+        return;
+      }
+
+      const next = activeQ < questionList.length - 1 ? activeQ + 1 : activeQ;
+      setActiveQ(next);
+      setTimeout(() => setAiSpeaking(false), 2000);
+      toast.success("Answer saved!");
+    } catch (error) {
+      setAiThinking(false);
+      console.error(error);
+      toast.error("Failed to save answer. Proceeding...");
+      
+      setAnswered(p => [...new Set([...p, activeQ])]);
+      const isLastQuestion = activeQ >= questionList.length - 1;
+      if (isLastQuestion) {
+        await handleFinish();
+        return;
+      }
+      const next = activeQ < questionList.length - 1 ? activeQ + 1 : activeQ;
+      setActiveQ(next);
+    }
+  };
+
   const handleViolation = useCallback((type, count) => {
     setViolationCount(count);
     setViolationOverlay(type);
@@ -1053,81 +1110,7 @@ const InterviewSession = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const text = userInput.trim();
-    if (!text) { toast.error("Please type or speak your answer."); return; }
-    if (speech.active) speech.stop();
 
-    analytics.recordAnswer(activeQ, text, { score: 0, communication: 0, technical: 0, confidence: 0 });
-
-    setUserInput("");
-    setAiThinking(true);
-
-    try {
-const currentQuestion = questionList[activeQ] || QUESTIONS[activeQ];
-      let evaluation = null;
-      let followUp = null;
-      let scores = null;
-
-      if (sessionId && currentQuestion) {
-        evaluation = await studentService.submitInterviewResponse(sessionId, {
-          questionIndex: activeQ,
-          answer: text,
-        });
-
-        scores = {
-          score: evaluation.score ?? 0,
-          communication: evaluation.communication ?? 0,
-          technical: evaluation.technical ?? 0,
-          confidence: evaluation.confidence ?? 0,
-        };
-        followUp = evaluation.followUp || null;
-
-        if (evaluation.feedback) {
-          toast.success(`AI Feedback: ${evaluation.feedback}`);
-        }
-      } else {
-        const [aiScores, aiFollowUp] = await Promise.all([
-          aiInterviewService.scoreAnswer(currentQuestion?.question || QUESTIONS[activeQ].question, text),
-          Math.random() > 0.5 ? aiInterviewService.generateFollowUp(currentQuestion?.question || QUESTIONS[activeQ].question, text, config.role) : Promise.resolve(null),
-        ]);
-        scores = aiScores;
-        followUp = aiFollowUp;
-      }
-
-      analytics.recordAnswer(activeQ, text, scores);
-
-      if (followUp && !followUpMode) {
-        setFollowUpQ(followUp);
-        setFollowUpMode(true);
-        setAiThinking(false);
-        setAiSpeaking(true);
-        setTimeout(() => setAiSpeaking(false), 3500);
-      } else {
-        setFollowUpMode(false);
-        setFollowUpQ("");
-        setAnswered(p => [...new Set([...p, activeQ])]);
-        const isLastQuestion = activeQ >= questionList.length - 1;
-        setAiThinking(false);
-        setAiSpeaking(true);
-        if (isLastQuestion) {
-          setTimeout(() => setAiSpeaking(false), 3000);
-          await handleFinish();
-          return;
-        }
-
-        const next = activeQ < questionList.length - 1 ? activeQ + 1 : activeQ;
-        setActiveQ(next);
-        setTimeout(() => setAiSpeaking(false), 3000);
-      }
-      toast.success("Answer submitted!");
-    } catch (error) {
-      setAiThinking(false);
-      console.error(error);
-      toast.error("AI service unavailable. Your answer was saved.");
-      setAnswered(p => [...new Set([...p, activeQ])]);
-    }
-  };
 
   const handleFinish = async () => {
     if (speech.active) speech.stop();
@@ -1182,10 +1165,10 @@ const currentQuestion = questionList[activeQ] || QUESTIONS[activeQ];
       {/* ── HEADER ── */}
       <header style={s.header}>
         <div style={s.logoWrap}>
-          <div style={s.logoBadge}>GLA</div>
+          <div style={s.logoBadge}>IVAI</div>
           <div>
-            <p style={s.logoTitle}>GLA University</p>
-            <p style={s.logoSub}>'A+' Grade NAAC · 12-B UGC</p>
+            <p style={s.logoTitle}>INTERVIEWVERSE AI</p>
+            <p style={s.logoSub}></p>
           </div>
         </div>
 

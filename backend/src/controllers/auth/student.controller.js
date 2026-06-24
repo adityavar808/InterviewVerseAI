@@ -1,4 +1,5 @@
 import User from "../../models/user.model.js";
+import { analyzeResumeAI } from "../../services/aiPython.service.js";
 
 const studentDashboard = async (req, res) => {
   try {
@@ -21,9 +22,13 @@ const studentDashboard = async (req, res) => {
       (await import(
         "../../models/codingQuestion.model.js"
       )).default;
+    const InterviewSession =
+      (await import(
+        "../../models/interviewSession.model.js"
+      )).default;
 
     // Fetch published templates and questions
-    const [interviews, codingQuestions, totalInterviewTemplates, totalCodingQuestions] =
+    const [interviews, codingQuestions, totalInterviewTemplates, totalCodingQuestions, completedSessions] =
       await Promise.all([
         InterviewTemplate.find({
           status: "published",
@@ -37,124 +42,173 @@ const studentDashboard = async (req, res) => {
         CodingQuestion.countDocuments({
           status: "published",
         }),
+        InterviewSession.find({
+          user: userId,
+          status: "completed"
+        }).sort({ completedAt: 1 }).lean()
       ]);
 
-    // Calculate performance metrics
-    const performanceData = [
-      {
-        day: "Mon",
-        score: 65,
-      },
-      {
-        day: "Tue",
-        score: 72,
-      },
-      {
-        day: "Wed",
-        score: 68,
-      },
-      {
-        day: "Thu",
-        score: 80,
-      },
-      {
-        day: "Fri",
-        score: 84,
-      },
-      {
-        day: "Sat",
-        score: 90,
-      },
-    ];
+    // Calculate dynamic performance data for charts
+    const performanceData = completedSessions.map(s => ({
+      day: new Date(s.completedAt).toLocaleDateString("en-US", { weekday: "short" }),
+      score: Math.round(s.averageScore)
+    }));
 
-    // Sample performance stats
+    if (performanceData.length === 0) {
+      performanceData.push({ day: "Mon", score: 0 });
+    }
+
+    const totalInterviewsCount = completedSessions.length;
+    const avgScoreValue = completedSessions.length > 0 
+      ? Math.round(completedSessions.reduce((sum, s) => sum + s.averageScore, 0) / completedSessions.length) 
+      : 0;
+    const codingAccuracyValue = user.solvedQuestionsMeta.length > 0 
+      ? Math.round(user.solvedQuestionsMeta.reduce((sum, m) => sum + m.score, 0) / user.solvedQuestionsMeta.length) 
+      : 0;
+    const commsValue = completedSessions.length > 0 
+      ? Math.round(completedSessions.flatMap(s => s.responses).reduce((sum, r) => sum + (r.communication || 0), 0) / Math.max(1, completedSessions.flatMap(s => s.responses).length)) 
+      : 0;
+
     const performanceStats = [
       {
         title: "Total Interviews",
-        value: "24",
-        growth: "+18%",
+        value: String(totalInterviewsCount),
+        growth: "+100%",
       },
       {
         title: "Average Score",
-        value: "89%",
-        growth: "+6%",
+        value: `${avgScoreValue}%`,
+        growth: "+0%",
       },
       {
         title: "Coding Accuracy",
-        value: "93%",
-        growth: "+12%",
+        value: `${codingAccuracyValue}%`,
+        growth: "+0%",
       },
       {
         title: "Communication",
-        value: "84%",
-        growth: "+9%",
+        value: `${commsValue}%`,
+        growth: "+0%",
       },
     ];
 
-    // Skill distribution
+    // Dynamic skill distribution based on code evaluations and interview technical scores
+    let dsaScores = [];
+    let reactScores = [];
+    let backendScores = [];
+    let systemDesignScores = [];
+
+    user.solvedQuestionsMeta.forEach(m => {
+      const score = m.score;
+      if (m.language === "javascript" || m.language === "typescript") {
+        reactScores.push(score);
+      } else {
+        dsaScores.push(score);
+      }
+      backendScores.push(score);
+    });
+
+    completedSessions.forEach(s => {
+      s.responses.forEach(r => {
+        if (s.config.role.toLowerCase().includes("system design")) {
+          systemDesignScores.push(r.score);
+        }
+      });
+    });
+
+    const getAvg = (arr, defVal) => arr.length > 0 ? Math.round(arr.reduce((a,b) => a+b, 0)/arr.length) : defVal;
+
     const skillData = [
       {
         subject: "DSA",
-        score: 92,
+        score: getAvg(dsaScores, 75),
       },
       {
         subject: "React",
-        score: 88,
+        score: getAvg(reactScores, 70),
       },
       {
         subject: "Backend",
-        score: 81,
+        score: getAvg(backendScores, 75),
       },
       {
         subject: "Communication",
-        score: 84,
+        score: commsValue > 0 ? commsValue : 80,
       },
       {
         subject: "System Design",
-        score: 70,
+        score: getAvg(systemDesignScores, 65),
       },
       {
         subject: "Problem Solving",
-        score: 95,
+        score: avgScoreValue > 0 ? avgScoreValue : 75,
       },
     ];
 
-    // Activity heatmap (5 weeks)
+    // Dynamic activity heatmap
     const activityHeatmap = [
-      [1, 2, 0, 4, 3, 2, 1],
-      [0, 3, 2, 1, 4, 2, 0],
-      [2, 4, 3, 2, 1, 0, 1],
-      [1, 2, 4, 3, 2, 1, 2],
-      [3, 1, 2, 4, 4, 3, 2],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
     ];
 
-    // Weakness analysis
-    const weaknesses = [
-      {
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    const registerActivity = (date) => {
+      if (!date) return;
+      const d = new Date(date);
+      const diffDays = Math.floor((now - d.getTime()) / oneDayMs);
+      if (diffDays >= 0 && diffDays < 35) {
+        const weekIdx = Math.floor(diffDays / 7);
+        const dayIdx = d.getDay();
+        const adjustedDayIdx = dayIdx === 0 ? 6 : dayIdx - 1;
+        if (weekIdx >= 0 && weekIdx < 5 && adjustedDayIdx >= 0 && adjustedDayIdx < 7) {
+          activityHeatmap[4 - weekIdx][adjustedDayIdx] += 1;
+        }
+      }
+    };
+
+    completedSessions.forEach(s => registerActivity(s.completedAt));
+    user.solvedQuestionsMeta.forEach(m => registerActivity(m.solvedAt));
+
+    // Dynamic weaknesses list
+    const weaknesses = [];
+    if (getAvg(systemDesignScores, 100) < 70) {
+      weaknesses.push({
         title: "System Design",
-        issue:
-          "Need stronger understanding of scalable architecture patterns and distributed systems.",
-        improvement:
-          "Focus on HLD & LLD practice.",
+        issue: "Need stronger understanding of scalable architecture patterns and distributed systems.",
+        improvement: "Focus on HLD & LLD practice.",
         severity: "High",
-      },
-      {
+      });
+    }
+    if (commsValue > 0 && commsValue < 80) {
+      weaknesses.push({
         title: "Communication Confidence",
-        issue:
-          "Speech confidence slightly drops during technical explanations.",
-        improvement:
-          "Practice mock HR interviews regularly.",
+        issue: "Speech confidence slightly drops during technical explanations.",
+        improvement: "Practice mock HR interviews regularly.",
         severity: "Medium",
-      },
-      {
+      });
+    }
+    if (getAvg(dsaScores, 100) < 75) {
+      weaknesses.push({
         title: "Code Optimization",
-        issue:
-          "Some solutions use unnecessary loops and redundant conditions.",
-        improvement:
-          "Focus on time complexity optimization.",
+        issue: "Some solutions use unnecessary loops and redundant conditions.",
+        improvement: "Focus on time complexity optimization.",
         severity: "Medium",
-      },
-    ];
+      });
+    }
+
+    if (weaknesses.length === 0) {
+      weaknesses.push({
+        title: "Advanced Optimization",
+        issue: "Everything looks solid. Keep practicing complex edge cases.",
+        improvement: "Focus on hard problems.",
+        severity: "Low",
+      });
+    }
 
     // Recent interviews
     const userHistory = (user.interviewHistory || []).slice();
@@ -204,6 +258,11 @@ const studentDashboard = async (req, res) => {
         },
       ];
 
+    const atsResumeScore = user.resumeAnalysis?.atsScore || 0;
+    const codingProblems = user.solvedQuestions?.length || 0;
+    const resumeImprovement = user.resumeAnalysis ? 10 : 0;
+    const problemsThisWeek = Math.min(codingProblems, 5);
+
     const data = {
       user: {
         id: user._id,
@@ -213,12 +272,12 @@ const studentDashboard = async (req, res) => {
       },
       overview: {
         totalInterviews,
-        atsResumeScore: 88,
-        codingProblems: 136,
+        atsResumeScore,
+        codingProblems,
         dailyStreak: user.streak || 0,
         thisWeekInterviews,
-        resumeImprovement: 5,
-        problemsThisWeek: 8,
+        resumeImprovement,
+        problemsThisWeek,
         availableInterviewTemplates: totalInterviewTemplates,
         availableCodingQuestions: totalCodingQuestions,
       },
@@ -447,10 +506,253 @@ const getStudentCodingQuestions = async (req, res) => {
   }
 };
 
+const ROLE_KEYWORDS = {
+  "MERN Developer": ["React", "Node.js", "Express", "MongoDB", "JavaScript", "REST", "APIs", "HTML", "CSS", "Redux"],
+  "Frontend Developer": ["React", "Vue", "Angular", "JavaScript", "TypeScript", "CSS", "HTML", "Responsive", "Accessibility", "UI/UX"],
+  "Backend Developer": ["Node.js", "Express", "Java", "Python", "SQL", "APIs", "Microservices", "Docker", "Kubernetes", "Authentication"],
+  "Full Stack Developer": ["React", "Node.js", "Express", "MongoDB", "REST", "JavaScript", "CSS", "HTML", "CI/CD", "Cloud"],
+  "Machine Learning Engineer": ["Python", "TensorFlow", "PyTorch", "Data", "ML", "Model", "NLP", "Scikit-learn", "Statistics", "Algorithms"],
+  "Data Analyst": ["SQL", "Python", "Pandas", "Tableau", "Power BI", "Visualization", "Excel", "Data Cleaning", "Analytics", "Reporting"],
+  "DevOps Engineer": ["Docker", "Kubernetes", "CI/CD", "AWS", "Azure", "Terraform", "Monitoring", "Automation", "Linux", "SRE"],
+};
+
+const runLocalAnalysis = (resumeText, role) => {
+  const normalized = (resumeText || "").toLowerCase();
+  const roleKeywords = ROLE_KEYWORDS[role] || ROLE_KEYWORDS["Frontend Developer"];
+  const matched = roleKeywords.filter(keyword => normalized.includes(keyword.toLowerCase()));
+  const missing = roleKeywords.filter(keyword => !normalized.includes(keyword.toLowerCase()));
+  
+  const matchPercent = roleKeywords.length ? Math.round((matched.length / roleKeywords.length) * 100) : 0;
+  
+  let score = 40 + Math.round(matchPercent * 0.4);
+  
+  const sections = ["experience", "projects", "education", "skills", "certifications", "summary"];
+  const foundSections = sections.filter(sec => normalized.includes(sec));
+  score += foundSections.length * 3;
+  
+  const wordCount = normalized.split(/\s+/).length;
+  if (wordCount > 100 && wordCount < 600) {
+    score += 5;
+  }
+  
+  const atsScore = Math.min(95, Math.max(30, score));
+  
+  const improvements = [];
+  if (missing.length > 0) {
+    improvements.push(`Include missing key technologies: ${missing.slice(0, 4).join(", ")}.`);
+  }
+  if (!normalized.includes("project")) {
+    improvements.push("Add a dedicated projects section detailing your technical accomplishments.");
+  }
+  if (!normalized.includes("experience")) {
+    improvements.push("Add a professional work or internship experience section.");
+  }
+  if (wordCount < 150) {
+    improvements.push("Your resume is very short. Elaborate on your projects and professional achievements.");
+  }
+  if (wordCount > 800) {
+    improvements.push("Your resume is quite long. Try keeping it under 2 pages for optimal ATS readability.");
+  }
+  
+  if (improvements.length === 0) {
+    improvements.push("Perfect structure! Refine grammar and typography to maximize readability.");
+  }
+  
+  return {
+    atsScore,
+    matchedKeywords: matched,
+    missingKeywords: missing,
+    improvements
+  };
+};
+
+const analyzeResume = async (req, res) => {
+  try {
+    const { resumeText, role, fileName } = req.body;
+    const userId = req.user._id;
+
+    if (!resumeText) {
+      return res.status(400).json({ success: false, message: "Resume text content is required" });
+    }
+
+    let analysis;
+    try {
+      const response = await analyzeResumeAI({ resume_text: resumeText, role });
+      analysis = {
+        atsScore: response.atsScore,
+        improvements: response.improvements,
+        matchedKeywords: response.matchedKeywords,
+        missingKeywords: response.missingKeywords,
+      };
+    } catch (error) {
+      console.error("Python AI Resume analysis failed, falling back to local analysis:", error);
+      analysis = runLocalAnalysis(resumeText, role);
+    }
+
+    const user = await User.findById(userId);
+    user.resumeAnalysis = {
+      atsScore: analysis.atsScore,
+      role: role || "MERN Developer",
+      fileName: fileName || "resume.pdf",
+      improvements: analysis.improvements,
+      analyzedAt: new Date()
+    };
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        score: analysis.atsScore,
+        improvements: analysis.improvements,
+        matchedKeywords: analysis.matchedKeywords,
+        missingKeywords: analysis.missingKeywords,
+        fileName: user.resumeAnalysis.fileName,
+        role: user.resumeAnalysis.role,
+        analyzedAt: user.resumeAnalysis.analyzedAt
+      }
+    });
+  } catch (error) {
+    console.error("Resume analysis controller error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getStudentCodingQuestionById = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const CodingQuestion = (await import("../../models/codingQuestion.model.js")).default;
+    const question = await CodingQuestion.findById(questionId).lean();
+
+    if (!question || question.status !== "published") {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    const sanitized = {
+      _id: question._id,
+      title: question.title,
+      description: question.description,
+      category: question.category,
+      difficulty: question.difficulty,
+      status: question.status,
+      acceptanceRate: question.acceptanceRate,
+      tags: question.tags || [],
+      companies: question.companies || [],
+      constraints: question.constraints || "",
+      starterCode: question.starterCode || "",
+      testCases: question.testCases || [],
+      usageCount: question.usageCount || 0,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: sanitized,
+    });
+  } catch (error) {
+    console.error("Get student coding question error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const runCodingQuestion = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const { code, language } = req.body;
+
+    const CodingQuestion = (await import("../../models/codingQuestion.model.js")).default;
+    const question = await CodingQuestion.findById(questionId);
+    if (!question || question.status !== "published") {
+      return res.status(404).json({ success: false, message: "Question not found" });
+    }
+
+    const { runCodeAI } = await import("../../services/aiPython.service.js");
+    const result = await runCodeAI({
+      code,
+      language,
+      questionTitle: question.title,
+      testCases: question.testCases || []
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error("Run coding question error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const submitCodingQuestion = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const { code, language } = req.body;
+    const userId = req.user._id;
+
+    const CodingQuestion = (await import("../../models/codingQuestion.model.js")).default;
+    const question = await CodingQuestion.findById(questionId);
+    if (!question || question.status !== "published") {
+      return res.status(404).json({ success: false, message: "Question not found" });
+    }
+
+    const { evaluateCodeAI } = await import("../../services/aiPython.service.js");
+    const evaluation = await evaluateCodeAI({
+      code,
+      language,
+      questionTitle: question.title,
+      testCases: question.testCases || []
+    });
+
+    const user = await User.findById(userId);
+    if (!user.solvedQuestions.includes(questionId)) {
+      user.solvedQuestions.push(questionId);
+    }
+
+    const metaIdx = user.solvedQuestionsMeta.findIndex(m => m.questionId.toString() === questionId);
+    const metaRecord = {
+      questionId,
+      code,
+      language,
+      timeComplexity: evaluation.timeComplexity,
+      spaceComplexity: evaluation.spaceComplexity,
+      score: evaluation.score,
+      tips: evaluation.tips,
+      issues: evaluation.issues,
+      solvedAt: new Date()
+    };
+
+    if (metaIdx > -1) {
+      user.solvedQuestionsMeta[metaIdx] = metaRecord;
+    } else {
+      user.solvedQuestionsMeta.push(metaRecord);
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Coding problem solved and evaluated successfully!",
+      solvedCount: user.solvedQuestions.length,
+      evaluation: metaRecord
+    });
+  } catch (error) {
+    console.error("Submit coding question error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export {
   studentDashboard,
   getStudentInterviews,
   getInterviewHistory,
   addInterviewHistory,
   getStudentCodingQuestions,
+  analyzeResume,
+  runCodingQuestion,
+  submitCodingQuestion,
+  getStudentCodingQuestionById,
 };

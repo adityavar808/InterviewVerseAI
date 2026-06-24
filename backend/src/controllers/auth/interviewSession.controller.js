@@ -108,35 +108,22 @@ const submitInterviewResponse = async (req, res) => {
       });
     }
 
-    const evaluation = await evaluateAnswer({
-      question: question.question,
-      answer,
-      role: session.config.role,
-      difficulty: session.config.difficulty,
-      language: session.config.language,
-      experience: session.config.experience,
-    });
-
     session.responses.push({
       questionIndex,
       answer,
-      score: evaluation.score,
-      communication: evaluation.communication,
-      technical: evaluation.technical,
-      confidence: evaluation.confidence,
-      feedback: evaluation.feedback,
+      score: 0,
+      communication: 0,
+      technical: 0,
+      confidence: 0,
+      feedback: "",
       createdAt: new Date(),
     });
-
-    session.averageScore =
-      session.responses.reduce((sum, item) => sum + item.score, 0) /
-      Math.max(1, session.responses.length);
 
     await session.save();
 
     return res.status(200).json({
       success: true,
-      data: evaluation,
+      message: "Response saved successfully"
     });
   } catch (error) {
     res.status(500).json({
@@ -189,39 +176,88 @@ const endInterviewSession = async (req, res) => {
       });
     }
 
+    // Set status to completed immediately and save to database
     session.status = "completed";
     session.completedAt = new Date();
-    session.averageScore =
-      session.responses.length > 0
-        ? session.responses.reduce((sum, item) => sum + item.score, 0) / session.responses.length
-        : 0;
-
+    session.averageScore = 0;
     await session.save();
 
-    const user = await User.findById(req.user._id);
+    // Setup background evaluation promises
+    const evaluationPromises = session.responses.map(async (resp) => {
+      const question = session.questions[resp.questionIndex];
+      if (!question) return;
 
-    if (user) {
-      user.interviewHistory.unshift({
-        sessionId: session._id,
-        title: `${session.config.role} Interview`,
-        role: session.config.role,
-        score: Math.round(session.averageScore),
-        duration: session.config.duration,
-        status: "Completed",
-        difficulty: session.config.difficulty,
-        tags: session.questions.flatMap((q) => q.tags || []),
-        tech: session.questions.flatMap((q) => q.tags || []),
-        notes: session.responses.map((r) => r.feedback).join(" \n"),
-        completedAt: session.completedAt,
+      try {
+        const evaluation = await evaluateAnswer({
+          question: question.question,
+          answer: resp.answer,
+          role: session.config.role,
+          difficulty: session.config.difficulty,
+          language: session.config.language,
+          experience: session.config.experience,
+        });
+
+        resp.score = evaluation.score || 0;
+        resp.communication = evaluation.communication || 0;
+        resp.technical = evaluation.technical || 0;
+        resp.confidence = evaluation.confidence || 0;
+        resp.feedback = evaluation.feedback || "";
+      } catch (e) {
+        console.error(`Failed to evaluate response index ${resp.questionIndex}:`, e);
+        resp.score = 70;
+        resp.communication = 70;
+        resp.technical = 70;
+        resp.confidence = 70;
+        resp.feedback = "Dynamic feedback was unavailable at this time.";
+      }
+    });
+
+    // Run parallel AI evaluation in background (non-blocking)
+    Promise.all(evaluationPromises)
+      .then(async () => {
+        const bgSession = await InterviewSession.findById(sessionId);
+        if (bgSession) {
+          bgSession.responses = session.responses;
+          bgSession.averageScore =
+            bgSession.responses.length > 0
+              ? bgSession.responses.reduce((sum, item) => sum + item.score, 0) / bgSession.responses.length
+              : 0;
+
+          await bgSession.save();
+
+          const user = await User.findById(req.user._id);
+          if (user) {
+            // Remove previous placeholder if any, to avoid duplicate sessionId history items
+            user.interviewHistory = user.interviewHistory.filter(
+              (item) => item.sessionId?.toString() !== sessionId.toString()
+            );
+
+            user.interviewHistory.unshift({
+              sessionId: bgSession._id,
+              title: `${bgSession.config.role} Interview`,
+              role: bgSession.config.role,
+              score: Math.round(bgSession.averageScore),
+              duration: bgSession.config.duration,
+              status: "Completed",
+              difficulty: bgSession.config.difficulty,
+              tags: bgSession.questions.flatMap((q) => q.tags || []),
+              tech: bgSession.questions.flatMap((q) => q.tags || []),
+              notes: bgSession.responses.map((r) => r.feedback).join(" \n"),
+              completedAt: bgSession.completedAt,
+            });
+            await user.save();
+          }
+        }
+      })
+      .catch((err) => {
+        console.error(`Background evaluation error for session ${sessionId}:`, err);
       });
-      await user.save();
-    }
 
     return res.status(200).json({
       success: true,
       data: {
         sessionId: session._id,
-        averageScore: Math.round(session.averageScore),
+        averageScore: 0,
         completedAt: session.completedAt,
       },
     });

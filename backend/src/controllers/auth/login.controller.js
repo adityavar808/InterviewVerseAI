@@ -170,6 +170,21 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Intercept with 2FA check if enabled
+    if (user.isTwoFactorEnabled) {
+      const tempToken = jwt.sign(
+        { id: user._id, requires2FA: true },
+        process.env.JWT_2FA_SECRET || (process.env.JWT_ACCESS_SECRET + "-2fa"),
+        { expiresIn: "5m" }
+      );
+      return res.status(200).json({
+        success: true,
+        requires2FA: true,
+        tempToken,
+        email: user.email,
+      });
+    }
+
     // Generate Tokens
     const accessToken = generateAccessToken(user);
 

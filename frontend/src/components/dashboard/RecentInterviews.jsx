@@ -66,54 +66,28 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="relative overflow-hidden rounded-2xl p-6"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-      }}
+      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
     >
-      {/* Top shimmer */}
-      <div
-        className="absolute top-0 left-8 right-8 h-px"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(74,222,128,0.45), transparent)",
-        }}
-      />
-
-      {/* Ambient orb */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "250px",
-          height: "250px",
-          top: "-60px",
-          right: "-60px",
-          background:
-            "radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)",
-        }}
-      />
+      {/* Glow and top line border */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-green-500/[0.04] blur-[50px]" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+             style={{ background: "linear-gradient(90deg, rgba(74,222,128,0.5), transparent)" }} />
+      </div>
 
       {/* Header */}
       <div className="relative mb-6 flex items-start justify-between">
         <div>
-          <p
-            className="mb-1 font-mono uppercase tracking-widest"
-            style={{
-              fontSize: "9px",
-              color: "rgba(100,116,139,0.7)",
-            }}
-          >
+          <p className="mb-1 font-mono uppercase tracking-widest text-slate-500 text-[9px]">
             History
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100">
+          <h2 className="text-lg font-semibold text-white tracking-tight">
             Recent Interviews
           </h2>
         </div>
 
-        <button className="mt-1 flex items-center gap-1 text-xs text-cyan-400 transition-colors hover:text-cyan-300">
+        <button className="mt-1 flex items-center gap-1 text-xs text-cyan-400 transition-colors hover:text-cyan-300 active:scale-[0.98] cursor-pointer">
           View all <ArrowRight size={12} />
         </button>
       </div>
@@ -122,24 +96,11 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
       <div className="relative overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr
-              style={{
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
+            <tr className="border-b border-white/10">
               {["Role", "Score", "Date", "Status", ""].map((heading, index) => (
                 <th
                   key={index}
-                  className="pb-3 text-left"
-                  style={{
-                    fontSize: "9px",
-                    color: "rgba(100,116,139,0.6)",
-                    fontFamily: "monospace",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                    fontWeight: 500,
-                    paddingRight: "16px",
-                  }}
+                  className="pb-3 text-left text-slate-500 font-mono text-[9px] uppercase tracking-wider font-semibold pr-4"
                 >
                   {heading}
                 </th>
@@ -155,17 +116,14 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
                 <motion.tr
                   key={index}
                   whileHover={{
-                    backgroundColor: "rgba(255,255,255,0.03)",
+                    backgroundColor: "rgba(255,255,255,0.02)",
                   }}
-                  className="group cursor-pointer transition-all"
-                  style={{
-                    borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  }}
+                  className="group cursor-pointer transition-all border-b border-white/5"
                 >
                   {/* Role */}
                   <td className="py-4 pr-4">
                     <div>
-                      <p className="text-sm font-medium text-slate-200">
+                      <p className="text-sm font-semibold text-slate-200">
                         {interview.role}
                       </p>
 
@@ -173,12 +131,7 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
                         {(interview.tech || []).map((tech, i) => (
                           <span
                             key={i}
-                            className="rounded-md px-1.5 py-0.5 text-xs"
-                            style={{
-                              background: "rgba(255,255,255,0.06)",
-                              color: "rgba(148,163,184,0.7)",
-                              fontSize: "10px",
-                            }}
+                            className="rounded-md px-1.5 py-0.5 text-[10px] bg-white/[0.04] border border-white/5 text-slate-400 font-medium"
                           >
                             {tech}
                           </span>
@@ -191,11 +144,11 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
                   <td className="py-4 pr-4">
                     <div className="flex items-center gap-2">
                       <span
-                        className="rounded-lg px-2.5 py-1 text-sm font-bold"
+                        className="rounded-xl px-2.5 py-1 text-sm font-bold border"
                         style={{
                           background: sc.bg,
                           color: sc.text,
-                          border: `1px solid ${sc.border}`,
+                          borderColor: sc.border,
                         }}
                       >
                         {interview.score}%
@@ -205,12 +158,7 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
 
                   {/* Date */}
                   <td className="py-4 pr-4">
-                    <span
-                      className="text-xs font-mono"
-                      style={{
-                        color: "rgba(100,116,139,0.75)",
-                      }}
-                    >
+                    <span className="text-xs font-mono text-slate-400">
                       {interview.date}
                     </span>
                   </td>
@@ -219,14 +167,10 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
                   <td className="py-4 pr-4">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{
-                          background: "#4ade80",
-                          boxShadow: "0 0 6px rgba(74,222,128,0.7)",
-                        }}
+                        className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.7)]"
                       />
 
-                      <span className="text-xs" style={{ color: "#4ade80" }}>
+                      <span className="text-xs text-green-400 font-medium">
                         {interview.status}
                       </span>
                     </div>
@@ -246,55 +190,17 @@ const RecentInterviews = ({ interviews = defaultInterviews }) => {
       </div>
 
       {/* Footer */}
-      <div
-        className="mt-5 flex items-center justify-between pt-4"
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.05)",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "11px",
-            color: "rgba(100,116,139,0.6)",
-          }}
-        >
-          Showing{" "}
-          <span
-            style={{
-              color: "rgba(226,232,240,0.7)",
-            }}
-          >
-            {displayInterviews.length}
-          </span>{" "}
-          of{" "}
-          <span
-            style={{
-              color: "rgba(226,232,240,0.7)",
-            }}
-          >
-            24
-          </span>{" "}
-          interviews
+      <div className="mt-5 flex items-center justify-between pt-4 border-t border-white/5">
+        <p className="text-[11px] text-slate-500 font-medium">
+          Showing <span className="text-slate-300 font-semibold">{displayInterviews.length}</span> of <span className="text-slate-300 font-semibold">24</span> interviews
         </p>
 
         <div className="flex items-center gap-1.5">
-          <span
-            style={{
-              fontSize: "11px",
-              color: "rgba(100,116,139,0.6)",
-            }}
-          >
+          <span className="text-[11px] text-slate-500 font-medium">
             Avg score:
           </span>
 
-          <span
-            className="rounded-md px-2 py-0.5 text-xs font-bold"
-            style={{
-              background: "rgba(6,182,212,0.12)",
-              color: "#22d3ee",
-              border: "1px solid rgba(6,182,212,0.2)",
-            }}
-          >
+          <span className="rounded-lg px-2 py-0.5 text-xs font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
             {avgScore}%
           </span>
         </div>

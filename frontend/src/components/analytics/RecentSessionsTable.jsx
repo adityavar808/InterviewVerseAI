@@ -1,6 +1,8 @@
 // src/components/analytics/RecentSessionsTable.jsx
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { studentService } from "../../services/studentApi";
 
 import {
   Clock3,
@@ -9,7 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const sessions = [
+const defaultSessions = [
   {
     role: "Frontend Developer",
     type: "Technical Interview",
@@ -40,42 +42,75 @@ const sessions = [
   },
 ];
 
-const RecentSessionsTable = () => {
+const RecentSessionsTable = ({ sessions: propSessions }) => {
+  const [sessionsList, setSessionsList] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (propSessions && propSessions.length > 0) {
+      setSessionsList(propSessions);
+      return;
+    }
+
+    const fetchHistory = async () => {
+      try {
+        setLoading(true);
+        const data = await studentService.getInterviewHistory();
+        if (data && data.length > 0) {
+          const formatted = data.map(item => {
+            const scoreNum = parseInt(item.score) || 0;
+            return {
+              role: item.role || item.title || "AI Interview",
+              type: `${item.difficulty || "Medium"} Level`,
+              score: `${scoreNum}%`,
+              duration: item.duration || "30 Min",
+              status: scoreNum >= 70 ? "Passed" : "Needs Work",
+            };
+          });
+          setSessionsList(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to load interview history:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [propSessions]);
+
+  const displaySessions = sessionsList.length > 0 ? sessionsList : defaultSessions;
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="
-        relative
-        overflow-hidden
-        bg-white/5
-        border
-        border-white/10
-        backdrop-blur-xl
-        rounded-3xl
-        p-6
-      "
+      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
     >
-      {/* Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 pointer-events-none"></div>
+      {/* Glow and top line border */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-cyan-500/[0.06] blur-[50px]" />
+        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-purple-500/[0.06] blur-[50px]" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.5), rgba(139,92,246,0.3), transparent)" }} />
+      </div>
 
       <div className="relative">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 relative">
           
           <div>
-            <h2 className="text-2xl font-semibold text-white mb-2">
+            <h2 className="text-xl font-semibold text-white tracking-tight mb-1">
               Recent Sessions
             </h2>
 
-            <p className="text-sm text-gray-400">
+            <p className="text-xs text-slate-400">
               Latest AI interview performance history
             </p>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm">
-            <Sparkles size={16} />
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
+            <Sparkles size={13} />
             Session Analytics
           </div>
         </div>
@@ -88,23 +123,23 @@ const RecentSessionsTable = () => {
             <thead>
               <tr className="border-b border-white/10">
                 
-                <th className="text-left text-gray-400 font-medium py-4">
+                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
                   Role
                 </th>
 
-                <th className="text-left text-gray-400 font-medium py-4">
+                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
                   Interview Type
                 </th>
 
-                <th className="text-left text-gray-400 font-medium py-4">
+                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
                   Score
                 </th>
 
-                <th className="text-left text-gray-400 font-medium py-4">
+                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
                   Duration
                 </th>
 
-                <th className="text-left text-gray-400 font-medium py-4">
+                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
                   Status
                 </th>
               </tr>
@@ -112,12 +147,11 @@ const RecentSessionsTable = () => {
 
             <tbody>
               
-              {sessions.map((session, index) => (
+              {displaySessions.map((session, index) => (
                 <motion.tr
                   key={index}
                   whileHover={{
-                    backgroundColor:
-                      "rgba(255,255,255,0.03)",
+                    backgroundColor: "rgba(255,255,255,0.02)",
                   }}
                   className="border-b border-white/5 transition-all duration-300"
                 >
@@ -125,7 +159,7 @@ const RecentSessionsTable = () => {
                   <td className="py-5">
                     
                     <div>
-                      <h3 className="text-white font-medium">
+                      <h3 className="text-slate-200 font-semibold text-sm">
                         {session.role}
                       </h3>
                     </div>
@@ -134,7 +168,7 @@ const RecentSessionsTable = () => {
                   {/* Type */}
                   <td className="py-5">
                     
-                    <div className="px-4 py-2 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-sm w-fit">
+                    <div className="px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-medium w-fit">
                       {session.type}
                     </div>
                   </td>
@@ -142,7 +176,7 @@ const RecentSessionsTable = () => {
                   {/* Score */}
                   <td className="py-5">
                     
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-base font-bold text-white">
                       {session.score}
                     </div>
                   </td>
@@ -150,9 +184,9 @@ const RecentSessionsTable = () => {
                   {/* Duration */}
                   <td className="py-5">
                     
-                    <div className="flex items-center gap-2 text-gray-300">
+                    <div className="flex items-center gap-2 text-slate-300 text-sm">
                       
-                      <Clock3 size={16} />
+                      <Clock3 size={15} />
 
                       {session.duration}
                     </div>
@@ -162,16 +196,16 @@ const RecentSessionsTable = () => {
                   <td className="py-5">
                     
                     {session.status === "Passed" ? (
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm w-fit">
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium w-fit">
                         
-                        <CheckCircle2 size={16} />
+                        <CheckCircle2 size={14} />
 
                         Passed
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm w-fit">
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium w-fit">
                         
-                        <XCircle size={16} />
+                        <XCircle size={14} />
 
                         Needs Work
                       </div>
@@ -184,18 +218,17 @@ const RecentSessionsTable = () => {
         </div>
 
         {/* Bottom Info */}
-        <div className="mt-8 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-white/10 rounded-3xl p-5">
-          
-          <h3 className="text-lg font-semibold text-white mb-2">
-            AI Performance Tracking
-          </h3>
+        <div className="mt-6 bg-white/[0.03] border border-white/10 rounded-2xl p-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[0.03] to-purple-500/[0.03] pointer-events-none" />
+          <div className="relative">
+            <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
+              AI Performance Tracking
+            </h3>
 
-          <p className="text-sm text-gray-300 leading-relaxed">
-            Your recent interview sessions are continuously
-            analyzed to identify strengths, weaknesses, and
-            placement readiness trends using AI-powered
-            evaluation models.
-          </p>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Your recent interview sessions are continuously analyzed to identify strengths, weaknesses, and placement readiness trends using AI-powered evaluation models.
+            </p>
+          </div>
         </div>
       </div>
     </motion.div>

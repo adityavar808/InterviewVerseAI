@@ -1,3 +1,9 @@
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
+
+// Set PDF.js worker path using CDN matching the installed package version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
 const ROLE_KEYWORDS = {
   "MERN Developer": [
     "React",
@@ -121,14 +127,67 @@ const KNOWN_TECH_KEYWORDS = [
 const normalizeText = (text) =>
   (text || "").replace(/\s+/g, " ").trim();
 
-const extractTextFromFile = async (file) => {
-  const textTypes = ["text/plain", "application/json", "text/markdown"];
+const extractTextFromPDF = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+  const pdf = await loadingTask.promise;
+  
+  let fullText = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items
+      .map((item) => item.str)
+      .join(" ");
+    fullText += pageText + "\n";
+  }
+  return fullText;
+};
 
+const extractTextFromDocx = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value || "";
+};
+
+const extractTextFromFile = async (file) => {
   if (!file) {
     return "";
   }
 
-  if (textTypes.includes(file.type) || file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".json")) {
+  const name = file.name.toLowerCase();
+
+  // PDF format
+  if (name.endsWith(".pdf") || file.type === "application/pdf") {
+    try {
+      return await extractTextFromPDF(file);
+    } catch (err) {
+      console.error("PDF Parsing Error:", err);
+      throw new Error("Unable to parse PDF. Make sure the document is not password-protected.");
+    }
+  }
+
+  // Word docx format
+  if (
+    name.endsWith(".docx") ||
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    try {
+      return await extractTextFromDocx(file);
+    } catch (err) {
+      console.error("DOCX Parsing Error:", err);
+      throw new Error("Unable to parse DOCX. Make sure the document is not corrupted.");
+    }
+  }
+
+  // Text, markdown, json formats
+  const textTypes = ["text/plain", "application/json", "text/markdown"];
+  if (
+    textTypes.includes(file.type) ||
+    name.endsWith(".txt") ||
+    name.endsWith(".md") ||
+    name.endsWith(".json")
+  ) {
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result || "");

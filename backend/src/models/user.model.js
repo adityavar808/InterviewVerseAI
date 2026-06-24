@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["student", "admin"],
+      enum: ["student", "candidate", "recruiter", "admin"],
       default: "student",
     },
 
@@ -109,6 +109,40 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    solvedQuestions: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "CodingQuestion",
+      default: [],
+    },
+
+    solvedQuestionsMeta: {
+      type: [
+        {
+          questionId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "CodingQuestion",
+          },
+          code: { type: String, default: "" },
+          language: { type: String, default: "" },
+          timeComplexity: { type: String, default: "" },
+          spaceComplexity: { type: String, default: "" },
+          score: { type: Number, default: 0 },
+          tips: { type: [String], default: [] },
+          issues: { type: [String], default: [] },
+          solvedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
+
+    resumeAnalysis: {
+      atsScore: { type: Number, default: 0 },
+      role: { type: String, default: "" },
+      fileName: { type: String, default: "" },
+      improvements: { type: [String], default: [] },
+      analyzedAt: { type: Date },
+    },
+
     streak: {
       type: Number,
       default: 0,
@@ -117,6 +151,42 @@ const userSchema = new mongoose.Schema(
     profileImage: {
       type: String,
       default: "",
+    },
+
+    githubUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    linkedinUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    portfolioUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    certifications: {
+      type: [
+        {
+          title: { type: String, trim: true, default: "" },
+          issuer: { type: String, trim: true, default: "" },
+          year: { type: String, trim: true, default: "" },
+          description: { type: String, trim: true, default: "" },
+          certificateId: { type: String, trim: true, default: "" },
+          issueDateStart: { type: String, trim: true, default: "" },
+          issueDateEnd: { type: String, trim: true, default: "" },
+          fileUrl: { type: String, default: "" },
+          fileName: { type: String, trim: true, default: "" },
+          fileType: { type: String, trim: true, default: "" },
+        },
+      ],
+      default: [],
     },
     refreshToken: {
       type: String,
@@ -149,6 +219,36 @@ const userSchema = new mongoose.Schema(
 
     resetPasswordExpire: {
       type: Date,
+    },
+
+    notificationSettings: {
+      emailNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      interviewReminders: {
+        type: Boolean,
+        default: true,
+      },
+      aiInsightsAlerts: {
+        type: Boolean,
+        default: false,
+      },
+    },
+
+    twoFactorSecret: {
+      type: String,
+      default: "",
+    },
+
+    twoFactorTempSecret: {
+      type: String,
+      default: "",
+    },
+
+    isTwoFactorEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {

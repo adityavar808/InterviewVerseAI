@@ -109,6 +109,11 @@ export const adminService = {
     return response.data;
   },
 
+  verifyLogin2FA: async (payload) => {
+    const response = await adminApi.post("/login-2fa", payload);
+    return response.data;
+  },
+
   logout: async () => {
     const response =
       await adminApi.post("/logout");

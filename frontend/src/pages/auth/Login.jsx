@@ -45,6 +45,10 @@ const Login = () => {
   const dispatch  = useDispatch();
   const [showPw, setShowPw]         = useState(false);
   const [focused, setFocused]       = useState(null);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempToken, setTempToken] = useState("");
+  const [otpToken, setOtpToken] = useState("");
+  const [isVerifying2FA, setIsVerifying2FA] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -78,6 +82,13 @@ const Login = () => {
           replace: true,
         });
         toast.error(res.data.message || "Please verify your email first");
+        return;
+      }
+
+      if (res.data?.requires2FA) {
+        setTempToken(res.data.tempToken);
+        setRequires2FA(true);
+        toast.success("Please enter your 2FA verification code.");
         return;
       }
 
@@ -117,6 +128,47 @@ const Login = () => {
       }
 
       toast.error(message || "Login failed");
+    }
+  };
+
+  const handle2FAVerify = async (e) => {
+    e.preventDefault();
+    if (!otpToken || otpToken.length !== 6) {
+      toast.error("Please enter a 6-digit verification code.");
+      return;
+    }
+
+    try {
+      setIsVerifying2FA(true);
+      const res = await api.post("/auth/login-2fa", {
+        tempToken,
+        otpToken,
+      });
+
+      if (!res.data?.success) {
+        toast.error(res.data?.message || "2FA verification failed");
+        return;
+      }
+
+      toast.success("Welcome back!");
+      dispatch(setCredentials({ user: res.data.user, accessToken: res.data.accessToken }));
+      localStorage.setItem("accessToken", res.data.accessToken);
+      
+      if (res.data.user?.role === "admin") {
+        navigate("/admin-login", { replace: true });
+        return;
+      }
+
+      navigate(
+        res.data.user?.profileSetupDone === false
+          ? "/complete-profile"
+          : "/dashboard",
+        { replace: true }
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.message || "2FA verification failed");
+    } finally {
+      setIsVerifying2FA(false);
     }
   };
 
@@ -240,153 +292,208 @@ const Login = () => {
             <p className="mt-1 text-[13px] text-slate-500">Continue your preparation where you left off.</p>
           </div>
 
-          {/* Google */}
-          <button
-            type="button"
-            onClick={() => {
-              window.location.href = `${BACKEND_ORIGIN}/api/auth/google`;
-            }}
-            className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 text-[13px] text-slate-300 transition hover:border-white/[0.14] hover:bg-white/[0.07] hover:text-white"
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-
-          {/* Divider */}
-          <div className="relative mb-4 flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className="text-[9px] uppercase tracking-[0.2em] text-slate-700">or email</span>
-            <div className="flex-1 h-px bg-white/[0.06]" />
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
-
-            {/* Email */}
-            <div>
-              <label className="mb-1 block text-[11px] font-medium text-slate-400">Email address</label>
-              <div className={`rounded-xl border transition-all duration-200 ${
-                focused === "email"
-                  ? "border-emerald-400/40 bg-emerald-400/[0.04] shadow-[0_0_0_3px_rgba(52,211,153,0.07)]"
-                  : errors.email
-                  ? "border-rose-400/35 bg-rose-400/[0.03]"
-                  : "border-white/[0.08] bg-white/[0.04]"
-              }`}>
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: { value: /\S+@\S+\.\S+/, message: "Invalid email" },
-                  })}
-                  onFocus={() => setFocused("email")}
-                  onBlur={() => setFocused(null)}
-                  className="w-full bg-transparent px-4 py-3 text-[13px] text-white outline-none placeholder:text-slate-600"
-                />
+          {requires2FA ? (
+            <form onSubmit={handle2FAVerify} className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-xs text-slate-400">
+                  Please enter the 6-digit verification code from your authenticator app.
+                </p>
               </div>
-              <AnimatePresence>
-                {errors.email && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-1 text-[11px] text-rose-400"
-                  >
-                    {errors.email.message}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
 
-            {/* Password */}
-            <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label className="text-[11px] font-medium text-slate-400">Password</label>
-                <Link to="/forgot-password" className="text-[11px] text-slate-600 hover:text-emerald-400 transition-colors">
-                  Forgot?
-                </Link>
+              <div>
+                <label className="mb-1 block text-[11px] font-medium text-slate-400">Authenticator Code</label>
+                <div className={`rounded-xl border transition-all duration-200 ${
+                  focused === "otp"
+                    ? "border-emerald-400/40 bg-emerald-400/[0.04] shadow-[0_0_0_3px_rgba(52,211,153,0.07)]"
+                    : "border-white/[0.08] bg-white/[0.04]"
+                }`}>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    pattern="\d{6}"
+                    placeholder="123456"
+                    value={otpToken}
+                    onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ""))}
+                    onFocus={() => setFocused("otp")}
+                    onBlur={() => setFocused(null)}
+                    className="w-full bg-transparent px-4 py-3 text-center text-lg font-mono tracking-widest text-white outline-none placeholder:text-slate-700"
+                    required
+                    autoFocus
+                  />
+                </div>
               </div>
-              <div className={`relative rounded-xl border transition-all duration-200 ${
-                focused === "password"
-                  ? "border-emerald-400/40 bg-emerald-400/[0.04] shadow-[0_0_0_3px_rgba(52,211,153,0.07)]"
-                  : errors.password
-                  ? "border-rose-400/35 bg-rose-400/[0.03]"
-                  : "border-white/[0.08] bg-white/[0.04]"
-              }`}>
-                <input
-                  type={showPw ? "text" : "password"}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  {...register("password", { required: "Password is required" })}
-                  onFocus={() => setFocused("password")}
-                  onBlur={() => setFocused(null)}
-                  className="w-full bg-transparent px-4 py-3 pr-10 text-[13px] text-white outline-none placeholder:text-slate-600"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
-                >
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {errors.password && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-1 text-[11px] text-rose-400"
-                  >
-                    {errors.password.message}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 py-3 text-[13px] font-bold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 shadow-[0_0_18px_rgba(52,211,153,0.16)]"
-            >
-              <AnimatePresence mode="wait">
-                {isSubmitting ? (
-                  <motion.span key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    <motion.span
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                      className="inline-block h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950"
+              <button
+                type="submit"
+                disabled={isVerifying2FA || otpToken.length !== 6}
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 py-3 text-[13px] font-bold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 shadow-[0_0_18px_rgba(52,211,153,0.16)]"
+              >
+                {isVerifying2FA ? "Verifying…" : "Verify Code"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRequires2FA(false);
+                  setTempToken("");
+                  setOtpToken("");
+                }}
+                className="w-full text-center text-[12px] text-slate-500 hover:text-slate-400 transition-colors mt-2"
+              >
+                ← Back to Password Login
+              </button>
+            </form>
+          ) : (
+            <>
+              {/* Google */}
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = `${BACKEND_ORIGIN}/api/auth/google`;
+                }}
+                className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 text-[13px] text-slate-300 transition hover:border-white/[0.14] hover:bg-white/[0.07] hover:text-white"
+              >
+                <GoogleIcon />
+                Continue with Google
+              </button>
+
+              {/* Divider */}
+              <div className="relative mb-4 flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/[0.06]" />
+                <span className="text-[9px] uppercase tracking-[0.2em] text-slate-700">or email</span>
+                <div className="flex-1 h-px bg-white/[0.06]" />
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
+
+                {/* Email */}
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-slate-400">Email address</label>
+                  <div className={`rounded-xl border transition-all duration-200 ${
+                    focused === "email"
+                      ? "border-emerald-400/40 bg-emerald-400/[0.04] shadow-[0_0_0_3px_rgba(52,211,153,0.07)]"
+                      : errors.email
+                      ? "border-rose-400/35 bg-rose-400/[0.03]"
+                      : "border-white/[0.08] bg-white/[0.04]"
+                  }`}>
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      {...register("email", {
+                        required: "Email is required",
+                        pattern: { value: /\S+@\S+\.\S+/, message: "Invalid email" },
+                      })}
+                      onFocus={() => setFocused("email")}
+                      onBlur={() => setFocused(null)}
+                      className="w-full bg-transparent px-4 py-3 text-[13px] text-white outline-none placeholder:text-slate-600"
                     />
-                    Signing in…
-                  </motion.span>
-                ) : (
-                  <motion.span key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    Sign in
-                    <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-          </form>
+                  </div>
+                  <AnimatePresence>
+                    {errors.email && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-1 text-[11px] text-rose-400"
+                      >
+                        {errors.email.message}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-          {/* Footer links */}
-          <div className="mt-4 flex flex-col items-center gap-1.5">
-            <p className="text-center text-[13px] text-slate-600">
-              No account?{" "}
-              <Link to="/register" className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
-                Create one free
-              </Link>
-            </p>
-            <p className="text-center text-[11px] text-slate-700">
-              Administrator?{" "}
-              <Link to="/admin-login" className="text-slate-600 hover:text-slate-400 transition-colors underline underline-offset-2">
-                Admin login →
-              </Link>
-            </p>
-          </div>
+                {/* Password */}
+                <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="text-[11px] font-medium text-slate-400">Password</label>
+                    <Link to="/forgot-password" className="text-[11px] text-slate-600 hover:text-emerald-400 transition-colors">
+                      Forgot?
+                    </Link>
+                  </div>
+                  <div className={`relative rounded-xl border transition-all duration-200 ${
+                    focused === "password"
+                      ? "border-emerald-400/40 bg-emerald-400/[0.04] shadow-[0_0_0_3px_rgba(52,211,153,0.07)]"
+                      : errors.password
+                      ? "border-rose-400/35 bg-rose-400/[0.03]"
+                      : "border-white/[0.08] bg-white/[0.04]"
+                  }`}>
+                    <input
+                      type={showPw ? "text" : "password"}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      {...register("password", { required: "Password is required" })}
+                      onFocus={() => setFocused("password")}
+                      onBlur={() => setFocused(null)}
+                      className="w-full bg-transparent px-4 py-3 pr-10 text-[13px] text-white outline-none placeholder:text-slate-600"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPw(v => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
+                    >
+                      {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                  <AnimatePresence>
+                    {errors.password && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-1 text-[11px] text-rose-400"
+                      >
+                        {errors.password.message}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 py-3 text-[13px] font-bold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 shadow-[0_0_18px_rgba(52,211,153,0.16)]"
+                >
+                  <AnimatePresence mode="wait">
+                    {isSubmitting ? (
+                      <motion.span key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                          className="inline-block h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950"
+                        />
+                        Signing in…
+                      </motion.span>
+                    ) : (
+                      <motion.span key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                        Sign in
+                        <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </form>
+
+              {/* Footer links */}
+              <div className="mt-4 flex flex-col items-center gap-1.5">
+                <p className="text-center text-[13px] text-slate-600">
+                  No account?{" "}
+                  <Link to="/register" className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+                    Create one free
+                  </Link>
+                </p>
+                <p className="text-center text-[11px] text-slate-700">
+                  Administrator?{" "}
+                  <Link to="/admin-login" className="text-slate-600 hover:text-slate-400 transition-colors underline underline-offset-2">
+                    Admin login →
+                  </Link>
+                </p>
+              </div>
+            </>
+          )}
         </motion.div>
       </div>
     </div>

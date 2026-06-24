@@ -82,59 +82,81 @@ const PerformanceStats = ({ stats = defaultStats }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             whileHover={{ y: -4 }}
-            className={`
+            className="
               relative
               overflow-hidden
               rounded-3xl
               border
-              ${item.border}
-              ${item.bg}
+              border-white/10
+              bg-white/[0.035]
               backdrop-blur-xl
-              p-6
-            `}
+              p-5
+              transition-all
+              duration-300
+              hover:border-white/20
+            "
           >
-            {/* Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+            {/* Glow and top border indicator based on item color */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -top-12 -right-12 h-36 w-36 rounded-full opacity-[0.12] blur-[40px]"
+                   style={{
+                     backgroundColor:
+                       item.color.includes("cyan") ? "rgb(34,211,238)" :
+                       item.color.includes("purple") ? "rgb(167,139,250)" :
+                       item.color.includes("green") ? "rgb(74,222,128)" :
+                       item.color.includes("pink") ? "rgb(244,114,182)" : "rgb(34,211,238)"
+                   }}
+              />
+              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+                   style={{
+                     background: `linear-gradient(90deg, ${
+                       item.color.includes("cyan") ? "rgba(34,211,238,0.5)" :
+                       item.color.includes("purple") ? "rgba(167,139,250,0.5)" :
+                       item.color.includes("green") ? "rgba(74,222,128,0.5)" :
+                       item.color.includes("pink") ? "rgba(244,114,182,0.5)" : "rgba(34,211,238,0.5)"
+                     }, transparent)`
+                   }}
+              />
+            </div>
 
             {/* Top */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 relative">
               
               <div
                 className={`
-                  w-14
-                  h-14
+                  w-12
+                  h-12
                   rounded-2xl
                   flex
                   items-center
                   justify-center
+                  border
                   ${item.bg}
+                  ${item.border}
                 `}
               >
                 <Icon
                   className={item.color}
-                  size={28}
+                  size={24}
                 />
               </div>
 
-              <div className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs">
+              <div className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
                 {item.growth}
               </div>
             </div>
 
             {/* Content */}
-            <div>
+            <div className="relative">
               
-              <h2 className="text-4xl font-bold text-white mb-2">
+              <h2 className="text-3xl font-bold text-white mb-1.5 tracking-tight">
                 {item.value}
               </h2>
 
-              <p className="text-gray-400 text-sm">
+              <p className="text-slate-400 text-sm font-medium">
                 {item.title}
               </p>
             </div>
-
-            {/* Bottom Gradient */}
-            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </motion.div>
         );
       })}

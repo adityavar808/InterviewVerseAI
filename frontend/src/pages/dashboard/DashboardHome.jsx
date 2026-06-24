@@ -20,11 +20,11 @@ import {
   CheckCircle2,
   ArrowRight,
   Zap,
-  Target,
   BookOpen,
   Lightbulb,
   TrendingUp,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 
 const recentActivity = [
@@ -122,59 +122,103 @@ const DashboardHome = () => {
   const availableInterviews = dashboard?.availableInterviews || [];
   const availableCodingQuestions = dashboard?.availableCodingQuestions || [];
 
+  const readinessScore = Math.min(100, Math.max(0, Math.round(
+    ((overview.codingProblems || 0) / 250) * 40 +
+    ((overview.totalInterviews || 0) / 15) * 30 +
+    (overview.atsResumeScore || 0) * 0.3
+  )));
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         {/* HEADER SECTION */}
-        <section className="rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,rgba(6,182,212,0.16),rgba(15,23,42,0.82),rgba(99,102,241,0.08))] p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <section className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-[32px] p-6 lg:p-8">
+          {/* Glow and top line border */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-500/[0.12] blur-[80px] animate-pulse duration-[8s]" />
+            <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-500/[0.12] blur-[80px] animate-pulse duration-[10s]" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+                 style={{ background: "linear-gradient(90deg, transparent, rgba(6,182,212,0.8) 20%, rgba(139,92,246,0.8) 50%, rgba(244,114,182,0.6) 80%, transparent)" }} />
+          </div>
+
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-300">
-                Student dashboard
-              </p>
-              <h1 className="mt-3 text-4xl font-bold text-white">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-mono uppercase tracking-widest mb-3 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                <Sparkles size={11} className="text-cyan-400 animate-pulse" />
+                Student Dashboard
+              </div>
+              
+              <h1 className="mt-2 text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
                 Welcome,{" "}
-                <span
-                  style={{
-                    background: "linear-gradient(135deg, #06b6d4, #818cf8)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
+                <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
                   {dashboard?.user?.name || "Student"}
                 </span>
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-300">
                 Track your interview preparation journey, solve coding challenges, and improve your skills with personalized insights and recommendations.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Streak
+            <div className="relative group/readiness shrink-0 w-full lg:w-auto">
+              {/* Tooltip */}
+              <div className="absolute bottom-full right-0 mb-3 w-64 p-3 rounded-2xl border border-white/10 bg-[#0b0f19]/95 backdrop-blur-md shadow-2xl opacity-0 translate-y-1 group-hover/readiness:opacity-100 group-hover/readiness:translate-y-0 transition-all duration-300 pointer-events-none z-50">
+                <p className="text-[11px] text-white font-semibold mb-1 flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-cyan-400 animate-pulse" />
+                  Interview Readiness Score
                 </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {overview.dailyStreak || 0} days
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Coding Problems
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {overview.codingProblems || 0}
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  Based on your coding problems solved ({overview.codingProblems || 0}), total mock interviews ({overview.totalInterviews || 0}), and ATS resume score ({overview.atsResumeScore || 0}%).
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Available Questions
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {overview.availableCodingQuestions || 0}
-                </p>
+              {/* Circular Gauge Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] p-3.5 transition-all duration-300 flex items-center gap-4 hover:border-cyan-500/30 cursor-default hover:-translate-y-0.5 group-hover/readiness:shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/[0.02] to-cyan-500/0 opacity-0 group-hover/readiness:opacity-100 transition-opacity duration-300" />
+                <div className="absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent opacity-0 group-hover/readiness:opacity-100 transition-opacity duration-300" />
+                
+                {/* SVG Progress Circle */}
+                <div className="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
+                    {/* Background track */}
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="24"
+                      className="stroke-white/[0.04] fill-none"
+                      strokeWidth="4.5"
+                    />
+                    {/* Foreground progress path with gradient */}
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="24"
+                      className="fill-none transition-all duration-1000 ease-out"
+                      strokeWidth="4.5"
+                      strokeDasharray="150.8"
+                      strokeDashoffset={150.8 - (readinessScore / 100) * 150.8}
+                      strokeLinecap="round"
+                      stroke="url(#readinessGradient)"
+                    />
+                    <defs>
+                      <linearGradient id="readinessGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#22d3ee" />
+                        <stop offset="100%" stopColor="#818cf8" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Inside Text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-[13px] font-extrabold text-white leading-none">{readinessScore}%</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500 font-mono font-semibold">Readiness</p>
+                  <p className="text-sm font-bold text-white mt-0.5">
+                    {readinessScore >= 80 ? "Excellent Progress" : readinessScore >= 60 ? "Ready to Apply" : "Needs Practice"}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Keep preparing!</p>
+                </div>
               </div>
             </div>
           </div>
@@ -270,59 +314,56 @@ const DashboardHome = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.14 }}
-            className="rounded-[28px] border border-white/10 bg-white/5 p-6"
+            className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
           >
-            <div className="mb-6 flex items-center justify-between">
+            {/* Glow and top line border */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-cyan-500/[0.05] blur-[50px]" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+                   style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.5), transparent)" }} />
+            </div>
+
+            <div className="relative mb-6 flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-semibold">
                   Practice
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-white">
+                <h3 className="mt-1 text-lg font-semibold text-white tracking-tight">
                   Available Coding Questions
                 </h3>
               </div>
               <a
                 href="/coding"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white hover:bg-white/10 transition-colors"
-                style={{
-                  background: "rgba(6,182,212,0.1)",
-                  border: "1px solid rgba(6,182,212,0.2)",
-                  color: "#22d3ee",
-                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 hover:bg-cyan-500/15 active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
-                View All <ArrowRight size={14} />
+                View All <ArrowRight size={12} />
               </a>
             </div>
 
-            <div className="space-y-3">
+            <div className="relative space-y-3">
               {availableCodingQuestions.slice(0, 5).map((question) => (
                 <div
                   key={question._id}
-                  className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/5 p-4 md:flex-row md:items-center md:justify-between hover:bg-white/8 transition-colors cursor-pointer"
+                  className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:flex-row md:items-center md:justify-between hover:bg-white/[0.05] transition-all duration-300 cursor-pointer active:scale-[0.99]"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2.5">
                       <Code2 size={16} className="text-cyan-400" />
-                      <p className="font-semibold text-white">
+                      <p className="font-semibold text-white text-sm">
                         {question.title}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                       {question.category && (
                         <span
-                          className="text-xs px-2 py-1 rounded-md"
-                          style={{
-                            background: "rgba(6,182,212,0.1)",
-                            border: "1px solid rgba(6,182,212,0.2)",
-                            color: "#22d3ee",
-                          }}
+                          className="text-xs px-2.5 py-0.5 rounded-lg border bg-cyan-500/10 border-cyan-500/20 text-cyan-300 font-medium"
                         >
                           {question.category}
                         </span>
                       )}
                       {question.difficulty && (
                         <span
-                          className="text-xs px-2 py-1 rounded-md"
+                          className="text-xs px-2.5 py-0.5 rounded-lg border font-semibold"
                           style={{
                             background:
                               question.difficulty === "Hard"
@@ -330,12 +371,12 @@ const DashboardHome = () => {
                                 : question.difficulty === "Medium"
                                   ? "rgba(251,146,60,0.1)"
                                   : "rgba(34,197,94,0.1)",
-                            border:
+                            borderColor:
                               question.difficulty === "Hard"
-                                ? "1px solid rgba(239,68,68,0.2)"
+                                ? "rgba(239,68,68,0.2)"
                                 : question.difficulty === "Medium"
-                                  ? "1px solid rgba(251,146,60,0.2)"
-                                  : "1px solid rgba(34,197,94,0.2)",
+                                  ? "rgba(251,146,60,0.2)"
+                                  : "rgba(34,197,94,0.2)",
                             color:
                               question.difficulty === "Hard"
                                 ? "#f87171"
@@ -348,7 +389,7 @@ const DashboardHome = () => {
                         </span>
                       )}
                       {question.companies && question.companies.length > 0 && (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-500 font-medium">
                           {question.companies.slice(0, 2).join(", ")}
                           {question.companies.length > 2 &&
                             ` +${question.companies.length - 2}`}
@@ -356,11 +397,11 @@ const DashboardHome = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {question.acceptanceRate !== undefined && (
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500">Acceptance</p>
-                        <p className="text-lg font-semibold text-white">
+                      <div className="text-right pr-2">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Acceptance</p>
+                        <p className="text-base font-bold text-white leading-tight mt-0.5">
                           {question.acceptanceRate}%
                         </p>
                       </div>
@@ -368,12 +409,7 @@ const DashboardHome = () => {
                     <a
                       href={`/coding/${question._id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold"
-                      style={{
-                        background: "rgba(6,182,212,0.15)",
-                        border: "1px solid rgba(6,182,212,0.2)",
-                        color: "#22d3ee",
-                      }}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.2)] active:scale-[0.98] transition-all duration-300 cursor-pointer"
                     >
                       Solve <ArrowRight size={12} />
                     </a>
@@ -390,62 +426,59 @@ const DashboardHome = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.16 }}
-            className="rounded-[28px] border border-white/10 bg-white/5 p-6"
+            className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
           >
-            <div className="mb-6 flex items-center justify-between">
+            {/* Glow and top line border */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-purple-500/[0.05] blur-[50px]" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+                   style={{ background: "linear-gradient(90deg, rgba(167,139,250,0.5), transparent)" }} />
+            </div>
+
+            <div className="relative mb-6 flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-semibold">
                   Interviews
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-white">
+                <h3 className="mt-1 text-lg font-semibold text-white tracking-tight">
                   Available Interview Templates
                 </h3>
               </div>
               <a
                 href="/interviews"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white hover:bg-white/10 transition-colors"
-                style={{
-                  background: "rgba(99,102,241,0.1)",
-                  border: "1px solid rgba(99,102,241,0.2)",
-                  color: "#a78bfa",
-                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-purple-500/10 border border-purple-500/20 text-purple-300 hover:bg-purple-500/15 active:scale-[0.98] transition-all duration-300 cursor-pointer"
               >
-                View All <ArrowRight size={14} />
+                View All <ArrowRight size={12} />
               </a>
             </div>
 
-            <div className="space-y-3">
+            <div className="relative space-y-3">
               {availableInterviews.slice(0, 5).map((template) => (
                 <div
                   key={template._id}
-                  className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/5 p-4 md:flex-row md:items-center md:justify-between hover:bg-white/8 transition-colors cursor-pointer"
+                  className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:flex-row md:items-center md:justify-between hover:bg-white/[0.05] transition-all duration-300 cursor-pointer active:scale-[0.99]"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <BookOpen size={16} className="text-violet-400" />
-                      <p className="font-semibold text-white">
+                      <p className="font-semibold text-white text-sm">
                         {template.title}
                       </p>
                     </div>
-                    <p className="text-sm text-slate-400 mb-2">
-                      {template.description?.slice(0, 80)}...
+                    <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                      {template.description?.slice(0, 120)}...
                     </p>
                     <div className="flex items-center gap-3 flex-wrap">
                       {template.category && (
                         <span
-                          className="text-xs px-2 py-1 rounded-md"
-                          style={{
-                            background: "rgba(167,139,250,0.1)",
-                            border: "1px solid rgba(167,139,250,0.2)",
-                            color: "#a78bfa",
-                          }}
+                          className="text-xs px-2.5 py-0.5 rounded-lg border bg-purple-500/10 border-purple-500/20 text-purple-300 font-medium"
                         >
                           {template.category}
                         </span>
                       )}
                       {template.difficulty && (
                         <span
-                          className="text-xs px-2 py-1 rounded-md"
+                          className="text-xs px-2.5 py-0.5 rounded-lg border font-semibold"
                           style={{
                             background:
                               template.difficulty === "Hard"
@@ -453,12 +486,12 @@ const DashboardHome = () => {
                                 : template.difficulty === "Medium"
                                   ? "rgba(251,146,60,0.1)"
                                   : "rgba(34,197,94,0.1)",
-                            border:
+                            borderColor:
                               template.difficulty === "Hard"
-                                ? "1px solid rgba(239,68,68,0.2)"
+                                ? "rgba(239,68,68,0.2)"
                                 : template.difficulty === "Medium"
-                                  ? "1px solid rgba(251,146,60,0.2)"
-                                  : "1px solid rgba(34,197,94,0.2)",
+                                  ? "rgba(251,146,60,0.2)"
+                                  : "rgba(34,197,94,0.2)",
                             color:
                               template.difficulty === "Hard"
                                 ? "#f87171"
@@ -475,12 +508,7 @@ const DashboardHome = () => {
                   <a
                     href={`/interviews/${template._id}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold flex-shrink-0"
-                    style={{
-                      background: "rgba(167,139,250,0.15)",
-                      border: "1px solid rgba(167,139,250,0.2)",
-                      color: "#a78bfa",
-                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-450 hover:bg-purple-350 text-slate-950 shadow-[0_0_15px_rgba(167,139,250,0.2)] active:scale-[0.98] transition-all duration-300 cursor-pointer flex-shrink-0"
                   >
                     Start <ArrowRight size={12} />
                   </a>

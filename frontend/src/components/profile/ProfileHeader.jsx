@@ -1,15 +1,16 @@
 // src/components/profile/ProfileHeader.jsx
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
-
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BadgeCheck,
   Pencil,
   Sparkles,
   MapPin,
   BriefcaseBusiness,
+  Zap,
 } from "lucide-react";
 
 const getInitials = (name) =>
@@ -21,47 +22,40 @@ const getInitials = (name) =>
     .join("") || "ST";
 
 const ProfileHeader = () => {
+  const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   const user = useSelector((state) => state.auth.user || {});
-  const displayName = user.name || "Student Name";
-  const displayRole =
-    user.role === "student" ? "Student" : user.role || "Learner";
+
+  const displayName     = user.name || "Student Name";
+  const displayRole     = user.role === "student" ? "Student" : user.role || "Learner";
   const displayLocation = user.location || "Remote";
-  const displayBio =
-    user.bio ||
-    "Passionate learner tracking interview performance, coding progress, and career readiness with AI-powered insights.";
-  const skills = user.skills || ["React", "Node.js", "MongoDB", "AI/ML", "Tailwind CSS"];
   const initials = getInitials(displayName);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="
-        relative
-        overflow-hidden
-        bg-white/5
-        border
-        border-white/10
-        backdrop-blur-xl
-        rounded-3xl
-        p-6
-      "
+      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-7"
     >
-      {/* Glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 pointer-events-none"></div>
+      {/* Background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-cyan-500/[0.06] blur-[60px]" />
+        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-violet-500/[0.05] blur-[50px]" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.55), rgba(139,92,246,0.3), transparent)" }} />
+      </div>
 
-      <div className="relative flex flex-col xl:flex-row xl:items-center xl:justify-between gap-8">
-        
-        {/* Left */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          
-          {/* Profile Image */}
-          <div className="relative">
-            
-            <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-cyan-500 to-purple-500 p-[3px]">
-              
-              <div className="w-full h-full rounded-3xl bg-[#0B1120] flex items-center justify-center text-4xl font-bold text-white overflow-hidden">
+      <div className="relative flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8">
+
+        {/* ── Left ── */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-7">
+
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <div className="w-28 h-28 rounded-[22px] p-[2px]"
+                 style={{ background: "linear-gradient(135deg, rgba(6,182,212,0.7), rgba(139,92,246,0.7))" }}>
+              <div className="w-full h-full rounded-[20px] bg-slate-950 flex items-center justify-center overflow-hidden">
                 {user.profileImage && !imageError ? (
                   <img
                     src={user.profileImage}
@@ -70,130 +64,65 @@ const ProfileHeader = () => {
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                  initials
+                  <span className="text-3xl font-bold text-white/80">{initials}</span>
                 )}
               </div>
             </div>
-
-            {/* Online Badge */}
-            <div className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-green-400 border-4 border-[#0B1120]"></div>
+            {/* Online dot */}
+            <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center">
+              <Zap size={12} className="text-cyan-400" />
+            </div>
           </div>
 
-          {/* User Info */}
-          <div>
-            
-            <div className="flex flex-wrap items-center gap-3 mb-3">
-              
-              <h1 className="text-4xl font-bold text-white">
+          {/* Info */}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-white leading-tight tracking-tight">
                 {displayName}
               </h1>
-
-              <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-sm">
-                
-                <BadgeCheck size={16} />
-
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-400/20 bg-cyan-400/10 text-cyan-300 text-xs font-medium">
+                <BadgeCheck size={13} />
                 Verified
-              </div>
+              </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-gray-400 mb-5">
-              
-              <div className="flex items-center gap-2">
-                
-                <BriefcaseBusiness size={18} />
-
-                <span>{displayRole}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                
-                <MapPin size={18} />
-
-                <span>{displayLocation}</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-4 text-slate-400 text-sm mb-4">
+              <span className="flex items-center gap-1.5">
+                <BriefcaseBusiness size={15} />
+                {displayRole}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MapPin size={15} />
+                {displayLocation}
+              </span>
             </div>
 
-            <p className="max-w-2xl text-gray-300 leading-relaxed">
-              {displayBio}
-            </p>
-
-            {/* Skills */}
-            <div className="flex flex-wrap gap-3 mt-5">
-              
-              {skills.map((skill, index) => (
-                <div
-                  key={index}
-                  className="
-                    px-4
-                    py-2
-                    rounded-2xl
-                    bg-white/5
-                    border
-                    border-white/10
-                    text-sm
-                    text-gray-300
-                  "
-                >
-                  {skill}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Right */}
-        <div className="flex flex-col gap-4">
-          
-          {/* AI Badge */}
-          <div className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-300">
-            
-            <Sparkles size={18} />
-
+        {/* ── Right ── */}
+        <div className="flex flex-col gap-3 xl:items-end xl:flex-shrink-0">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-violet-400/20 bg-violet-400/10 text-violet-300 text-sm">
+            <Sparkles size={15} />
             AI Optimized Profile
           </div>
-
-          {/* Edit Button */}
           <button
-            className="
-              flex
-              items-center
-              justify-center
-              gap-2
-              px-6
-              py-3
-              rounded-2xl
-              bg-cyan-500
-              hover:bg-cyan-400
-              transition-all
-              duration-300
-              text-white
-              font-medium
-            "
+            onClick={() => navigate("/settings")}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 text-slate-950 text-sm font-semibold cursor-pointer"
           >
-            <Pencil size={18} />
-
+            <Pencil size={15} />
             Edit Profile
           </button>
         </div>
       </div>
 
-      {/* Bottom Info */}
-      <div className="relative mt-8 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-white/10 rounded-3xl p-5">
-        
-        <div className="flex items-start gap-3">
-          
-          <Sparkles
-            className="text-cyan-400 mt-1"
-            size={18}
-          />
-
-          <p className="text-sm text-gray-300 leading-relaxed">
-            Your profile showcases interview performance,
-            coding analytics, resume strength, achievements,
-            and AI-generated career insights to recruiters
-            and placement systems.
-          </p>
-        </div>
+      {/* Bottom AI note */}
+      <div className="relative mt-7 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4">
+        <Sparkles size={15} className="text-cyan-400 mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Your profile showcases interview performance, coding analytics, resume strength, achievements,
+          and AI-generated career insights to recruiters and placement systems.
+        </p>
       </div>
     </motion.div>
   );

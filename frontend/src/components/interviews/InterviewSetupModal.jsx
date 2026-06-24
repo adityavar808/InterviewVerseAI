@@ -12,6 +12,7 @@ import {
   Sparkles,
   Globe,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 
 const difficulties = ["Easy", "Medium", "Hard"];
@@ -37,6 +38,7 @@ const InterviewSetupModal = ({ open, onClose }) => {
   const [selectedExperience, setSelectedExperience] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   if (!open) return null;
 
@@ -180,7 +182,7 @@ const InterviewSetupModal = ({ open, onClose }) => {
         </div>
 
         {/* MAIN GRID */}
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-20">
           {/* LEFT */}
           <div className="space-y-4">
             {/* DIFFICULTY */}
@@ -212,27 +214,89 @@ const InterviewSetupModal = ({ open, onClose }) => {
             </div>
 
             {/* ROLE */}
-            <div>
+            <div className="relative">
               <p className="text-xs font-semibold text-white mb-2">
                 Interview Role
               </p>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="
-                  w-full px-4 py-3 rounded-xl text-sm
-                  bg-white/5 border border-white/10 hover:border-cyan-500/25
-                  text-slate-300 focus:bg-white/8 focus:border-cyan-500/50
-                  outline-none transition-all cursor-pointer
-                "
-              >
-                <option value="">Select a role...</option>
-                {roles.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
+              <div className="relative" id="role-select-container">
+                <button
+                  type="button"
+                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                  className="
+                    w-full px-4 py-3 rounded-xl text-sm text-left
+                    bg-white/5 border border-white/10 hover:border-cyan-500/25
+                    text-white flex items-center justify-between
+                    outline-none transition-all cursor-pointer
+                  "
+                  style={{
+                    borderColor: isRoleDropdownOpen ? "rgba(6,182,212,0.5)" : "rgba(255,255,255,0.1)",
+                    boxShadow: isRoleDropdownOpen ? "0 0 10px rgba(6,182,212,0.15)" : "none",
+                  }}
+                >
+                  <span className={selectedRole ? "text-white" : "text-slate-400"}>
+                    {selectedRole || "Select a role..."}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-slate-400 transition-transform duration-200 ${
+                      isRoleDropdownOpen ? "rotate-180 text-cyan-400" : ""
+                    }`}
+                  />
+                </button>
+
+                {isRoleDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsRoleDropdownOpen(false)}
+                    />
+                    <div
+                      className="
+                        absolute z-50 left-0 right-0 mt-2
+                        rounded-xl border border-white/10
+                        bg-[#0f172a]
+                        shadow-[0_15px_50px_rgba(0,0,0,0.6)]
+                        max-h-60 overflow-y-auto py-1
+                      "
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedRole("");
+                          setIsRoleDropdownOpen(false);
+                        }}
+                        className="
+                          w-full px-4 py-3 text-sm text-left
+                          text-slate-400 hover:text-white hover:bg-white/5
+                          transition-colors cursor-pointer block
+                        "
+                      >
+                        Select a role...
+                      </button>
+                      {roles.map((role) => (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => {
+                            setSelectedRole(role);
+                            setIsRoleDropdownOpen(false);
+                          }}
+                          className={`
+                            w-full px-4 py-3 text-sm text-left block transition-all cursor-pointer
+                            ${
+                              selectedRole === role
+                                ? "bg-cyan-500/20 text-cyan-300 font-medium"
+                                : "text-slate-200 hover:text-white hover:bg-white/5"
+                            }
+                          `}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* EXPERIENCE */}

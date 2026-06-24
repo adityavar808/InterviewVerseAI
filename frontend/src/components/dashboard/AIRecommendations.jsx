@@ -34,57 +34,32 @@ const AIRecommendations = () => {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15 }}
-      className="relative rounded-2xl p-6 overflow-hidden"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        backdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-      }}
+      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
     >
-      {/* Top shimmer */}
-      <div
-        className="absolute top-0 left-8 right-8 h-px"
-        style={{
-          background: "linear-gradient(90deg, transparent, rgba(167,139,250,0.5), transparent)",
-        }}
-      />
-
-      {/* Ambient orb */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "260px", height: "260px",
-          top: "-80px", right: "-60px",
-          background: "radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)",
-        }}
-      />
+      {/* Glow and top line border */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-purple-500/[0.05] blur-[50px]" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
+             style={{ background: "linear-gradient(90deg, rgba(167,139,250,0.5), transparent)" }} />
+      </div>
 
       {/* Header */}
       <div className="relative flex items-start justify-between mb-6">
         <div>
-          <p
-            className="font-mono uppercase tracking-widest mb-1"
-            style={{ fontSize: "9px", color: "rgba(100,116,139,0.7)" }}
-          >
+          <p className="font-mono uppercase tracking-widest text-[9px] text-slate-500 mb-1">
             Insights
           </p>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-lg font-semibold text-slate-100">AI Recommendations</h2>
-            <div
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full"
-              style={{
-                background: "rgba(167,139,250,0.1)",
-                border: "1px solid rgba(167,139,250,0.2)",
-              }}
-            >
+            <h2 className="text-lg font-semibold text-white tracking-tight">AI Recommendations</h2>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-              <span className="text-violet-400 font-mono uppercase tracking-widest" style={{ fontSize: "9px" }}>
+              <span className="text-violet-400 font-mono uppercase tracking-widest text-[9px]">
                 Live
               </span>
             </div>
           </div>
         </div>
-        <button className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors mt-1">
+        <button className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors mt-1 cursor-pointer">
           View all <ArrowRight size={12} />
         </button>
       </div>
@@ -98,26 +73,14 @@ const AIRecommendations = () => {
               key={index}
               whileHover={{ x: 4 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="flex items-start gap-4 p-4 rounded-xl cursor-default transition-all"
-              style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-              }}
+              className="flex items-start gap-4 p-4 rounded-2xl cursor-default transition-all duration-300 bg-white/[0.03] border border-white/10 hover:bg-white/[0.045]"
             >
               {/* Icon box */}
               <div
-                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border"
                 style={{
                   background: item.accent.bg,
-                  border: `1px solid ${item.accent.border}`,
+                  borderColor: item.accent.border,
                   boxShadow: `0 0 16px ${item.accent.glow}`,
                 }}
               >
@@ -127,9 +90,9 @@ const AIRecommendations = () => {
               {/* Text */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>
+                  <h3 className="text-sm font-semibold text-white tracking-tight">{item.title}</h3>
                   <span
-                    className="text-xs px-2 py-0.5 rounded-md font-medium flex-shrink-0"
+                    className="text-[10px] px-2 py-0.5 rounded-md font-semibold flex-shrink-0"
                     style={{
                       background: item.badgeColor.bg,
                       color: item.badgeColor.text,
@@ -138,7 +101,7 @@ const AIRecommendations = () => {
                     {item.badge}
                   </span>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: "rgba(148,163,184,0.75)" }}>
+                <p className="text-xs leading-relaxed text-slate-400">
                   {item.description}
                 </p>
               </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Code2, Eye, FileCode2, Plus, Rocket } from "lucide-react";
+import { Code2, Eye, FileCode2, Plus, Rocket, Trash2, X, Sparkles, FlaskConical } from "lucide-react";
 
 import StatsCard from "../components/ui/StatsCard";
 import SearchBar from "../components/ui/SearchBar";
@@ -24,6 +24,21 @@ const CodingQuestions = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
+  const [testCaseManagingItem, setTestCaseManagingItem] = useState(null);
+  const [tempTestCases, setTempTestCases] = useState([]);
+  const [newInput, setNewInput] = useState("");
+  const [newExpectedOutput, setNewExpectedOutput] = useState("");
+  const [newIsSample, setNewIsSample] = useState(false);
+  const [isSavingTestCases, setIsSavingTestCases] = useState(false);
+
+  useEffect(() => {
+    if (testCaseManagingItem) {
+      setTempTestCases(testCaseManagingItem.testCases || []);
+      setNewInput("");
+      setNewExpectedOutput("");
+      setNewIsSample(false);
+    }
+  }, [testCaseManagingItem]);
 
   const loadQuestions = async () => {
     try {
@@ -443,6 +458,15 @@ const CodingQuestions = () => {
                 <button
                   type="button"
                   onClick={() => {
+                    setTestCaseManagingItem(previewItem);
+                  }}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+                >
+                  Manage Test Cases
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setEditingItem(previewItem);
                     setPreviewItem(null);
                     setFormOpen(true);
@@ -452,6 +476,206 @@ const CodingQuestions = () => {
                   Edit Question
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {testCaseManagingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-[28px] border border-white/10 bg-slate-950 p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-cyan-300 flex items-center gap-1.5">
+                  <FlaskConical size={14} />
+                  Manage Test Cases
+                </p>
+                <h2 className="mt-2 text-xl font-bold text-white">
+                  {testCaseManagingItem.title}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTestCaseManagingItem(null)}
+                className="rounded-xl border border-white/10 p-2 text-slate-400 hover:bg-white/5 hover:text-white transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="mt-6 grid gap-6 overflow-hidden md:grid-cols-5 flex-1 min-h-0">
+              {/* Left Column: Test Cases List */}
+              <div className="md:col-span-3 flex flex-col min-h-0">
+                <h3 className="text-sm font-semibold text-slate-300 mb-3">
+                  Existing Test Cases ({tempTestCases.length})
+                </h3>
+                
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                  {tempTestCases.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-48 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-slate-500">
+                      <p className="text-sm">No test cases configured yet.</p>
+                      <p className="text-xs mt-1">Add one on the right to get started.</p>
+                    </div>
+                  ) : (
+                    tempTestCases.map((tc, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 flex flex-col gap-3 relative group transition hover:border-white/10"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400/80 bg-cyan-400/5 px-2.5 py-1 rounded-full border border-cyan-400/10">
+                            Case {idx + 1}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            {tc.isSample && (
+                              <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md border border-emerald-400/20">
+                                Sample
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTempTestCases(prev => prev.filter((_, i) => i !== idx));
+                              }}
+                              className="text-rose-400 hover:text-rose-300 p-1 rounded-lg hover:bg-rose-500/10 transition"
+                              title="Delete Test Case"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2 text-xs">
+                          <div>
+                            <span className="text-slate-500 font-medium">Input:</span>
+                            <pre className="mt-1 overflow-x-auto rounded-lg bg-slate-950 p-2 text-slate-300 whitespace-pre-wrap font-mono max-h-24">
+                              {tc.input}
+                            </pre>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 font-medium">Expected Output:</span>
+                            <pre className="mt-1 overflow-x-auto rounded-lg bg-slate-950 p-2 text-slate-300 whitespace-pre-wrap font-mono max-h-24">
+                              {tc.expectedOutput}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Add Test Case Form */}
+              <div className="md:col-span-2 flex flex-col border-t border-white/10 pt-4 md:border-t-0 md:pt-0 md:border-l md:border-white/10 md:pl-6 min-h-0 overflow-y-auto pr-1">
+                <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-cyan-400" />
+                  Add New Test Case
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-slate-400">Input Arguments</span>
+                    <textarea
+                      value={newInput}
+                      onChange={(e) => setNewInput(e.target.value)}
+                      rows={3}
+                      placeholder="e.g. nums = [2,7,11,15]\ntarget = 9&#10;or [2,7,11,15]\n9"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono text-white outline-none transition focus:border-cyan-400/40"
+                    />
+                    <p className="text-[10px] text-slate-500 leading-normal">
+                      Provide values matching parameter order or standard assignment lines.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-slate-400">Expected Output</span>
+                    <textarea
+                      value={newExpectedOutput}
+                      onChange={(e) => setNewExpectedOutput(e.target.value)}
+                      rows={2}
+                      placeholder="e.g. [0, 1] or 6 or &quot;bab&quot;"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono text-white outline-none transition focus:border-cyan-400/40"
+                    />
+                    <p className="text-[10px] text-slate-500 leading-normal">
+                      Enter the JSON value or literal string returned by the function.
+                    </p>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={newIsSample}
+                      onChange={(e) => setNewIsSample(e.target.checked)}
+                      className="rounded border-white/10 bg-white/5 text-cyan-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    <span className="text-xs font-medium text-slate-300">
+                      Mark as Sample Case
+                    </span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newInput.trim() || !newExpectedOutput.trim()) {
+                        toast.error("Both Input and Expected Output are required");
+                        return;
+                      }
+                      setTempTestCases(prev => [
+                        ...prev,
+                        {
+                          input: newInput.trim(),
+                          expectedOutput: newExpectedOutput.trim(),
+                          isSample: newIsSample
+                        }
+                      ]);
+                      setNewInput("");
+                      setNewExpectedOutput("");
+                      setNewIsSample(false);
+                      toast.success("Test case added locally");
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-cyan-400/10 hover:bg-cyan-400/20 text-cyan-300 border border-cyan-400/20 text-xs font-semibold tracking-wide transition uppercase"
+                  >
+                    Add Test Case
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-5 mt-6">
+              <button
+                type="button"
+                onClick={() => setTestCaseManagingItem(null)}
+                className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingTestCases}
+                onClick={async () => {
+                  try {
+                    setIsSavingTestCases(true);
+                    await adminService.updateCodingQuestion(testCaseManagingItem._id, {
+                      testCases: tempTestCases
+                    });
+                    toast.success("Test cases saved successfully");
+                    
+                    setPreviewItem(prev => prev ? { ...prev, testCases: tempTestCases } : null);
+                    setTestCaseManagingItem(null);
+                    loadQuestions();
+                  } catch (err) {
+                    toast.error(err.response?.data?.message || "Unable to save test cases");
+                  } finally {
+                    setIsSavingTestCases(false);
+                  }
+                }}
+                className="rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-5 py-2 text-xs font-semibold text-slate-950 transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingTestCases ? "Saving..." : "Save Test Cases"}
+              </button>
             </div>
           </div>
         </div>
