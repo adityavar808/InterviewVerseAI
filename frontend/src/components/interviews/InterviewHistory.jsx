@@ -671,7 +671,7 @@ const InterviewHistory = () => {
       </div>
 
       {/* Scrollable list area */}
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+      <div className="flex-1 overflow-y-auto space-y-2.5 pr-1.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.12)_transparent]">
         {filteredInterviews.map((interview, index) => {
           const sc = getScoreColor(interview.score);
           const diffStyle = getDifficultyBadge(interview.difficulty);
@@ -684,31 +684,38 @@ const InterviewHistory = () => {
           return (
             <motion.div
               key={interview.id}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="group rounded-xl p-3 md:p-3.5 transition-all hover:bg-white/[0.04]"
+              transition={{ delay: index * 0.04 }}
+              className="group rounded-xl p-3.5 transition-all hover:border-cyan-500/40 cursor-default shadow-md"
               style={{
-                background: isActive ? "rgba(6,182,212,0.06)" : "rgba(255,255,255,0.02)",
+                background: isActive ? "rgba(6,182,212,0.08)" : "rgba(15,23,42,0.6)",
                 border: isActive
-                  ? "1px solid rgba(6,182,212,0.2)"
-                  : "1px solid rgba(255,255,255,0.05)",
+                  ? "1px solid rgba(6,182,212,0.3)"
+                  : "1px solid rgba(255,255,255,0.08)",
               }}
             >
               <div className="flex items-center gap-3.5">
-                {/* Score ring */}
+                {/* Score badge / ring */}
                 <div className="flex-shrink-0">
-                  <ScoreRing score={interview.score} size={50} strokeWidth={3.5} />
+                  {interview.score > 0 ? (
+                    <ScoreRing score={interview.score} size={48} strokeWidth={3.5} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-inner">
+                      <span className="text-xs font-bold text-slate-300">0%</span>
+                      <span className="text-[8px] font-mono uppercase text-slate-400">Score</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-cyan-300 transition-colors">
+                    <h3 className="text-white font-bold text-sm leading-snug group-hover:text-cyan-300 transition-colors">
                       {interview.role}
                     </h3>
                     <span
-                      className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
+                      className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
                       style={diffStyle}
                     >
                       {interview.difficulty}
@@ -720,54 +727,55 @@ const InterviewHistory = () => {
                       {cleanTags.slice(0, 4).map((tag, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/[0.04] text-slate-300 border border-white/5"
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-white/[0.04] text-slate-300 border border-white/10"
                         >
                           #{tag}
                         </span>
                       ))}
                       {cleanTags.length > 4 && (
-                        <span className="px-1.5 py-0.5 rounded-md text-[10px] text-slate-500 bg-white/[0.02]">
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono text-slate-400 bg-white/[0.02]">
                           +{cleanTags.length - 4}
                         </span>
                       )}
                     </div>
                   ) : null}
 
-                  <div className="flex items-center gap-2.5 text-[11px] text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Clock size={10} />
+                  <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                    <span className="flex items-center gap-1 font-medium">
+                      <Clock size={11} className="text-slate-400" />
                       {interview.duration}
                     </span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-slate-600" />
-                    <span>{interview.date}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span className="font-medium">{interview.date}</span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex-shrink-0 flex gap-1.5">
+                <div className="flex-shrink-0 flex items-center gap-2">
                   <button
-                    className="w-8.5 h-8.5 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm text-xs font-bold"
                     style={{
-                      background: isActive ? "rgba(6,182,212,0.2)" : "rgba(6,182,212,0.08)",
-                      border: "1px solid rgba(6,182,212,0.25)",
-                      color: "#06b6d4",
+                      background: isActive ? "rgba(6,182,212,0.25)" : "rgba(6,182,212,0.12)",
+                      border: "1px solid rgba(6,182,212,0.3)",
+                      color: "#67e8f9",
                     }}
                     title="View Comprehensive Score Analysis"
                     onClick={() => openSessionAnalysis(interview)}
                   >
-                    <BarChart3 size={14} />
+                    <BarChart3 size={13} />
+                    <span>Review</span>
                   </button>
                   <button
-                    className="w-8.5 h-8.5 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                     style={{
-                      background: "rgba(139,92,246,0.08)",
-                      border: "1px solid rgba(139,92,246,0.2)",
-                      color: "#a78bfa",
+                      background: "rgba(139,92,246,0.1)",
+                      border: "1px solid rgba(139,92,246,0.25)",
+                      color: "#c084fc",
                     }}
-                    title="Reattempt Interview Track"
-                    onClick={() => toast.success("Select a track above to launch a new interview session.")}
+                    title="Reattempt Track"
+                    onClick={() => toast.success("Select a track above to launch a new session.")}
                   >
-                    <RotateCcw size={14} />
+                    <RotateCcw size={13} />
                   </button>
                 </div>
               </div>

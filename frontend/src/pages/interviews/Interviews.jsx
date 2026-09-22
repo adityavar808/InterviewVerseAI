@@ -12,6 +12,7 @@ import {
   Zap,
   Target,
   Clock,
+  Sliders,
 } from "lucide-react";
 
 import InterviewSetupModal from "../../components/interviews/InterviewSetupModal";
@@ -69,65 +70,67 @@ const Interviews = () => {
     <>
       <DashboardLayout>
         <div className="max-w-[1600px] mx-auto">
-          {/* SIDE-BY-SIDE 2-COLUMN LAYOUT */}
+          {/* EQUAL HEIGHT 2-COLUMN GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             
-            {/* LEFT COLUMN: Static & Non-scrollable */}
-            <div className="lg:col-span-5 space-y-3 lg:sticky lg:top-2 self-start">
+            {/* LEFT COLUMN: Fixed Intro & Track Selection Panel */}
+            <div className="lg:col-span-5 space-y-3.5 lg:sticky lg:top-2 self-start">
+              
               {/* HERO INTRO CARD */}
-              <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90 p-4.5 backdrop-blur-2xl shadow-xl">
-                {/* Ambient Glow */}
+              <div className="relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-5 backdrop-blur-2xl shadow-2xl">
+                {/* Glowing Background Orbs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  <div className="absolute -top-24 right-[-80px] h-[250px] w-[250px] rounded-full bg-cyan-500/15 blur-3xl" />
-                  <div className="absolute bottom-[-140px] left-[-60px] h-[200px] w-[200px] rounded-full bg-sky-500/10 blur-3xl" />
+                  <div className="absolute -top-20 right-[-60px] h-[260px] w-[260px] rounded-full bg-cyan-500/15 blur-3xl" />
+                  <div className="absolute bottom-[-120px] left-[-40px] h-[200px] w-[200px] rounded-full bg-indigo-500/15 blur-3xl" />
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400" />
                 </div>
 
                 <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-cyan-500/10 border border-cyan-500/25">
+                  <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-cyan-500/10 border border-cyan-500/25 shadow-sm">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                     <Sparkles size={13} className="text-cyan-400" />
-                    <span className="text-[11px] font-semibold text-cyan-300 tracking-wide">
-                      AI Interview Engine
+                    <span className="text-[11px] font-semibold text-cyan-300">
+                      AI Interview Engine 2.0
                     </span>
                   </div>
 
-                  <h1 className="mt-2.5 text-xl md:text-2xl font-bold leading-tight text-white">
-                    Master Technical &
-                    <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">
-                      {" "}HR Interviews
+                  <h1 className="mt-3 text-xl md:text-2xl font-extrabold leading-tight text-white tracking-tight">
+                    Master Technical &{" "}
+                    <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
+                      HR Interviews
                     </span>
                   </h1>
 
-                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                    Interactive voice & video AI mock interviews with instant scoring, rubric feedback, and question breakdown.
+                  <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+                    Practice voice & video AI mock interviews with real-time feedback, rubric scoring, and question breakdown.
                   </p>
 
-                  {/* Feature Highlights */}
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] border border-white/5">
-                      <Zap size={11} className="text-amber-400" />
-                      Instant Scoring
+                  {/* Highlights */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 font-medium">
+                      <Zap size={12} className="text-amber-400" />
+                      Instant Evaluation
                     </span>
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] border border-white/5">
-                      <Target size={11} className="text-cyan-400" />
-                      Role-Specific
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 font-medium">
+                      <Target size={12} className="text-cyan-400" />
+                      Role Adaptive
                     </span>
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] border border-white/5">
-                      <Clock size={11} className="text-emerald-400" />
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 font-medium">
+                      <Clock size={12} className="text-emerald-400" />
                       15–60 Min
                     </span>
                   </div>
 
-                  {/* Custom Setup CTA */}
+                  {/* Start Custom Setup CTA */}
                   <button
-                    className="mt-3.5 w-full group inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-slate-950 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
+                    className="mt-4 w-full group inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-950 transition-all duration-300 hover:scale-[1.01] cursor-pointer shadow-lg shadow-cyan-500/20"
                     style={{
                       background: "linear-gradient(135deg, #22d3ee 0%, #0891b2 100%)",
-                      boxShadow: "0 0 20px rgba(34,211,238,0.25)",
                     }}
                     onClick={() => handleLaunchTrack("")}
                   >
-                    <span>Start Custom Interview</span>
+                    <Sliders size={14} />
+                    <span>Configure Custom Session</span>
                     <ArrowRight
                       size={14}
                       className="transition-transform duration-300 group-hover:translate-x-1"
@@ -136,12 +139,15 @@ const Interviews = () => {
                 </div>
               </div>
 
-              {/* TRACK SELECTION CARDS */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-1">
-                  Available Track Sessions
-                </p>
-                
+              {/* TRACK SELECTION LIST */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Available Track Sessions
+                  </p>
+                  <span className="text-[10px] text-cyan-400 font-medium">1-Click Launch</span>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
                   {interviewTypes.map((item, index) => {
                     const Icon = item.icon;
@@ -151,7 +157,7 @@ const Interviews = () => {
                         key={index}
                         type="button"
                         onClick={() => handleLaunchTrack(item.role)}
-                        className="group relative text-left overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-2.5 transition-all duration-300 hover:border-cyan-500/40 hover:bg-white/[0.06] cursor-pointer"
+                        className="group relative text-left overflow-hidden rounded-xl border border-white/10 bg-slate-900/60 p-3 transition-all duration-300 hover:border-cyan-500/40 hover:bg-slate-900/90 cursor-pointer shadow-md backdrop-blur-md"
                       >
                         {/* Glow */}
                         <div
@@ -161,48 +167,49 @@ const Interviews = () => {
                           }}
                         />
 
-                        <div className="relative z-10 flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2.5">
+                        <div className="relative z-10 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
                             <div
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
                               style={{
                                 background: `${item.color}15`,
                                 border: `1px solid ${item.color}30`,
                               }}
                             >
                               <Icon
-                                size={16}
+                                size={17}
                                 style={{
                                   color: item.color,
                                 }}
                               />
                             </div>
                             <div>
-                              <h3 className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">
-                                {item.title}
-                              </h3>
-                              <span
-                                className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-medium"
-                                style={{
-                                  background: `${item.color}15`,
-                                  color: item.color,
-                                  border: `1px solid ${item.color}25`,
-                                }}
-                              >
-                                {item.badge}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
+                                  {item.title}
+                                </h3>
+                                <span
+                                  className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider"
+                                  style={{
+                                    background: `${item.color}15`,
+                                    color: item.color,
+                                    border: `1px solid ${item.color}25`,
+                                  }}
+                                >
+                                  {item.badge}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-[11px] leading-tight text-slate-400 line-clamp-1">
+                                {item.description}
+                              </p>
                             </div>
                           </div>
 
                           <ChevronRight
-                            size={14}
-                            className="text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all mt-1"
+                            size={15}
+                            className="text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all shrink-0"
                           />
                         </div>
-
-                        <p className="relative z-10 mt-1 text-[11px] leading-snug text-slate-400 line-clamp-1">
-                          {item.description}
-                        </p>
                       </button>
                     );
                   })}
@@ -210,20 +217,20 @@ const Interviews = () => {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: History with Fixed Height & Scrollable Box */}
-            <div className="lg:col-span-7 space-y-2.5 flex flex-col h-[calc(100vh-140px)] min-h-[520px]">
-              <div className="flex items-center justify-between gap-4 px-1 shrink-0">
+            {/* RIGHT COLUMN: Fixed Height Container with Internal Scrollable History */}
+            <div className="lg:col-span-7 flex flex-col h-[calc(100vh-140px)] min-h-[560px]">
+              <div className="flex items-center justify-between gap-4 px-1 mb-2.5 shrink-0">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/80">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/80">
                     Performance Records
                   </p>
-                  <h2 className="mt-0.5 text-lg md:text-xl font-bold text-white">
-                    Interview History
+                  <h2 className="text-lg md:text-xl font-extrabold text-white tracking-tight">
+                    Interview History & Analytics
                   </h2>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl flex flex-col">
+              <div className="flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-4 backdrop-blur-2xl shadow-2xl flex flex-col">
                 <InterviewHistory />
               </div>
             </div>
