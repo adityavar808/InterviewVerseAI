@@ -86,15 +86,7 @@ const Interviews = () => {
                 </div>
 
                 <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-cyan-500/10 border border-cyan-500/25 shadow-sm">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    <Sparkles size={13} className="text-cyan-400" />
-                    <span className="text-[11px] font-semibold text-cyan-300">
-                      AI Interview Engine 2.0
-                    </span>
-                  </div>
-
-                  <h1 className="mt-3 text-xl md:text-2xl font-extrabold leading-tight text-white tracking-tight">
+                  <h1 className="text-xl md:text-2xl font-extrabold leading-tight text-white tracking-tight">
                     Master Technical &{" "}
                     <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
                       HR Interviews
