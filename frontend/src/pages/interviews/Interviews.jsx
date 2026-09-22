@@ -72,10 +72,10 @@ const Interviews = () => {
           {/* SIDE-BY-SIDE 2-COLUMN LAYOUT */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             
-            {/* LEFT COLUMN: Interview Section Intro & Track Selection */}
-            <div className="lg:col-span-5 space-y-4">
+            {/* LEFT COLUMN: Static & Non-scrollable */}
+            <div className="lg:col-span-5 space-y-3 lg:sticky lg:top-2 self-start">
               {/* HERO INTRO CARD */}
-              <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90 p-5 backdrop-blur-2xl shadow-xl">
+              <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90 p-4.5 backdrop-blur-2xl shadow-xl">
                 {/* Ambient Glow */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                   <div className="absolute -top-24 right-[-80px] h-[250px] w-[250px] rounded-full bg-cyan-500/15 blur-3xl" />
@@ -91,7 +91,7 @@ const Interviews = () => {
                     </span>
                   </div>
 
-                  <h1 className="mt-3 text-xl md:text-2xl font-bold leading-tight text-white">
+                  <h1 className="mt-2.5 text-xl md:text-2xl font-bold leading-tight text-white">
                     Master Technical &
                     <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">
                       {" "}HR Interviews
@@ -120,7 +120,7 @@ const Interviews = () => {
 
                   {/* Custom Setup CTA */}
                   <button
-                    className="mt-4 w-full group inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-950 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
+                    className="mt-3.5 w-full group inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-slate-950 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
                     style={{
                       background: "linear-gradient(135deg, #22d3ee 0%, #0891b2 100%)",
                       boxShadow: "0 0 20px rgba(34,211,238,0.25)",
@@ -137,12 +137,12 @@ const Interviews = () => {
               </div>
 
               {/* TRACK SELECTION CARDS */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-1">
                   Available Track Sessions
                 </p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
                   {interviewTypes.map((item, index) => {
                     const Icon = item.icon;
 
@@ -151,7 +151,7 @@ const Interviews = () => {
                         key={index}
                         type="button"
                         onClick={() => handleLaunchTrack(item.role)}
-                        className="group relative text-left overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-500/40 hover:bg-white/[0.06] cursor-pointer"
+                        className="group relative text-left overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-2.5 transition-all duration-300 hover:border-cyan-500/40 hover:bg-white/[0.06] cursor-pointer"
                       >
                         {/* Glow */}
                         <div
@@ -164,14 +164,14 @@ const Interviews = () => {
                         <div className="relative z-10 flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2.5">
                             <div
-                              className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-lg"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                               style={{
                                 background: `${item.color}15`,
                                 border: `1px solid ${item.color}30`,
                               }}
                             >
                               <Icon
-                                size={17}
+                                size={16}
                                 style={{
                                   color: item.color,
                                 }}
@@ -200,7 +200,7 @@ const Interviews = () => {
                           />
                         </div>
 
-                        <p className="relative z-10 mt-1.5 text-[11px] leading-snug text-slate-400 line-clamp-2">
+                        <p className="relative z-10 mt-1 text-[11px] leading-snug text-slate-400 line-clamp-1">
                           {item.description}
                         </p>
                       </button>
@@ -210,9 +210,9 @@ const Interviews = () => {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: Interview History */}
-            <div className="lg:col-span-7 space-y-3">
-              <div className="flex items-center justify-between gap-4 px-1">
+            {/* RIGHT COLUMN: History with Fixed Height & Scrollable Box */}
+            <div className="lg:col-span-7 space-y-2.5 flex flex-col h-[calc(100vh-140px)] min-h-[520px]">
+              <div className="flex items-center justify-between gap-4 px-1 shrink-0">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/80">
                     Performance Records
@@ -223,7 +223,7 @@ const Interviews = () => {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl min-h-[480px]">
+              <div className="flex-1 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl flex flex-col">
                 <InterviewHistory />
               </div>
             </div>

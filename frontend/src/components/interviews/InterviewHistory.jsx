@@ -646,9 +646,9 @@ const InterviewHistory = () => {
   });
 
   return (
-    <>
-      {/* Category filter pills & counter bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-white/[0.06]">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Category filter pills & counter bar (fixed at top) */}
+      <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-white/[0.06]">
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
           {filterOptions.map((filter) => (
             <button
@@ -670,7 +670,8 @@ const InterviewHistory = () => {
         </div>
       </div>
 
-      <div className="space-y-2">
+      {/* Scrollable list area */}
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         {filteredInterviews.map((interview, index) => {
           const sc = getScoreColor(interview.score);
           const diffStyle = getDifficultyBadge(interview.difficulty);
@@ -788,7 +789,7 @@ const InterviewHistory = () => {
         sessionError={sessionError}
         onClose={closeModal}
       />
-    </>
+    </div>
   );
 };
 
