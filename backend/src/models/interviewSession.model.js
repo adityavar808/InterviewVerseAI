@@ -54,6 +54,10 @@ const interviewSessionSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
     },
+    creditDeducted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

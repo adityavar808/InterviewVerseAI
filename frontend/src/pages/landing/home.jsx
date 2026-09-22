@@ -477,11 +477,6 @@ export default function LandingPage() {
                               copy: "Communication & storytelling",
                               color: "text-emerald-300 bg-emerald-400/10",
                             },
-                            {
-                              title: "Coding rounds",
-                              copy: "DSA, logic, test cases",
-                              color: "text-violet-300 bg-violet-400/10",
-                            },
                           ].map((item) => (
                             <div
                               key={item.title}

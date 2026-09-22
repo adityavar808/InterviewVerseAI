@@ -44,7 +44,7 @@ You MUST return ONLY a valid JSON object (with NO markdown formatting, no ```jso
         raw_result = await call_groq_model(
             model=FEEDBACK_MODEL or "groq-m3-large",
             prompt=prompt,
-            max_new_tokens=800,
+            max_new_tokens=1500,
             temperature=0.2
         )
         extracted_text = extract_text(raw_result)
@@ -104,7 +104,7 @@ You MUST return ONLY a valid JSON object (with NO markdown formatting, no ```jso
         raw_result = await call_groq_model(
             model=FEEDBACK_MODEL or "groq-m3-large",
             prompt=prompt,
-            max_new_tokens=800,
+            max_new_tokens=1500,
             temperature=0.2
         )
         extracted_text = extract_text(raw_result)

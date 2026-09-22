@@ -80,7 +80,7 @@ You MUST return ONLY a valid JSON object (with NO markdown formatting, no ```jso
         raw_result = await call_groq_model(
             model=FEEDBACK_MODEL or "groq-m3-large",
             prompt=prompt,
-            max_new_tokens=500,
+            max_new_tokens=1500,
             temperature=0.3
         )
         

@@ -1,20 +1,27 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useDropzone } from "react-dropzone";
+import { useSelector, useDispatch } from "react-redux";
 import {
   AlertTriangle,
   Sparkles,
   Upload,
+  FileText,
 } from "lucide-react";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { buildAnalysis, extractTextFromFile, ROLE_KEYWORDS } from "../../utils/resumeAnalyzerUtils";
 import studentService from "../../services/studentApi";
+import { updateUserCredits } from "../../redux/slices/authSlice";
 
 const roleOptions = Object.keys(ROLE_KEYWORDS);
 const defaultRole = roleOptions[0] || "Frontend Developer";
 
 const ResumeAnalyzer = () => {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user || {});
+  const resumeCredits = user.resumeCredits ?? 10;
+
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeText, setResumeText] = useState("");
   const [selectedRole, setSelectedRole] = useState(defaultRole);
@@ -23,6 +30,12 @@ const ResumeAnalyzer = () => {
   const [error, setError] = useState("");
 
   const handleAnalyze = async (file, text, role) => {
+    if (resumeCredits < 1) {
+      setAnalysis(null);
+      setError("Insufficient resume analyzer credits. You have 0 credits remaining.");
+      return;
+    }
+
     if (!text) {
       setAnalysis(null);
       setError("Please upload a resume containing text content to analyze.");
@@ -40,7 +53,9 @@ const ResumeAnalyzer = () => {
       });
       
       const data = response?.data || response;
-      
+      const updatedCredits = data?.resumeCredits ?? Math.max(0, resumeCredits - 1);
+      dispatch(updateUserCredits({ resumeCredits: updatedCredits }));
+
       const formattedAnalysis = {
         scoreValue: data.score,
         stats: {
@@ -172,6 +187,18 @@ const ResumeAnalyzer = () => {
                 <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-400">
                   Select a target role, drop your resume, and instantly see your ATS compatibility score alongside a checklist of actionable changes to help you stand out.
                 </p>
+                <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold ${
+                  resumeCredits > 0
+                    ? "bg-purple-500/10 border border-purple-500/20 text-purple-300"
+                    : "bg-red-500/10 border border-red-500/20 text-red-300"
+                }`}>
+                  <FileText size={13} className={resumeCredits > 0 ? "text-purple-400" : "text-red-400"} />
+                  <span>
+                    {resumeCredits > 0
+                      ? `1 Resume Credit will be used per analysis (Remaining: ${resumeCredits})`
+                      : "0 Resume Credits remaining. Please acquire more credits to proceed."}
+                  </span>
+                </div>
               </div>
             </div>
 

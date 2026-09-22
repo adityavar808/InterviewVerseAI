@@ -31,7 +31,6 @@ const GoogleIcon = () => (
 const tracks = [
   { icon: Brain,     label: "Mock Interviews",    sub: "Frontend · Backend · HR",      color: "text-violet-400",  bg: "bg-violet-400/[0.07] border-violet-400/15",  dot: "bg-violet-400" },
   { icon: FileText,  label: "Resume Review",      sub: "ATS scoring · Keyword gaps",   color: "text-fuchsia-400", bg: "bg-fuchsia-400/[0.07] border-fuchsia-400/15", dot: "bg-fuchsia-400" },
-  { icon: Code2,     label: "Coding Practice",    sub: "DSA · Logic · Test cases",     color: "text-indigo-400",  bg: "bg-indigo-400/[0.07] border-indigo-400/15",  dot: "bg-indigo-400" },
   { icon: BarChart3, label: "Progress Analytics", sub: "Streaks · Weak areas · Trends", color: "text-pink-400",   bg: "bg-pink-400/[0.07] border-pink-400/15",      dot: "bg-pink-400" },
 ];
 
@@ -79,7 +78,7 @@ const Register = () => {
       };
       const response = await api.post("/auth/register", payload);
       toast.success(response.data.message || "Account created successfully");
-      navigate("/verify-otp", { state: { email: data.email } });
+      navigate("/verify-otp", { state: { email: data.email, devOtp: response.data.otp } });
     } catch (error) {
       toast.error(error.response?.data?.message || "Registration failed");
     }

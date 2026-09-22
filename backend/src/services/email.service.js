@@ -12,6 +12,7 @@ export const normalizeEmailCredential = (value) => {
 };
 
 const sendEmail = async (options) => {
+  dotenv.config({ override: true });
   const emailUser = normalizeEmailCredential(process.env.EMAIL_USER);
   const emailPass = normalizeEmailCredential(process.env.EMAIL_PASS);
 

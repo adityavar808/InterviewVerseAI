@@ -78,7 +78,7 @@ const DashboardLayout = ({ children }) => {
     hidden lg:block flex-shrink-0
     transition-all duration-300
 
-    ${collapsed ? "w-24" : "w-72"}
+    ${collapsed ? "w-20" : "w-72"}
   `}
       >
         <div className="sticky top-0 h-screen">

@@ -72,12 +72,17 @@ If you did not request this, please ignore this email.
 </html>
 `;
 
-  await sendEmail({
-    email: normalizedEmail,
-    subject,
-    message,
-    html,
-  });
+  try {
+    await sendEmail({
+      email: normalizedEmail,
+      subject,
+      message,
+      html,
+    });
+  } catch (emailError) {
+    console.error("WARNING: Failed to send email via SMTP:", emailError.message);
+    console.log(`[DEV ONLY] OTP for ${normalizedEmail} is: ${otp}`);
+  }
 
   return {
     email: normalizedEmail,

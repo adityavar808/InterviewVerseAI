@@ -19,6 +19,8 @@ import {
   useState, useEffect, useRef, useCallback, useMemo, createContext, useContext, memo
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { updateUserCredits } from "../../redux/slices/authSlice";
 import toast from "react-hot-toast";
 import studentService from "../../services/studentApi";
 import {
@@ -30,22 +32,31 @@ import {
   AlertTriangle, CheckCheck, Cpu, Camera, CameraOff, Radio,
 } from "lucide-react";
 
+import VoiceAnswerPanel from "../../components/interviews/VoiceAnswerPanel";
+import CodeEditorPanel from "../../components/coding/CodeEditorPanel";
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MAX_VIOLATIONS = 3;
+
+const isCodingQuestion = (q) => {
+  if (!q) return false;
+  if (q.isCoding === true || q.starterCode || q.code) return true;
+  const category = (q.category || "").toLowerCase();
+  const text = (q.text || q.question || q.prompt || q.title || "").toLowerCase();
+  if (["coding", "dsa", "programming", "algorithm", "sql"].some(c => category.includes(c))) return true;
+  if (["write a function", "write a query", "implement", "given an array", "return the indices", "leetcode", "sql query", "write code", "two sum", "water"].some(kw => text.includes(kw))) return true;
+  return false;
+};
 
 const QUESTIONS = [
   { id: 0, text: "Tell me about yourself and your background in software development.", category: "Behavioral", difficulty: "Easy" },
   { id: 1, text: "Explain the difference between useMemo and useCallback in React.", category: "Technical", difficulty: "Medium" },
-  { id: 2, text: "What is the event loop in JavaScript? How does it work?", category: "Technical", difficulty: "Medium" },
-  { id: 3, text: "Describe the SOLID principles with a concrete example.", category: "Design", difficulty: "Hard" },
-  { id: 4, text: "How would you diagnose and optimize a slow SQL query?", category: "Technical", difficulty: "Hard" },
-  { id: 5, text: "What are the key differences between REST and GraphQL?", category: "Architecture", difficulty: "Medium" },
-  { id: 6, text: "Explain closures in JavaScript with a practical use case.", category: "Technical", difficulty: "Medium" },
-  { id: 7, text: "What is your approach to writing robust unit tests?", category: "Quality", difficulty: "Easy" },
-  { id: 8, text: "Describe a technically challenging project and how you resolved the core obstacles.", category: "Behavioral", difficulty: "Hard" },
-  { id: 9, text: "What is the virtual DOM and what problem does it solve?", category: "Technical", difficulty: "Easy" },
-  { id: 10, text: "Explain the CSS Box Model and common layout pitfalls.", category: "Frontend", difficulty: "Easy" },
-  { id: 11, text: "How does async/await work under the hood in JavaScript?", category: "Technical", difficulty: "Hard" },
+  { id: 2, text: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.", category: "Coding", difficulty: "Easy", isCoding: true, starterCode: "function twoSum(nums, target) {\n    // Write your solution here\n}" },
+  { id: 3, text: "What is the event loop in JavaScript? How does it work under the hood?", category: "Technical", difficulty: "Medium" },
+  { id: 4, text: "Given an array representing heights, write a function to calculate how much rainwater can be trapped after raining.", category: "Coding", difficulty: "Hard", isCoding: true, starterCode: "function trap(height) {\n    // Write your solution here\n}" },
+  { id: 5, text: "Write an SQL query to find all employees who earn more than their average department salary.", category: "Coding", difficulty: "Medium", isCoding: true, starterCode: "-- Write your SQL query here\nSELECT * FROM employees;" },
+  { id: 6, text: "Describe the SOLID principles with a concrete architectural example.", category: "Design", difficulty: "Hard" },
+  { id: 7, text: "Explain closures in JavaScript with a practical use case.", category: "Technical", difficulty: "Medium" },
 ];
 
 const VIOLATION_MSGS = {
@@ -63,7 +74,7 @@ const VIOLATION_MSGS = {
 };
 
 const DIFF_COLORS = { Easy: "#22c55e", Medium: "#f59e0b", Hard: "#ef4444" };
-const CAT_COLORS = { Behavioral: "#8b5cf6", Technical: "#06b6d4", Design: "#f97316", Architecture: "#ec4899", Quality: "#10b981", Frontend: "#3b82f6" };
+const CAT_COLORS = { Behavioral: "#8b5cf6", Technical: "#06b6d4", Design: "#f97316", Architecture: "#ec4899", Quality: "#10b981", Frontend: "#3b82f6", Coding: "#10b981" };
 
 const fmt = (s) => {
   if (s === null || s === undefined) return "00:00";
@@ -280,23 +291,45 @@ const useSpeechRecognition = ({ onTranscript, onFinal }) => {
 };
 
 // ─── Custom Hook: useProctoring ───────────────────────────────────────────────
-const useProctoring = ({ enabled, onViolation, isFullscreen, enterFullscreen }) => {
+const useProctoring = ({ enabled, onViolation, isFullscreen, enterFullscreen, isFinishingRef }) => {
   const [log, setLog] = useState([]);
   const countRef = useRef(0);
   const termRef = useRef(false);
   const mouseWarnRef = useRef(false);
+  const lastFocusLossRef = useRef(0);
+  const lastTriggerTimeRef = useRef({});
 
   const trigger = useCallback((type) => {
-    if (termRef.current || !enabled) return;
+    if (termRef.current || !enabled || isFinishingRef?.current) return;
+
+    const now = Date.now();
+
+    // Deduplicate window switch / tab switch / focus loss events within 2.5s window
+    const isFocusEvent = type === "TAB_SWITCH" || type === "WINDOW_BLUR" || type === "MOUSE_LEAVE";
+    if (isFocusEvent && (now - lastFocusLossRef.current < 2500)) {
+      return;
+    }
+
+    // Deduplicate identical event types within 1.5s
+    const lastTypeTime = lastTriggerTimeRef.current[type] || 0;
+    if (now - lastTypeTime < 1500) {
+      return;
+    }
+
+    if (isFocusEvent) {
+      lastFocusLossRef.current = now;
+    }
+    lastTriggerTimeRef.current[type] = now;
+
     countRef.current += 1;
     const newCount = countRef.current;
-    setLog(prev => [...prev, { type, ts: Date.now(), count: newCount }]);
+    setLog(prev => [...prev, { type, ts: now, count: newCount }]);
     onViolation?.(type, newCount);
     if (newCount >= MAX_VIOLATIONS) termRef.current = true;
   }, [enabled, onViolation]);
 
   const terminate = () => { termRef.current = true; };
-  const reset = () => { countRef.current = 0; termRef.current = false; setLog([]); };
+  const reset = () => { countRef.current = 0; termRef.current = false; setLog([]); lastFocusLossRef.current = 0; lastTriggerTimeRef.current = {}; };
 
   // Tab visibility
   useEffect(() => {
@@ -917,6 +950,7 @@ const InterviewSession = () => {
     role: "Frontend Developer", difficulty: "Intermediate",
     duration: "30 Min", experience: "2-4 Years", language: "English",
   };
+  const dispatch = useDispatch();
   const [sessionId, setSessionId] = useState(location.state?.sessionId || null);
   const [questions, setQuestions] = useState(normalizeQuestions(location.state?.questions || []));
 
@@ -943,6 +977,7 @@ const InterviewSession = () => {
   const [violationOverlay, setViolationOverlay] = useState(null);
   const [violationCount, setViolationCount] = useState(0);
   const [terminated, setTerminated] = useState(false);
+  const isFinishingRef = useRef(false);
 
   // Hooks
   const camera = useCamera(camEnabled && !gateOpen);
@@ -1018,6 +1053,7 @@ const InterviewSession = () => {
   };
 
   const handleViolation = useCallback((type, count) => {
+    if (isFinishingRef.current) return;
     setViolationCount(count);
     setViolationOverlay(type);
     if (count >= MAX_VIOLATIONS) setTerminated(true);
@@ -1028,6 +1064,7 @@ const InterviewSession = () => {
     onViolation: handleViolation,
     isFullscreen,
     enterFullscreen: enterFS,
+    isFinishingRef,
   });
 
   // Fonts
@@ -1045,7 +1082,7 @@ const InterviewSession = () => {
     const h = () => {
       const inFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
       setIsFullscreen(inFS);
-      if (!inFS && !gateOpen && !terminated) {
+      if (!inFS && !gateOpen && !terminated && !isFinishingRef.current) {
         proctor.trigger("FULLSCREEN");
         setTimeout(enterFS, 250);
       }
@@ -1113,11 +1150,15 @@ const InterviewSession = () => {
 
 
   const handleFinish = async () => {
+    isFinishingRef.current = true;
     if (speech.active) speech.stop();
     await exitFS();
     if (sessionId) {
       try {
-        await studentService.endInterviewSession(sessionId);
+        const response = await studentService.endInterviewSession(sessionId);
+        if (response?.interviewCredits !== undefined) {
+          dispatch(updateUserCredits({ interviewCredits: response.interviewCredits }));
+        }
       } catch (error) {
         console.error("Failed to close interview session:", error);
       }
@@ -1127,11 +1168,15 @@ const InterviewSession = () => {
   };
 
   const handleTerminate = async () => {
+    isFinishingRef.current = true;
     if (speech.active) speech.stop();
     await exitFS();
     if (sessionId) {
       try {
-        await studentService.endInterviewSession(sessionId);
+        const response = await studentService.endInterviewSession(sessionId);
+        if (response?.interviewCredits !== undefined) {
+          dispatch(updateUserCredits({ interviewCredits: response.interviewCredits }));
+        }
       } catch (error) {
         console.error("Failed to close interview session:", error);
       }
@@ -1243,38 +1288,76 @@ const InterviewSession = () => {
                 </div>
               )}
 
-              {/* Question card */}
-              <div style={s.questionCard}>
-                <div style={s.questionMeta}>
-                  <span style={s.questionNum}>
-                    {followUpMode ? "FOLLOW-UP" : `Question ${activeQ + 1} of ${questionList.length}`}
-                  </span>
-                  <span style={{ ...s.catBadge, background: CAT_COLORS[currentQ.category] + "22", color: CAT_COLORS[currentQ.category] || "#6366f1" }}>
-                    {currentQ.category}
-                  </span>
-                  <span style={{ ...s.diffBadge, color: DIFF_COLORS[currentQ.difficulty] || "#94a3b8" }}>
-                    {currentQ.difficulty}
-                  </span>
-                </div>
-                {(aiSpeaking || aiThinking) && (
-                  <div style={s.typingIndicator}>
-                    {[0, 1, 2].map(i => <div key={i} style={{ ...s.typingDot, animationDelay: `${i * 0.2}s` }} />)}
+              {isCodingQuestion(currentQ) ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, minHeight: 480 }}>
+                  {/* Coding Question Header Card */}
+                  <div style={s.questionCard}>
+                    <div style={s.questionMeta}>
+                      <span style={s.questionNum}>
+                        {followUpMode ? "FOLLOW-UP" : `Question ${activeQ + 1} of ${questionList.length}`}
+                      </span>
+                      <span style={{ ...s.catBadge, background: "rgba(16, 185, 129, 0.15)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                        💻 CODING QUESTION
+                      </span>
+                      <span style={{ ...s.catBadge, background: (CAT_COLORS[currentQ.category] || "#6366f1") + "22", color: CAT_COLORS[currentQ.category] || "#6366f1" }}>
+                        {currentQ.category || "DSA"}
+                      </span>
+                      <span style={{ ...s.diffBadge, color: DIFF_COLORS[currentQ.difficulty] || "#94a3b8" }}>
+                        {currentQ.difficulty || "Medium"}
+                      </span>
+                    </div>
+                    <p style={s.questionText}>{currentQ.text || currentQ.question}</p>
                   </div>
-                )}
-                <p style={s.questionText}>{currentQ.text}</p>
-              </div>
 
-              {/* Answer editor */}
-              <AnswerEditor
-                value={userInput}
-                onChange={setUserInput}
-                onSubmit={handleSubmit}
-                onVoiceToggle={speech.toggle}
-                voiceActive={speech.active}
-                speechSupported={speech.supported}
-                interim={speech.interim}
-                confidence={speech.confidence}
-              />
+                  {/* Multi-Language Compiler Section */}
+                  <div style={{ height: 460, borderRadius: 16, overflow: "hidden" }}>
+                    <CodeEditorPanel
+                      question={currentQ}
+                      setTestCases={() => {}}
+                      setAiReview={() => {}}
+                      setActiveTab={() => {}}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Verbal Question Card */}
+                  <div style={s.questionCard}>
+                    <div style={s.questionMeta}>
+                      <span style={s.questionNum}>
+                        {followUpMode ? "FOLLOW-UP" : `Question ${activeQ + 1} of ${questionList.length}`}
+                      </span>
+                      <span style={{ ...s.catBadge, background: (CAT_COLORS[currentQ.category] || "#6366f1") + "22", color: CAT_COLORS[currentQ.category] || "#6366f1" }}>
+                        {currentQ.category}
+                      </span>
+                      <span style={{ ...s.diffBadge, color: DIFF_COLORS[currentQ.difficulty] || "#94a3b8" }}>
+                        {currentQ.difficulty}
+                      </span>
+                    </div>
+                    {(aiSpeaking || aiThinking) && (
+                      <div style={s.typingIndicator}>
+                        {[0, 1, 2].map(i => <div key={i} style={{ ...s.typingDot, animationDelay: `${i * 0.2}s` }} />)}
+                      </div>
+                    )}
+                    <p style={s.questionText}>{currentQ.text}</p>
+                  </div>
+
+                  {/* Voice-Only Answer Panel */}
+                  <VoiceAnswerPanel
+                    value={userInput}
+                    onChange={setUserInput}
+                    onSubmit={handleSubmit}
+                    onVoiceToggle={speech.toggle}
+                    voiceActive={speech.active}
+                    speechSupported={speech.supported}
+                    interim={speech.interim}
+                    confidence={speech.confidence}
+                    micLevel={mic.level}
+                    isMuted={mic.isMuted}
+                    onMuteToggle={mic.toggleMute}
+                  />
+                </>
+              )}
             </div>
 
             {/* Candidate camera */}
@@ -1441,127 +1524,172 @@ const gs = {
     right: -100,
   },
 
+  backdrop: {
+    position: "fixed",
+    inset: 0,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "radial-gradient(circle at top, #0f172a, #020617)",
+    overflow: "hidden",
+    padding: "20px",
+    zIndex: 99999,
+  },
+
+  glow1: {
+    position: "absolute",
+    width: 500,
+    height: 500,
+    borderRadius: "50%",
+    background: "#2563eb",
+    filter: "blur(140px)",
+    opacity: 0.15,
+    top: -100,
+    left: -100,
+    pointerEvents: "none",
+  },
+
+  glow2: {
+    position: "absolute",
+    width: 500,
+    height: 500,
+    borderRadius: "50%",
+    background: "#06b6d4",
+    filter: "blur(140px)",
+    opacity: 0.12,
+    bottom: -100,
+    right: -100,
+    pointerEvents: "none",
+  },
+
   card: {
     position: "relative",
-    width: "90%",
-    maxWidth: "600px",
-    padding: "28px",
+    width: "95%",
+    maxWidth: "840px",
+    padding: "28px 36px",
     borderRadius: "24px",
-    background: "rgba(15,23,42,.85)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid rgba(59,130,246,.2)",
-    boxShadow: "0 25px 60px rgba(0,0,0,.45)",
+    background: "rgba(15,23,42,0.9)",
+    backdropFilter: "blur(24px)",
+    border: "1px solid rgba(59,130,246,0.25)",
+    boxShadow: "0 25px 80px rgba(0,0,0,0.55)",
     zIndex: 2,
-    transform: "scale(0.88)",
-    transformOrigin: "center",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
 
   badge: {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
-    padding: "8px 14px",
+    padding: "5px 12px",
     borderRadius: "999px",
-    background: "rgba(34,197,94,.15)",
+    background: "rgba(34,197,94,0.12)",
+    border: "1px solid rgba(34,197,94,0.25)",
     color: "#4ade80",
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: 700,
-    marginBottom: 24,
+    marginBottom: 12,
   },
 
   shieldWrap: {
-    width: 72,
-    height: 72,
+    width: 52,
+    height: 52,
     borderRadius: "50%",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    margin: "0 auto 20px",
+    margin: "0 auto 10px",
     color: "#fff",
-    background:
-      "linear-gradient(135deg,#2563eb,#06b6d4)",
-    boxShadow:
-      "0 0 35px rgba(37,99,235,.45)",
+    background: "linear-gradient(135deg, #2563eb, #06b6d4)",
+    boxShadow: "0 0 30px rgba(37,99,235,0.45)",
   },
 
   title: {
     textAlign: "center",
-    fontSize: "1.6rem",
+    fontSize: "1.5rem",
     fontWeight: 800,
     color: "#fff",
-    marginBottom: 12,
+    marginBottom: 6,
+    letterSpacing: "-0.02em",
   },
 
   sub: {
     textAlign: "center",
     color: "#94a3b8",
-    lineHeight: 1.7,
-    marginBottom: 28,
-    fontSize: 14,
+    lineHeight: 1.5,
+    marginBottom: 16,
+    fontSize: 13,
+    maxWidth: "600px",
   },
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 10,
-    marginBottom: 24,
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 8,
+    marginBottom: 16,
+    width: "100%",
   },
 
   rule: {
     display: "flex",
     alignItems: "center",
-    gap: 12,
-    padding: "12px",
-    borderRadius: "16px",
-    background: "rgba(255,255,255,.04)",
-    border: "1px solid rgba(255,255,255,.08)",
+    gap: 8,
+    padding: "8px 12px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.035)",
+    border: "1px solid rgba(255,255,255,0.08)",
     color: "#cbd5e1",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 500,
   },
 
   icon: {
-    fontSize: 18,
+    fontSize: 15,
+    flexShrink: 0,
   },
 
   warn: {
-    padding: "18px",
-    borderRadius: "18px",
-    background:
-      "rgba(245,158,11,.08)",
-    border: "1px solid rgba(245,158,11,.25)",
+    width: "100%",
+    padding: "10px 16px",
+    borderRadius: "14px",
+    background: "rgba(245,158,11,0.08)",
+    border: "1px solid rgba(245,158,11,0.25)",
     color: "#fbbf24",
-    lineHeight: 1.7,
-    marginBottom: 24,
+    lineHeight: 1.5,
+    marginBottom: 16,
+    fontSize: 12,
     textAlign: "center",
   },
 
   requirements: {
     display: "grid",
-    gridTemplateColumns: "repeat(3,1fr)",
-    gap: 12,
-    marginBottom: 28,
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: 10,
+    marginBottom: 20,
+    width: "100%",
   },
 
   reqCard: {
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    padding: "16px",
-    borderRadius: "16px",
-    background: "rgba(255,255,255,.04)",
-    border: "1px solid rgba(255,255,255,.08)",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.035)",
+    border: "1px solid rgba(255,255,255,0.08)",
     color: "#cbd5e1",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
   },
 
   btn: {
     width: "100%",
-    height: "52px",
+    height: "48px",
     border: "none",
-    borderRadius: "18px",
+    borderRadius: "14px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1570,10 +1698,9 @@ const gs = {
     color: "#fff",
     fontWeight: 700,
     fontSize: 14,
-    background:
-      "linear-gradient(90deg,#2563eb,#06b6d4)",
-    boxShadow:
-      "0 10px 30px rgba(37,99,235,.35)",
+    background: "linear-gradient(90deg, #2563eb, #06b6d4)",
+    boxShadow: "0 10px 30px rgba(37,99,235,0.35)",
+    transition: "all 0.2s ease",
   },
 };
 

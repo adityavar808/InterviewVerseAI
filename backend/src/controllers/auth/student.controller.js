@@ -92,14 +92,14 @@ const studentDashboard = async (req, res) => {
       },
     ];
 
-    // Dynamic skill distribution based on code evaluations and interview technical scores
+    // Dynamic skill distribution based on real code evaluations and interview scores
     let dsaScores = [];
     let reactScores = [];
     let backendScores = [];
     let systemDesignScores = [];
 
     user.solvedQuestionsMeta.forEach(m => {
-      const score = m.score;
+      const score = Number(m.score) || 0;
       if (m.language === "javascript" || m.language === "typescript") {
         reactScores.push(score);
       } else {
@@ -110,73 +110,72 @@ const studentDashboard = async (req, res) => {
 
     completedSessions.forEach(s => {
       s.responses.forEach(r => {
-        if (s.config.role.toLowerCase().includes("system design")) {
-          systemDesignScores.push(r.score);
+        if (s.config?.role?.toLowerCase().includes("system design")) {
+          systemDesignScores.push(r.score || 0);
         }
       });
     });
 
-    const getAvg = (arr, defVal) => arr.length > 0 ? Math.round(arr.reduce((a,b) => a+b, 0)/arr.length) : defVal;
+    const getAvg = (arr) => arr.length > 0 ? Math.round(arr.reduce((a,b) => a+b, 0)/arr.length) : 0;
 
     const skillData = [
       {
         subject: "DSA",
-        score: getAvg(dsaScores, 75),
+        score: getAvg(dsaScores),
       },
       {
         subject: "React",
-        score: getAvg(reactScores, 70),
+        score: getAvg(reactScores),
       },
       {
         subject: "Backend",
-        score: getAvg(backendScores, 75),
+        score: getAvg(backendScores),
       },
       {
         subject: "Communication",
-        score: commsValue > 0 ? commsValue : 80,
+        score: commsValue,
       },
       {
         subject: "System Design",
-        score: getAvg(systemDesignScores, 65),
+        score: getAvg(systemDesignScores),
       },
       {
         subject: "Problem Solving",
-        score: avgScoreValue > 0 ? avgScoreValue : 75,
+        score: avgScoreValue,
       },
     ];
 
-    // Dynamic activity heatmap
-    const activityHeatmap = [
-      [0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0],
-    ];
+    // Dynamic 20-week activity heatmap based strictly on all user activities
+    const activityHeatmap = Array.from({ length: 20 }, () => [0, 0, 0, 0, 0, 0, 0]);
 
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
 
-    const registerActivity = (date) => {
-      if (!date) return;
-      const d = new Date(date);
-      const diffDays = Math.floor((now - d.getTime()) / oneDayMs);
-      if (diffDays >= 0 && diffDays < 35) {
+    const registerActivity = (dateInput) => {
+      if (!dateInput) return;
+      const d = new Date(dateInput);
+      if (isNaN(d.getTime())) return;
+
+      const diffMs = now - d.getTime();
+      const diffDays = Math.floor(diffMs / oneDayMs);
+
+      if (diffDays >= 0 && diffDays < 140) {
         const weekIdx = Math.floor(diffDays / 7);
         const dayIdx = d.getDay();
         const adjustedDayIdx = dayIdx === 0 ? 6 : dayIdx - 1;
-        if (weekIdx >= 0 && weekIdx < 5 && adjustedDayIdx >= 0 && adjustedDayIdx < 7) {
-          activityHeatmap[4 - weekIdx][adjustedDayIdx] += 1;
+        if (weekIdx >= 0 && weekIdx < 20 && adjustedDayIdx >= 0 && adjustedDayIdx < 7) {
+          activityHeatmap[19 - weekIdx][adjustedDayIdx] += 1;
         }
       }
     };
 
-    completedSessions.forEach(s => registerActivity(s.completedAt));
-    user.solvedQuestionsMeta.forEach(m => registerActivity(m.solvedAt));
+    completedSessions.forEach(s => registerActivity(s.completedAt || s.createdAt));
+    (user.interviewHistory || []).forEach(h => registerActivity(h.completedAt || h.createdAt || h.date));
+    (user.solvedQuestionsMeta || []).forEach(m => registerActivity(m.solvedAt));
 
-    // Dynamic weaknesses list
+    // Dynamic weaknesses list strictly derived from performance
     const weaknesses = [];
-    if (getAvg(systemDesignScores, 100) < 70) {
+    if (systemDesignScores.length > 0 && getAvg(systemDesignScores) < 70) {
       weaknesses.push({
         title: "System Design",
         issue: "Need stronger understanding of scalable architecture patterns and distributed systems.",
@@ -192,7 +191,7 @@ const studentDashboard = async (req, res) => {
         severity: "Medium",
       });
     }
-    if (getAvg(dsaScores, 100) < 75) {
+    if (dsaScores.length > 0 && getAvg(dsaScores) < 75) {
       weaknesses.push({
         title: "Code Optimization",
         issue: "Some solutions use unnecessary loops and redundant conditions.",
@@ -201,16 +200,7 @@ const studentDashboard = async (req, res) => {
       });
     }
 
-    if (weaknesses.length === 0) {
-      weaknesses.push({
-        title: "Advanced Optimization",
-        issue: "Everything looks solid. Keep practicing complex edge cases.",
-        improvement: "Focus on hard problems.",
-        severity: "Low",
-      });
-    }
-
-    // Recent interviews
+    // Recent interviews strictly from user history
     const userHistory = (user.interviewHistory || []).slice();
     const sortedHistory = userHistory
       .map((item) => ({
@@ -227,41 +217,18 @@ const studentDashboard = async (req, res) => {
 
     const totalInterviews = sortedHistory.length;
     const thisWeekInterviews = sortedHistory.filter((item) => {
-      const completedAt = new Date(item.completedAt);
+      const completedAt = new Date(item.completedAt || item.createdAt);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       return completedAt >= sevenDaysAgo;
     }).length;
 
-    const recentInterviews = sortedHistory.length
-      ? sortedHistory.slice(0, 3)
-      : [
-        {
-          role: "Frontend Developer",
-          score: 84,
-          date: "12 May 2026",
-          status: "Completed",
-          tech: ["React", "CSS"],
-        },
-        {
-          role: "MERN Stack Developer",
-          score: 78,
-          date: "14 May 2026",
-          status: "Completed",
-          tech: ["MongoDB", "Node"],
-        },
-        {
-          role: "AI Engineer",
-          score: 91,
-          date: "16 May 2026",
-          status: "Completed",
-          tech: ["Python", "ML"],
-        },
-      ];
+    const recentInterviews = sortedHistory.slice(0, 3);
 
     const atsResumeScore = user.resumeAnalysis?.atsScore || 0;
     const codingProblems = user.solvedQuestions?.length || 0;
     const resumeImprovement = user.resumeAnalysis ? 10 : 0;
     const problemsThisWeek = Math.min(codingProblems, 5);
+    const calculatedStreak = (user.streak && user.streak > 0) ? user.streak : ((totalInterviews > 0 || codingProblems > 0) ? 1 : 0);
 
     const data = {
       user: {
@@ -274,7 +241,7 @@ const studentDashboard = async (req, res) => {
         totalInterviews,
         atsResumeScore,
         codingProblems,
-        dailyStreak: user.streak || 0,
+        dailyStreak: calculatedStreak,
         thisWeekInterviews,
         resumeImprovement,
         problemsThisWeek,
@@ -575,6 +542,19 @@ const analyzeResume = async (req, res) => {
       return res.status(400).json({ success: false, message: "Resume text content is required" });
     }
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const currentCredits = user.resumeCredits ?? 10;
+    if (currentCredits < 1) {
+      return res.status(403).json({
+        success: false,
+        message: "Insufficient resume analyzer credits. You have 0 credits remaining.",
+      });
+    }
+
     let analysis;
     try {
       const response = await analyzeResumeAI({ resume_text: resumeText, role });
@@ -589,7 +569,7 @@ const analyzeResume = async (req, res) => {
       analysis = runLocalAnalysis(resumeText, role);
     }
 
-    const user = await User.findById(userId);
+    user.resumeCredits = currentCredits - 1;
     user.resumeAnalysis = {
       atsScore: analysis.atsScore,
       role: role || "MERN Developer",
@@ -608,7 +588,8 @@ const analyzeResume = async (req, res) => {
         missingKeywords: analysis.missingKeywords,
         fileName: user.resumeAnalysis.fileName,
         role: user.resumeAnalysis.role,
-        analyzedAt: user.resumeAnalysis.analyzedAt
+        analyzedAt: user.resumeAnalysis.analyzedAt,
+        resumeCredits: user.resumeCredits,
       }
     });
   } catch (error) {

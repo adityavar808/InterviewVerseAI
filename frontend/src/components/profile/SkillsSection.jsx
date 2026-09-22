@@ -71,7 +71,7 @@ const SkillsSection = () => {
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-    className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-6 h-full"
+    className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 shadow-xl"
   >
     {/* Glow */}
     <div className="pointer-events-none absolute inset-0">
@@ -80,20 +80,20 @@ const SkillsSection = () => {
            style={{ background: "linear-gradient(90deg, rgba(52,211,153,0.5), rgba(6,182,212,0.3), transparent)" }} />
     </div>
 
-    <div className="relative flex flex-col h-full">
+    <div className="relative flex flex-col">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center flex-shrink-0">
-            <Code2 className="text-emerald-400" size={22} />
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center flex-shrink-0">
+            <Code2 className="text-emerald-400" size={18} />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white leading-tight">Skills & Technologies</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Technical stack & expertise overview</p>
+            <h2 className="text-base font-semibold text-white leading-tight">Skills & Technologies</h2>
+            <p className="text-[11px] text-slate-400">Technical stack & expertise overview</p>
           </div>
         </div>
-        <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 text-[11px] font-medium">
+        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 text-[10px] font-medium">
           <Sparkles size={11} />
           AI Skill Mapping
         </span>

@@ -14,7 +14,6 @@ import { motion } from "framer-motion";
 import {
   Brain,
   FileText,
-  Code2,
   Flame,
   Clock,
   CheckCircle2,
@@ -25,45 +24,10 @@ import {
   TrendingUp,
   AlertCircle,
   Sparkles,
+  Code2,
 } from "lucide-react";
 
-const recentActivity = [
-  {
-    icon: Brain,
-    label: "Completed AI Interview",
-    sub: "System Design Round",
-    time: "2h ago",
-    color: "#22d3ee",
-  },
-  {
-    icon: Code2,
-    label: "Solved LeetCode Problem",
-    sub: "Binary Search — Medium",
-    time: "5h ago",
-    color: "#a78bfa",
-  },
-  {
-    icon: FileText,
-    label: "Resume Score Updated",
-    sub: "ATS Score improved to 88%",
-    time: "1d ago",
-    color: "#4ade80",
-  },
-  {
-    icon: Flame,
-    label: "Streak Milestone",
-    sub: "12 days — Personal best!",
-    time: "1d ago",
-    color: "#fb923c",
-  },
-];
 
-const upcomingTasks = [
-  { label: "Mock Interview — React JS", due: "Today", done: false },
-  { label: "Review DSA Flashcards", due: "Today", done: true },
-  { label: "System Design: URL Shortener", due: "Tomorrow", done: false },
-  { label: "Update Resume — Projects", due: "This week", done: false },
-];
 
 const DashboardHome = () => {
   const [dashboard, setDashboard] = useState(null);
@@ -120,12 +84,10 @@ const DashboardHome = () => {
   const recentInterviews =
     dashboard?.recentInterviews || [];
   const availableInterviews = dashboard?.availableInterviews || [];
-  const availableCodingQuestions = dashboard?.availableCodingQuestions || [];
 
   const readinessScore = Math.min(100, Math.max(0, Math.round(
-    ((overview.codingProblems || 0) / 250) * 40 +
-    ((overview.totalInterviews || 0) / 15) * 30 +
-    (overview.atsResumeScore || 0) * 0.3
+    ((overview.totalInterviews || 0) / 15) * 60 +
+    (overview.atsResumeScore || 0) * 0.4
   )));
 
   return (
@@ -229,7 +191,7 @@ const DashboardHome = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
         >
           <StatCard
             title="Total Interviews"
@@ -264,7 +226,7 @@ const DashboardHome = () => {
             }}
           />
           <StatCard
-            title="Coding Problems Solved"
+            title="Problems Solved"
             value={overview.codingProblems || 0}
             icon={<Code2 size={22} />}
             color={{
@@ -305,118 +267,6 @@ const DashboardHome = () => {
             transition={{ duration: 0.4, delay: 0.12 }}
           >
             <PerformanceChart data={performanceChart} />
-          </motion.div>
-        )}
-
-        {/* AVAILABLE CODING QUESTIONS */}
-        {availableCodingQuestions.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.14 }}
-            className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
-          >
-            {/* Glow and top line border */}
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-cyan-500/[0.05] blur-[50px]" />
-              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-                   style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.5), transparent)" }} />
-            </div>
-
-            <div className="relative mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-semibold">
-                  Practice
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-white tracking-tight">
-                  Available Coding Questions
-                </h3>
-              </div>
-              <a
-                href="/coding"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 hover:bg-cyan-500/15 active:scale-[0.98] transition-all duration-300 cursor-pointer"
-              >
-                View All <ArrowRight size={12} />
-              </a>
-            </div>
-
-            <div className="relative space-y-3">
-              {availableCodingQuestions.slice(0, 5).map((question) => (
-                <div
-                  key={question._id}
-                  className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:flex-row md:items-center md:justify-between hover:bg-white/[0.05] transition-all duration-300 cursor-pointer active:scale-[0.99]"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2.5">
-                      <Code2 size={16} className="text-cyan-400" />
-                      <p className="font-semibold text-white text-sm">
-                        {question.title}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {question.category && (
-                        <span
-                          className="text-xs px-2.5 py-0.5 rounded-lg border bg-cyan-500/10 border-cyan-500/20 text-cyan-300 font-medium"
-                        >
-                          {question.category}
-                        </span>
-                      )}
-                      {question.difficulty && (
-                        <span
-                          className="text-xs px-2.5 py-0.5 rounded-lg border font-semibold"
-                          style={{
-                            background:
-                              question.difficulty === "Hard"
-                                ? "rgba(239,68,68,0.1)"
-                                : question.difficulty === "Medium"
-                                  ? "rgba(251,146,60,0.1)"
-                                  : "rgba(34,197,94,0.1)",
-                            borderColor:
-                              question.difficulty === "Hard"
-                                ? "rgba(239,68,68,0.2)"
-                                : question.difficulty === "Medium"
-                                  ? "rgba(251,146,60,0.2)"
-                                  : "rgba(34,197,94,0.2)",
-                            color:
-                              question.difficulty === "Hard"
-                                ? "#f87171"
-                                : question.difficulty === "Medium"
-                                  ? "#fb923c"
-                                  : "#4ade80",
-                          }}
-                        >
-                          {question.difficulty}
-                        </span>
-                      )}
-                      {question.companies && question.companies.length > 0 && (
-                        <span className="text-xs text-slate-500 font-medium">
-                          {question.companies.slice(0, 2).join(", ")}
-                          {question.companies.length > 2 &&
-                            ` +${question.companies.length - 2}`}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {question.acceptanceRate !== undefined && (
-                      <div className="text-right pr-2">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Acceptance</p>
-                        <p className="text-base font-bold text-white leading-tight mt-0.5">
-                          {question.acceptanceRate}%
-                        </p>
-                      </div>
-                    )}
-                    <a
-                      href={`/coding/${question._id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.2)] active:scale-[0.98] transition-all duration-300 cursor-pointer"
-                    >
-                      Solve <ArrowRight size={12} />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
 
@@ -535,7 +385,7 @@ const DashboardHome = () => {
           className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         >
           <SkillRadarChart data={skillRadar} />
-          <ActivityHeatmap data={dashboard?.charts?.activityHeatmap} />
+          <ActivityHeatmap data={dashboard?.charts?.activityHeatmap} streak={overview.dailyStreak || 0} />
         </motion.div>
 
         {/* WEAKNESS ANALYSIS */}

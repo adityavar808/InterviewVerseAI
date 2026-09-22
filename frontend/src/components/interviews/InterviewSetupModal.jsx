@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import studentService from "../../services/studentApi";
+import { updateUserCredits } from "../../redux/slices/authSlice";
 
 import {
   X,
   Camera,
+  CameraOff,
   Mic,
+  MicOff,
   Brain,
   Clock3,
   Sparkles,
   Globe,
   AlertCircle,
   ChevronDown,
+  Zap,
 } from "lucide-react";
 
 const difficulties = ["Easy", "Medium", "Hard"];
@@ -30,8 +35,11 @@ const roles = [
 
 const InterviewSetupModal = ({ open, onClose }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user || {});
+  const interviewCredits = user.interviewCredits ?? 10;
   
-  // State Management
+  // Form State Management
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
@@ -40,11 +48,131 @@ const InterviewSetupModal = ({ open, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
+  // Camera & Mic State Management
+  const [isCameraOn, setIsCameraOn] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(false);
+  const [mediaError, setMediaError] = useState("");
+  const [isTestingMedia, setIsTestingMedia] = useState(false);
+
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
+  // Stop media stream tracks
+  const stopMediaStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOn(false);
+    setIsMicOn(false);
+  }, []);
+
+  // Request & Enable Camera and Microphone
+  const enableMedia = useCallback(async () => {
+    setIsTestingMedia(true);
+    setMediaError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+        audio: true,
+      });
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+      setIsCameraOn(true);
+      setIsMicOn(true);
+      toast.success("Camera and Microphone enabled successfully!");
+    } catch (err) {
+      console.error("Media permission error:", err);
+      let errorMsg = "Unable to access camera or microphone.";
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        errorMsg = "Camera and microphone permissions were denied. Please allow access in browser settings.";
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        errorMsg = "No camera or microphone found on your device.";
+      }
+      setMediaError(errorMsg);
+      toast.error(errorMsg);
+      setIsCameraOn(false);
+      setIsMicOn(false);
+    } finally {
+      setIsTestingMedia(false);
+    }
+  }, []);
+
+  // Toggle Camera track
+  const toggleCamera = async () => {
+    if (!streamRef.current) {
+      await enableMedia();
+      return;
+    }
+
+    const videoTracks = streamRef.current.getVideoTracks();
+    if (videoTracks.length === 0) {
+      await enableMedia();
+      return;
+    }
+
+    const newCamState = !isCameraOn;
+    videoTracks.forEach((track) => {
+      track.enabled = newCamState;
+    });
+    setIsCameraOn(newCamState);
+    if (!newCamState && !isMicOn) {
+      stopMediaStream();
+    }
+  };
+
+  // Toggle Microphone track
+  const toggleMic = async () => {
+    if (!streamRef.current) {
+      await enableMedia();
+      return;
+    }
+
+    const audioTracks = streamRef.current.getAudioTracks();
+    if (audioTracks.length === 0) {
+      await enableMedia();
+      return;
+    }
+
+    const newMicState = !isMicOn;
+    audioTracks.forEach((track) => {
+      track.enabled = newMicState;
+    });
+    setIsMicOn(newMicState);
+    if (!newMicState && !isCameraOn) {
+      stopMediaStream();
+    }
+  };
+
+  // Cleanup stream when unmounting
+  useEffect(() => {
+    return () => {
+      stopMediaStream();
+    };
+  }, [stopMediaStream]);
+
+  const handleClose = () => {
+    stopMediaStream();
+    onClose();
+  };
+
   if (!open) return null;
 
-  // Handle form submission
+  // Handle form submission with MANDATORY Camera & Mic validation
   const handleStartInterview = async () => {
-    // Validation
+    if (interviewCredits < 1) {
+      toast.error("Insufficient interview credits. You have 0 credits remaining.");
+      return;
+    }
+
+    // Validation 1: All parameters selected
     if (
       !selectedDifficulty ||
       !selectedDuration ||
@@ -56,8 +184,20 @@ const InterviewSetupModal = ({ open, onClose }) => {
       return;
     }
 
+    // Validation 2: Camera and Microphone MUST be enabled
+    if (!isCameraOn || !isMicOn) {
+      toast.error("Please enable both camera and microphone before starting the interview.");
+      if (!isCameraOn && !isMicOn && !mediaError) {
+        enableMedia();
+      }
+      return;
+    }
+
     try {
       setIsLoading(true);
+
+      // Stop current setup stream so InterviewSession can claim hardware
+      stopMediaStream();
 
       // Prepare interview configuration
       const interviewConfig = {
@@ -76,6 +216,9 @@ const InterviewSetupModal = ({ open, onClose }) => {
       if (!sessionId) {
         throw new Error("Unable to create interview session");
       }
+
+      const updatedCredits = response?.interviewCredits ?? interviewCredits;
+      dispatch(updateUserCredits({ interviewCredits: updatedCredits }));
 
       navigate("/interview-session", {
         state: { config: interviewConfig, sessionId, questions },
@@ -96,7 +239,7 @@ const InterviewSetupModal = ({ open, onClose }) => {
   return (
     <div
       className="
-        fixed inset-0 z-[999999]
+        fixed inset-0 z-50
         flex items-center justify-center
         bg-[#020617]/80 backdrop-blur-md p-4
       "
@@ -165,11 +308,23 @@ const InterviewSetupModal = ({ open, onClose }) => {
             <p className="text-slate-400 mt-1.5 text-sm">
               Customize your AI-powered mock interview experience.
             </p>
+            <div className={`mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold ${
+              interviewCredits > 0
+                ? "bg-cyan-500/10 border border-cyan-500/20 text-cyan-300"
+                : "bg-red-500/10 border border-red-500/20 text-red-300"
+            }`}>
+              <Zap size={13} className={interviewCredits > 0 ? "text-cyan-400" : "text-red-400"} />
+              <span>
+                {interviewCredits > 0
+                  ? `1 Interview Credit will be deducted upon completion (Remaining: ${interviewCredits})`
+                  : "0 Interview Credits remaining. Please acquire more credits to proceed."}
+              </span>
+            </div>
           </div>
 
           {/* CLOSE */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="
               w-9 h-9 rounded-xl flex-shrink-0
               flex items-center justify-center
@@ -386,49 +541,95 @@ const InterviewSetupModal = ({ open, onClose }) => {
               </div>
             </div>
 
-            {/* CAMERA */}
+            {/* CAMERA PREVIEW & MEDIA CONTROLS */}
             <div
-              className="rounded-2xl h-40 flex flex-col items-center justify-center relative overflow-hidden"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+              className={`rounded-2xl h-52 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 border ${
+                mediaError
+                  ? "border-rose-500/40 bg-rose-500/5"
+                  : isCameraOn && isMicOn
+                  ? "border-emerald-500/40 bg-emerald-500/5"
+                  : "border-white/10 bg-white/[0.03]"
+              }`}
             >
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  width: "200px",
-                  height: "200px",
-                  background:
-                    "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
-                }}
+              {/* Live Video Element */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                  isCameraOn ? "opacity-100" : "opacity-0 pointer-events-none"
+                }`}
               />
-              <Camera size={36} className="text-slate-500 relative z-10" />
-              <p className="text-slate-400 mt-3 text-xs relative z-10">
-                Camera Preview
-              </p>
-              <div className="flex items-center gap-2 mt-4 relative z-10">
-                <button
-                  className="
-                    w-10 h-10 rounded-xl
-                    flex items-center justify-center
-                    bg-white/5 hover:bg-white/10
-                    border border-white/10 transition-all
-                  "
-                >
-                  <Mic size={15} className="text-slate-300" />
-                </button>
-                <button
-                  className="
-                    w-10 h-10 rounded-xl
-                    flex items-center justify-center
-                    bg-white/5 hover:bg-white/10
-                    border border-white/10 transition-all
-                  "
-                >
-                  <Camera size={15} className="text-slate-300" />
-                </button>
-              </div>
+
+              {/* Overlay when Camera is OFF */}
+              {!isCameraOn ? (
+                <div className="flex flex-col items-center justify-center p-5 text-center z-10">
+                  <div className="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2.5 shadow-inner">
+                    <CameraOff size={20} className="text-slate-400" />
+                  </div>
+                  <p className="text-slate-200 text-xs font-semibold">
+                    {mediaError ? "Media Access Failed" : "Camera & Microphone Off"}
+                  </p>
+                  <p className="text-slate-400 text-[11px] mt-1 max-w-[230px] leading-relaxed">
+                    {mediaError || "Camera & mic are required before entering the interview."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={enableMedia}
+                    disabled={isTestingMedia}
+                    className="mt-3.5 px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 active:scale-95"
+                  >
+                    {isTestingMedia ? (
+                      <span>Requesting Access...</span>
+                    ) : (
+                      <>
+                        <Sparkles size={13} className="text-cyan-400" />
+                        <span>Enable Camera & Mic</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Live Badge when Camera is ON */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-300 font-medium">
+                      Live Preview
+                    </span>
+                  </div>
+
+                  {/* Media Controls Bar (Mic & Camera Toggles on Live Stream) */}
+                  <div className="absolute bottom-3 left-0 right-0 z-20 flex items-center justify-center gap-2.5 px-3">
+                    <button
+                      type="button"
+                      onClick={toggleMic}
+                      title={isMicOn ? "Mute Microphone" : "Enable Microphone"}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center border backdrop-blur-md transition-all shadow-md cursor-pointer active:scale-95 ${
+                        isMicOn
+                          ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/40"
+                          : "bg-rose-500/25 border-rose-500/50 text-rose-300 hover:bg-rose-500/40"
+                      }`}
+                    >
+                      {isMicOn ? <Mic size={16} /> : <MicOff size={16} />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={toggleCamera}
+                      title={isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center border backdrop-blur-md transition-all shadow-md cursor-pointer active:scale-95 ${
+                        isCameraOn
+                          ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/40"
+                          : "bg-rose-500/25 border-rose-500/50 text-rose-300 hover:bg-rose-500/40"
+                      }`}
+                    >
+                      {isCameraOn ? <Camera size={16} /> : <CameraOff size={16} />}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -444,25 +645,34 @@ const InterviewSetupModal = ({ open, onClose }) => {
         >
           {/* SESSION INFO */}
           <div className="flex items-center gap-3 flex-wrap">
-            
             <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10">
               <p className="text-[10px] text-slate-500">AI Evaluation</p>
               <p className="text-emerald-400 font-semibold text-sm mt-0.5">
                 Enabled
               </p>
             </div>
+
+            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isCameraOn && isMicOn ? "bg-emerald-400 animate-pulse" : "bg-rose-400"}`} />
+              <div>
+                <p className="text-[10px] text-slate-500">Media Hardware</p>
+                <p className={`font-semibold text-xs mt-0.5 ${isCameraOn && isMicOn ? "text-emerald-400" : "text-rose-400"}`}>
+                  {isCameraOn && isMicOn ? "Camera & Mic Ready" : "Media Required"}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* BUTTONS */}
           <div className="flex items-center gap-2">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isLoading}
               className="
                 px-4 py-2.5 rounded-xl text-sm
                 bg-white/5 hover:bg-white/10 disabled:opacity-50
                 border border-white/10
-                text-slate-300 transition-all font-medium
+                text-slate-300 transition-all font-medium cursor-pointer
               "
             >
               Cancel
@@ -474,7 +684,7 @@ const InterviewSetupModal = ({ open, onClose }) => {
                 px-6 py-2.5 rounded-xl
                 font-semibold text-sm
                 text-[#020617]
-                transition-all
+                transition-all cursor-pointer
                 ${isLoading ? "opacity-75 cursor-not-allowed" : "hover:shadow-lg"}
               `}
               style={{

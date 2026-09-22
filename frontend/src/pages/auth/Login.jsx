@@ -35,7 +35,6 @@ const GoogleIcon = () => (
 const tracks = [
   { icon: Brain,    label: "Mock Interviews",    sub: "Frontend · Backend · HR",     color: "text-cyan-400",    bg: "bg-cyan-400/[0.07] border-cyan-400/15",    dot: "bg-cyan-400" },
   { icon: FileText, label: "Resume Review",      sub: "ATS scoring · Keyword gaps",  color: "text-emerald-400", bg: "bg-emerald-400/[0.07] border-emerald-400/15", dot: "bg-emerald-400" },
-  { icon: Code2,    label: "Coding Practice",    sub: "DSA · Logic · Test cases",    color: "text-violet-400",  bg: "bg-violet-400/[0.07] border-violet-400/15",  dot: "bg-violet-400" },
   { icon: BarChart3,label: "Progress Analytics", sub: "Streaks · Weak areas · Trends",color: "text-amber-400",  bg: "bg-amber-400/[0.07] border-amber-400/15",   dot: "bg-amber-400" },
 ];
 
@@ -78,7 +77,7 @@ const Login = () => {
 
       if (res.data?.requiresVerification) {
         navigate("/verify-otp", {
-          state: { email: data.email },
+          state: { email: data.email, devOtp: res.data.otp },
           replace: true,
         });
         toast.error(res.data.message || "Please verify your email first");

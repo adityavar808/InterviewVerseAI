@@ -9,7 +9,7 @@ from config import GROQ_API_KEY, GROQ_API_URL
 async def call_groq_model(
     model: str,
     prompt: str,
-    max_new_tokens: int = 250,
+    max_new_tokens: int = 1500,
     temperature: float = 0.7,
     top_p: float = 0.9,
 ):

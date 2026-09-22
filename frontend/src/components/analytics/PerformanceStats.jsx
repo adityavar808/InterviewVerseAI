@@ -12,39 +12,43 @@ import {
 const defaultStats = [
   {
     title: "Total Interviews",
-    value: "148",
-    growth: "+18%",
+    value: "0",
+    growth: "+100%",
     icon: Trophy,
     color: "text-cyan-400",
     bg: "bg-cyan-500/10",
     border: "border-cyan-500/20",
+    glowColor: "rgba(34, 211, 238, 0.4)",
   },
   {
     title: "Average Score",
-    value: "89%",
-    growth: "+6%",
+    value: "0%",
+    growth: "+0%",
     icon: Brain,
     color: "text-purple-400",
     bg: "bg-purple-500/10",
     border: "border-purple-500/20",
+    glowColor: "rgba(167, 139, 250, 0.4)",
   },
   {
     title: "Coding Accuracy",
-    value: "93%",
-    growth: "+12%",
+    value: "0%",
+    growth: "+0%",
     icon: Code2,
-    color: "text-green-400",
-    bg: "bg-green-500/10",
-    border: "border-green-500/20",
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
+    glowColor: "rgba(52, 211, 153, 0.4)",
   },
   {
     title: "Communication",
-    value: "84%",
-    growth: "+9%",
+    value: "0%",
+    growth: "+0%",
     icon: Mic,
     color: "text-pink-400",
     bg: "bg-pink-500/10",
     border: "border-pink-500/20",
+    glowColor: "rgba(244, 114, 182, 0.4)",
   },
 ];
 
@@ -70,90 +74,70 @@ const PerformanceStats = ({ stats = defaultStats }) => {
   }) : defaultStats;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-      
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {displayStats.map((item, index) => {
         const Icon = item.icon;
 
         return (
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ y: -4 }}
+            transition={{ delay: index * 0.05, duration: 0.2 }}
+            whileHover={{ y: -2, scale: 1.01 }}
             className="
               relative
               overflow-hidden
-              rounded-3xl
+              rounded-2xl
               border
               border-white/10
-              bg-white/[0.035]
-              backdrop-blur-xl
-              p-5
+              bg-slate-900/60
+              backdrop-blur-md
+              p-3.5 sm:p-4
               transition-all
-              duration-300
-              hover:border-white/20
+              duration-200
+              hover:border-white/25
+              hover:bg-slate-900/80
+              shadow-lg
+              flex
+              flex-col
+              justify-between
             "
           >
-            {/* Glow and top border indicator based on item color */}
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -top-12 -right-12 h-36 w-36 rounded-full opacity-[0.12] blur-[40px]"
-                   style={{
-                     backgroundColor:
-                       item.color.includes("cyan") ? "rgb(34,211,238)" :
-                       item.color.includes("purple") ? "rgb(167,139,250)" :
-                       item.color.includes("green") ? "rgb(74,222,128)" :
-                       item.color.includes("pink") ? "rgb(244,114,182)" : "rgb(34,211,238)"
-                   }}
-              />
-              <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-                   style={{
-                     background: `linear-gradient(90deg, ${
-                       item.color.includes("cyan") ? "rgba(34,211,238,0.5)" :
-                       item.color.includes("purple") ? "rgba(167,139,250,0.5)" :
-                       item.color.includes("green") ? "rgba(74,222,128,0.5)" :
-                       item.color.includes("pink") ? "rgba(244,114,182,0.5)" : "rgba(34,211,238,0.5)"
-                     }, transparent)`
-                   }}
-              />
-            </div>
-
-            {/* Top */}
-            <div className="flex items-center justify-between mb-6 relative">
-              
+            {/* Top Row: Icon + Growth Badge */}
+            <div className="flex items-center justify-between mb-2">
               <div
                 className={`
-                  w-12
-                  h-12
-                  rounded-2xl
+                  w-9
+                  h-9
+                  rounded-xl
                   flex
                   items-center
                   justify-center
                   border
                   ${item.bg}
                   ${item.border}
+                  flex-shrink-0
+                  shadow-sm
                 `}
               >
                 <Icon
                   className={item.color}
-                  size={24}
+                  size={18}
                 />
               </div>
 
-              <div className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold font-mono">
                 {item.growth}
-              </div>
+              </span>
             </div>
 
-            {/* Content */}
-            <div className="relative">
-              
-              <h2 className="text-3xl font-bold text-white mb-1.5 tracking-tight">
+            {/* Bottom Row: Value & Label */}
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none mb-1">
                 {item.value}
-              </h2>
-
-              <p className="text-slate-400 text-sm font-medium">
+              </h3>
+              <p className="text-slate-400 text-[11px] font-medium truncate">
                 {item.title}
               </p>
             </div>

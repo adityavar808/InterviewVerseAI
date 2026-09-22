@@ -67,50 +67,49 @@ const AppearanceSettings = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-7"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl"
     >
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-cyan-500/[0.06] blur-[60px]" />
-        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-violet-500/[0.05] blur-[50px]" />
+        <div className="absolute -top-16 -left-12 h-44 w-44 rounded-full bg-cyan-500/10 blur-[40px]" />
+        <div className="absolute -bottom-16 -right-12 h-44 w-44 rounded-full bg-purple-500/10 blur-[40px]" />
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.55), rgba(139,92,246,0.3), transparent)" }} />
+             style={{ background: "linear-gradient(90deg, rgba(34,211,238,0.6), rgba(167,139,250,0.4), transparent)" }} />
       </div>
 
       <div className="relative">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center flex-shrink-0">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
               <Palette
                 className="text-cyan-400"
-                size={22}
+                size={18}
               />
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white leading-tight">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
                 Appearance Settings
               </h2>
-
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-400">
                 Customize dashboard appearance & theme
               </p>
             </div>
           </div>
 
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 text-[11px] font-semibold">
-            <Sparkles size={11} />
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/10 text-purple-300 text-xs font-semibold">
+            <Sparkles size={12} />
             UI Personalization
           </span>
         </div>
 
         {/* Theme Cards */}
-        <div className="space-y-5 mb-8">
+        <div className="space-y-3 mb-4">
           {defaultThemes.map((theme) => {
             const Icon = theme.icon;
             const isActive = theme.value === selectedTheme;
@@ -119,37 +118,35 @@ const AppearanceSettings = () => {
               <motion.button
                 key={theme.value}
                 type="button"
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 onClick={() => setSelectedTheme(theme.value)}
                 className={`
                   w-full
                   text-left
                   flex
-                  flex-col
-                  lg:flex-row
-                  lg:items-center
-                  lg:justify-between
-                  gap-5
-                  rounded-3xl
+                  items-center
+                  justify-between
+                  gap-4
+                  rounded-xl
                   border
-                  p-5
+                  p-3.5
                   transition-all
-                  duration-300
+                  duration-200
                   ${
                     isActive
                       ? "bg-cyan-400/10 border-cyan-400/30 ring-1 ring-cyan-400/30"
-                      : "bg-white/[0.03] border-white/10 hover:border-cyan-400/20"
+                      : "bg-white/[0.025] border-white/10 hover:border-cyan-400/20"
                   }
                 `}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${theme.bg} border border-white/5`}>
-                    <Icon className={theme.color} size={24} />
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${theme.bg} border border-white/5 flex-shrink-0`}>
+                    <Icon className={theme.color} size={18} />
                   </div>
 
                   <div>
-                    <h3 className="text-slate-200 font-semibold text-sm leading-tight mb-2">{theme.title}</h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">{theme.description}</p>
+                    <h3 className="text-slate-200 font-bold text-xs leading-tight mb-0.5">{theme.title}</h3>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">{theme.description}</p>
                   </div>
                 </div>
 
@@ -158,18 +155,18 @@ const AppearanceSettings = () => {
                     inline-flex
                     items-center
                     justify-center
-                    rounded-2xl
-                    px-4
-                    py-2
+                    rounded-lg
+                    px-3
+                    py-1
                     text-xs
-                    font-semibold
+                    font-bold
                     transition-all
-                    duration-300
+                    duration-200
                     flex-shrink-0
                     ${
                       isActive
-                        ? "bg-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.25)]"
-                        : "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
+                        ? "bg-cyan-400 text-slate-950 shadow-sm"
+                        : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
                     }
                   `}
                 >
@@ -181,41 +178,40 @@ const AppearanceSettings = () => {
         </div>
 
         {/* Dashboard Density */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:bg-white/[0.045] transition-all duration-300">
-          <div className="flex items-center gap-3.5 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-purple-400/10 flex items-center justify-center flex-shrink-0">
+        <div className="bg-white/[0.025] border border-white/10 rounded-xl p-3.5 hover:bg-white/[0.04] transition-all duration-200">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-400/10 flex items-center justify-center flex-shrink-0">
               <LayoutDashboard
                 className="text-purple-400"
-                size={18}
+                size={16}
               />
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-white leading-tight">
+              <h3 className="text-xs font-bold text-white leading-tight">
                 Dashboard Density
               </h3>
-
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[10px] text-slate-400">
                 Control dashboard spacing & layout feel
               </p>
             </div>
           </div>
 
           {/* Options */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2.5">
             {densities.map((option) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => setDensity(option)}
                 className={`
-                  py-3.5
-                  rounded-2xl
+                  py-2
+                  rounded-lg
                   border
                   text-xs
-                  font-semibold
+                  font-bold
                   transition-all
-                  duration-300
+                  duration-200
                   ${
                     option === density
                       ? "bg-cyan-400/10 border-cyan-400/30 text-cyan-400 ring-1 ring-cyan-400/30"
@@ -230,14 +226,13 @@ const AppearanceSettings = () => {
         </div>
 
         {/* Bottom Summary */}
-        <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:bg-white/[0.045] transition-all duration-300 flex-1">
-            <h3 className="text-sm font-semibold text-white mb-2 leading-tight">
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="bg-white/[0.025] border border-white/10 rounded-xl p-3 flex-1">
+            <h3 className="text-xs font-bold text-white mb-0.5 leading-tight">
               AI Appearance Summary
             </h3>
-
             <p className="text-xs text-slate-400 leading-relaxed">
-              Personalize your InterviewVerse AI dashboard experience with futuristic themes, optimized layout density, and premium UI customization preferences for better productivity.
+              Personalize your InterviewVerse AI dashboard experience with futuristic themes and layout density options.
             </p>
           </div>
 
@@ -245,7 +240,7 @@ const AppearanceSettings = () => {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full lg:w-auto px-6 py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 text-slate-950 font-semibold text-sm shadow-[0_0_20px_rgba(34,211,238,0.25)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full lg:w-auto px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 text-slate-950 font-bold text-xs shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? "Saving..." : "Save Appearance"}
           </button>

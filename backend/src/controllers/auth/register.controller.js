@@ -179,38 +179,40 @@ const verifyOTP = async (req, res) => {
     const normalizedEmail = `${email || ""}`
       .trim()
       .toLowerCase();
+    const cleanOtp = otp ? String(otp).trim() : "";
+
+    if (!normalizedEmail || !cleanOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required",
+      });
+    }
 
     // Find pending user
-
     const pendingUser = await findPendingUser({
       email: normalizedEmail,
-      otp,
+      otp: cleanOtp,
     });
 
     // Invalid OTP
-
     if (!pendingUser) {
       return res.status(400).json({
         success: false,
-
         message: "Invalid or expired OTP",
       });
     }
 
     // Check existing real user
-
     const existingUser = await findUserByEmail(normalizedEmail);
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-
         message: "User already exists",
       });
     }
 
     // Create verified real user
-
     const user = await createVerifiedUser({
       name: pendingUser.name,
       email: pendingUser.email,
@@ -219,7 +221,6 @@ const verifyOTP = async (req, res) => {
     });
 
     // Delete pending user
-
     await deletePendingUser(normalizedEmail);
 
     // Generate Tokens
@@ -250,7 +251,6 @@ const verifyOTP = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-
       message: error.message,
     });
   }
@@ -265,12 +265,13 @@ const resendOTP = async (req, res) => {
 
     const pendingUser = await findPendingUser({
       email: normalizedEmail,
+      ignoreExpiry: true,
     });
 
     if (!pendingUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "No pending registration found for this email. Please register.",
       });
     }
 

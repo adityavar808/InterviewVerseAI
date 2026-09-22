@@ -1,4 +1,4 @@
-﻿import json
+import json
 import re
 from typing import List
 
@@ -280,7 +280,7 @@ async def generate_questions(config: InterviewConfig) -> List[dict]:
     raw = await call_groq_model(
         QUESTION_MODEL,
         prompt,
-        max_new_tokens=700,
+        max_new_tokens=2500,
         temperature=0.7,
     )
 

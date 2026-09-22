@@ -40,6 +40,16 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    interviewCredits: {
+      type: Number,
+      default: 10,
+    },
+
+    resumeCredits: {
+      type: Number,
+      default: 10,
+    },
+
     skills: {
       type: [String],
       default: [],
@@ -65,6 +75,11 @@ const userSchema = new mongoose.Schema(
 
     profileSetupDone: {
       type: Boolean,
+    },
+
+    profileSetupStep: {
+      type: Number,
+      default: 0,
     },
 
     interviewHistory: {

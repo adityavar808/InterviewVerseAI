@@ -60,7 +60,7 @@ const ProfileStats = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
       {stats.map((item, index) => {
         const Icon = item.icon;
         return (
@@ -69,8 +69,8 @@ const ProfileStats = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.07, duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className={`relative overflow-hidden rounded-3xl border ${item.border} bg-white/[0.035] backdrop-blur-xl p-6`}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className={`relative overflow-hidden rounded-2xl border ${item.border} bg-slate-900/60 backdrop-blur-md p-3.5 shadow-xl`}
           >
             {/* Glow */}
             <div
@@ -85,18 +85,18 @@ const ProfileStats = () => {
 
             <div className="relative">
               {/* Header row */}
-              <div className="flex items-start justify-between mb-5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${item.bg}`}>
-                  <Icon className={item.color} size={24} />
+              <div className="flex items-start justify-between mb-3">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.bg}`}>
+                  <Icon className={item.color} size={18} />
                 </div>
-                <span className="px-2.5 py-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 text-emerald-300 text-[11px] font-medium">
+                <span className="px-2 py-0.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 text-emerald-300 text-[10px] font-medium">
                   {item.growth}
                 </span>
               </div>
 
               {/* Value */}
-              <p className="text-3xl font-bold text-white mb-1 tracking-tight">{item.value}</p>
-              <p className="text-xs text-slate-400">{item.title}</p>
+              <p className="text-2xl font-bold text-white mb-0.5 tracking-tight">{item.value}</p>
+              <p className="text-[11px] text-slate-400">{item.title}</p>
             </div>
 
             {/* Bottom shimmer */}

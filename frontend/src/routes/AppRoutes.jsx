@@ -10,8 +10,6 @@ import ResetPassword from "../pages/auth/ResetPassword";
 
 import Interviews from "../pages/interviews/Interviews";
 import ResumeAnalyzer from "../pages/resume/ResumeAnalyzer";
-import CodingPractice from "../pages/coding/CodingPractice";
-import CodingQuestions from "../pages/coding/CodingQuestions";
 import Analytics from "../pages/analytics/Analytics";
 import Profile from "../pages/profile/Profile";
 import Settings from "../pages/settings/Settings";
@@ -33,7 +31,7 @@ const AppRoutes = () => {
       <Routes>
         {/* Public Auth Routes */}
         <Route element={<PublicRoute />}>
-          <Route path="/" element={<Home/>}></Route>
+          <Route path="/" element={<Home />} />
 
           <Route path="/login" element={<Login />} />
 
@@ -42,9 +40,9 @@ const AppRoutes = () => {
           <Route path="/verify-otp" element={<VerifyOTP />} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
-
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Route>
+
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* OAuth */}
         <Route path="/oauth-success" element={<OAuthSuccess />} />
@@ -68,7 +66,6 @@ const AppRoutes = () => {
         />
 
         {/* AI Interviews */}
-
         <Route
           path="/interviews"
           element={
@@ -79,7 +76,6 @@ const AppRoutes = () => {
         />
 
         {/* Resume Analyzer */}
-
         <Route
           path="/resume-analyzer"
           element={
@@ -89,28 +85,7 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Coding Practice */}
-
-        <Route
-          path="/coding"
-          element={
-            <ProtectedRoute>
-              <CodingQuestions />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/coding/:id"
-          element={
-            <ProtectedRoute>
-              <CodingPractice />
-            </ProtectedRoute>
-          }
-        />
-
         {/* Analytics */}
-
         <Route
           path="/analytics"
           element={
@@ -121,7 +96,6 @@ const AppRoutes = () => {
         />
 
         {/* Profile */}
-
         <Route
           path="/profile"
           element={
@@ -132,7 +106,6 @@ const AppRoutes = () => {
         />
 
         {/* Settings */}
-
         <Route
           path="/settings"
           element={

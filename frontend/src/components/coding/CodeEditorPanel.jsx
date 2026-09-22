@@ -1,86 +1,65 @@
-// src/components/coding/CodeEditorPanel.jsx
-
-import { motion } from "framer-motion";
-import Editor from "@monaco-editor/react";
-import { useState, useEffect } from "react";
-import studentService from "../../services/studentApi";
-
-import {
-  Code2,
-  Sparkles,
-  Copy,
-  RotateCcw,
-  Maximize2,
-  Play,
-  Send,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
-
-const defaultCode = `function twoSum(nums, target) {
-    const map = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        if (map.has(complement)) {
-            return [map.get(complement), i];
-        }
-        map.set(nums[i], i);
-    }
-}`;
+import LanguageSelector, { SUPPORTED_LANGUAGES } from "./LanguageSelector";
 
 const detectLanguage = (code) => {
   if (!code) return "javascript";
-  const clean = code.trim();
+  const clean = code.trim().toLowerCase();
+  if (clean.includes("select ") || clean.includes("from ") || clean.includes("where ") || clean.includes("join ")) {
+    return "sql";
+  }
   if (clean.includes("def ") && clean.includes(":")) {
     return "python";
   }
-  if (clean.includes("public ") || clean.includes("private ") || clean.includes("protected ") || clean.includes("System.out")) {
-    if (clean.includes("vector<") || clean.includes("std::") || clean.includes("#include")) {
-      return "cpp";
-    }
+  if (clean.includes("#include <stdio.h>") || (clean.includes("int main") && !clean.includes("using namespace"))) {
+    return "c";
+  }
+  if (clean.includes("vector<") || clean.includes("std::") || clean.includes("#include <iostream>") || clean.includes("using namespace std")) {
+    return "cpp";
+  }
+  if (clean.includes("public class") || clean.includes("system.out") || (clean.includes("class solution") && clean.includes("public int"))) {
     return "java";
   }
-  if (clean.includes("class ") && (clean.includes("vector<") || clean.includes("std::"))) {
-    return "cpp";
+  if (clean.includes("package main") || clean.includes("func ")) {
+    return "go";
+  }
+  if (clean.includes("fn ") || clean.includes("pub fn") || clean.includes("vec!")) {
+    return "rust";
+  }
+  if (clean.includes(": number") || clean.includes(": string") || clean.includes(": boolean") || clean.includes("interface ")) {
+    return "typescript";
   }
   return "javascript";
 };
 
 const extractMethodNameAndParams = (code, questionTitle) => {
   if (!code) {
-    const fallbackName = questionTitle?.replace(/\s+/g, "") || "solution";
+    const fallbackName = questionTitle?.replace(/[^a-zA-Z0-9]/g, "") || "solution";
     const methodName = fallbackName.charAt(0).toLowerCase() + fallbackName.slice(1);
     return { methodName, params: "nums, target" };
   }
   
-  // 1. Strip comments (both line comments and block comments)
   const cleanCode = code
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/.*/g, "");
+    .replace(/\/\/.*/g, "")
+    .replace(/#.*/g, "");
     
-  // 2. Find the first occurrence of parenthesis
   const firstParenIdx = cleanCode.indexOf("(");
   if (firstParenIdx === -1) {
-    const fallbackName = questionTitle?.replace(/\s+/g, "") || "solution";
+    const fallbackName = questionTitle?.replace(/[^a-zA-Z0-9]/g, "") || "solution";
     const methodName = fallbackName.charAt(0).toLowerCase() + fallbackName.slice(1);
     return { methodName, params: "nums, target" };
   }
   
-  // 3. Extract method name (the word directly preceding the opening parenthesis)
   const beforeParen = cleanCode.substring(0, firstParenIdx).trim();
   const words = beforeParen.split(/\s+/);
   let methodName = words[words.length - 1];
   
-  // If the extracted method name is a language keyword or empty, fall back to title
-  if (!methodName || methodName === "def" || methodName === "function") {
-    const fallbackName = questionTitle?.replace(/\s+/g, "") || "solution";
+  if (!methodName || ["def", "function", "fn", "func", "select", "void", "int"].includes(methodName.toLowerCase())) {
+    const fallbackName = questionTitle?.replace(/[^a-zA-Z0-9]/g, "") || "solution";
     methodName = fallbackName.charAt(0).toLowerCase() + fallbackName.slice(1);
   }
   
-  // Clean up methodName (remove C++ reference/pointer symbols)
   methodName = methodName.replace(/[*&]/g, "");
   
-  // 4. Extract parameters (content inside matching parentheses)
   const afterParen = cleanCode.substring(firstParenIdx);
   const match = afterParen.match(/\(([^)]*)\)/);
   let params = "nums, target";
@@ -88,14 +67,12 @@ const extractMethodNameAndParams = (code, questionTitle) => {
     const paramsStr = match[1].trim();
     if (paramsStr) {
       const parsedParams = paramsStr.split(",").map(p => {
-        // Handle Python type annotations if present (e.g. nums: List[int])
         const cleanParam = p.trim().split(":")[0].trim();
         const parts = cleanParam.split(/\s+/);
         let paramName = parts[parts.length - 1];
         paramName = paramName.replace(/[*&]/g, "");
-        return paramName.replace(/[\[\]]/g, ""); // remove array brackets (e.g. height[] -> height)
+        return paramName.replace(/[\[\]]/g, "");
       });
-      // Filter out empty params or "self" (Python class methods)
       params = parsedParams.filter(p => p && p !== "self").join(", ");
     } else {
       params = "";
@@ -112,19 +89,29 @@ const getBoilerplate = (lang, question) => {
     return question.starterCode;
   }
   
-  const { methodName, params } = extractMethodNameAndParams(question?.starterCode, question?.title);
+  const { methodName, params } = extractMethodNameAndParams(question?.starterCode, question?.title || question?.text);
   
   switch (lang) {
     case "javascript":
       return `function ${methodName}(${params}) {\n    // Write your JavaScript code here\n}`;
+    case "typescript":
+      return `function ${methodName}(${params}: any): any {\n    // Write your TypeScript code here\n}`;
     case "python":
       return `class Solution:\n    def ${methodName}(self, ${params}):\n        # Write your Python code here\n        pass`;
     case "cpp":
-      return `class Solution {\npublic:\n    vector<int> ${methodName}(${params}) {\n        // Write your C++ code here\n    }\n};`;
+      return `#include <iostream>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> ${methodName}(${params}) {\n        // Write your C++ code here\n        return {};\n    }\n};`;
+    case "c":
+      return `#include <stdio.h>\n#include <stdlib.h>\n\n// Write your C code here\nvoid ${methodName}() {\n    \n}`;
     case "java":
-      return `class Solution {\n    public int[] ${methodName}(${params}) {\n        // Write your Java code here\n    }\n}`;
+      return `class Solution {\n    public int[] ${methodName}(${params}) {\n        // Write your Java code here\n        return new int[]{};\n    }\n}`;
+    case "sql":
+      return `-- Write your SQL query here\nSELECT * FROM employees\nWHERE department = 'Engineering';`;
+    case "go":
+      return `package main\n\nimport "fmt"\n\nfunc ${methodName}(${params}) {\n    // Write your Go code here\n}`;
+    case "rust":
+      return `impl Solution {\n    pub fn ${methodName}(${params}) -> Vec<i32> {\n        // Write your Rust code here\n        vec![]\n    }\n}`;
     default:
-      return "";
+      return `function ${methodName}(${params}) {\n    // Write your code here\n}`;
   }
 };
 
@@ -309,16 +296,10 @@ const CodeEditorPanel = ({ question, setTestCases, setAiReview, setActiveTab }) 
         {/* Actions */}
         <div className="flex items-center gap-2">
           {/* Language Selection */}
-          <select
-            value={selectedLanguage}
-            onChange={(e) => handleLanguageChange(e.target.value)}
-            className="bg-white/[0.05] border border-white/10 hover:border-cyan-500/30 rounded-xl px-3 py-1.5 text-xs text-white outline-none cursor-pointer focus:border-cyan-400/40 transition-all font-sans mr-2"
-          >
-            <option value="javascript" className="bg-slate-950 text-white">JavaScript</option>
-            <option value="python" className="bg-slate-950 text-white">Python</option>
-            <option value="cpp" className="bg-slate-950 text-white">C++</option>
-            <option value="java" className="bg-slate-950 text-white">Java</option>
-          </select>
+          <LanguageSelector
+            selectedLanguage={selectedLanguage}
+            onChange={handleLanguageChange}
+          />
 
           <button
             onClick={handleCopy}

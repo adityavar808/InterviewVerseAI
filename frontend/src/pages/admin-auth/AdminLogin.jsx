@@ -173,7 +173,6 @@ const AdminLogin = () => {
             {[
               { label: "User management & role assignments" },
               { label: "Interview activity & content oversight" },
-              { label: "Coding question library operations" },
               { label: "Platform analytics & reporting" },
             ].map((item, i) => (
               <motion.div

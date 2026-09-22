@@ -32,10 +32,10 @@ const defaultAccounts = [
     description: "Showcase your projects and achievements publicly.",
     status: "Not Connected",
     icon: Globe,
-    color: "text-green-400",
-    bg: "bg-green-500/[0.03] hover:bg-green-500/[0.06]",
-    border: "border-green-500/25",
-    iconBg: "bg-green-500/10",
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/[0.03] hover:bg-emerald-500/[0.06]",
+    border: "border-emerald-500/25",
+    iconBg: "bg-emerald-500/10",
   },
 ];
 
@@ -93,82 +93,86 @@ const ConnectedAccounts = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-7"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl"
     >
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-cyan-500/[0.06] blur-[60px]" />
-        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-violet-500/[0.05] blur-[50px]" />
+        <div className="absolute -top-16 -left-12 h-44 w-44 rounded-full bg-cyan-500/10 blur-[40px]" />
+        <div className="absolute -bottom-16 -right-12 h-44 w-44 rounded-full bg-purple-500/10 blur-[40px]" />
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.55), rgba(139,92,246,0.3), transparent)" }} />
+             style={{ background: "linear-gradient(90deg, rgba(34,211,238,0.6), rgba(167,139,250,0.4), transparent)" }} />
       </div>
 
       <div className="relative">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-xl font-semibold text-white leading-tight">Connected Accounts</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Manage linked platforms & integrations</p>
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Link className="text-amber-400" size={18} />
+            </div>
+
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">Connected Accounts</h2>
+              <p className="text-[11px] text-slate-400">Manage linked platforms & integrations</p>
+            </div>
           </div>
 
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 text-[11px] font-semibold">
-            <Sparkles size={11} />
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/10 text-purple-300 text-xs font-semibold">
+            <Sparkles size={12} />
             Secure Integrations
           </span>
         </div>
 
         {/* Account Cards */}
-        <div className="space-y-5">
+        <div className="space-y-3">
           {accounts.map((account, index) => {
             const Icon = account.icon;
 
             return (
               <motion.div
                 key={index}
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 className={`
                   flex
-                  flex-col
-                  lg:flex-row
-                  lg:items-center
-                  lg:justify-between
-                  gap-5
-                  rounded-3xl
+                  items-center
+                  justify-between
+                  gap-4
+                  rounded-xl
                   border
                   ${account.border}
                   ${account.bg}
-                  p-5
+                  p-3.5
                   transition-all
-                  duration-300
+                  duration-200
                 `}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${account.iconBg} border border-white/5`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${account.iconBg} border border-white/5`}>
                     {Icon ? (
-                      <Icon className={account.color} size={24} />
+                      <Icon className={account.color} size={18} />
                     ) : (
-                      <Mail className={account.color} size={24} />
+                      <Mail className={account.color} size={18} />
                     )}
                   </div>
 
                   <div>
-                    <h3 className="text-slate-200 font-semibold text-sm leading-tight mb-2">{account.title}</h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">{account.description}</p>
+                    <h3 className="text-slate-200 font-bold text-xs leading-tight mb-0.5">{account.title}</h3>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">{account.description}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-start gap-4 flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   {account.status === "Connected" ? (
-                    <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-green-400/20 bg-green-400/10 text-green-300 text-xs font-semibold">
-                      <CheckCircle2 size={13} />
+                    <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-lg border border-emerald-400/20 bg-emerald-400/10 text-emerald-300 text-[11px] font-semibold">
+                      <CheckCircle2 size={12} />
                       Connected
                     </div>
                   ) : (
-                    <div className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-xs font-semibold">
+                    <div className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 text-[11px] font-semibold">
                       Not Connected
                     </div>
                   )}
@@ -177,19 +181,18 @@ const ConnectedAccounts = () => {
                     type="button"
                     onClick={() => toggleAccount(index)}
                     className={`
-                      px-5
-                      py-2.5
-                      rounded-2xl
-                      font-semibold
+                      px-3.5
+                      py-1.5
+                      rounded-lg
+                      font-bold
                       text-xs
-                      sm:text-sm
                       transition-all
                       duration-200
                       active:scale-[0.98]
                       ${
                         account.status === "Connected"
-                          ? "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20"
-                          : "bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:shadow-[0_0_20px_rgba(34,211,238,0.35)]"
+                          ? "bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20"
+                          : "bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm"
                       }
                     `}
                   >
@@ -202,11 +205,11 @@ const ConnectedAccounts = () => {
         </div>
 
         {/* Footer Area */}
-        <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:bg-white/[0.045] transition-all duration-300 flex-1">
-            <h3 className="text-sm font-semibold text-white mb-2 leading-tight">AI Integration Summary</h3>
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="bg-white/[0.025] border border-white/10 rounded-xl p-3 flex-1">
+            <h3 className="text-xs font-bold text-white mb-0.5 leading-tight">AI Integration Summary</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Connected platforms improve authentication, coding analytics, project visibility, and professional profile strength while enhancing your InterviewVerse AI ecosystem experience.
+              Connected platforms improve authentication, coding analytics, and profile visibility.
             </p>
           </div>
 
@@ -214,7 +217,7 @@ const ConnectedAccounts = () => {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full lg:w-auto px-6 py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 text-slate-950 font-semibold text-sm shadow-[0_0_20px_rgba(34,211,238,0.25)] hover:shadow-[0_0_25px_rgba(34,211,238,0.35)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full lg:w-auto px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 text-slate-950 font-bold text-xs shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? "Saving..." : "Save Connections"}
           </button>

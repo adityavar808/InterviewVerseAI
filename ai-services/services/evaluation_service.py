@@ -135,6 +135,39 @@ def parse_score(text):
     return max(0, min(100, score))
 
 
+def extract_clean_feedback(text: str, json_data: dict) -> str:
+    if isinstance(json_data, dict) and "feedback" in json_data and isinstance(json_data["feedback"], str):
+        fb = json_data["feedback"].strip()
+        if fb:
+            return fb
+
+    if not text:
+        return "No feedback provided."
+
+    text_str = str(text).strip()
+
+    # Remove markdown code fences
+    cleaned = re.sub(r"^```(?:json)?\s*", "", text_str, flags=re.IGNORECASE)
+    cleaned = re.sub(r"```\s*$", "", cleaned, flags=re.IGNORECASE).strip()
+
+    # Try regex match for "feedback": "..."
+    feedback_match = re.search(r'"feedback"\s*:\s*"(.*?)"(?:\s*\}|\s*,\s*"|$)', cleaned, re.DOTALL)
+    if not feedback_match:
+        feedback_match = re.search(r'"feedback"\s*:\s*"(.*?)"', cleaned, re.DOTALL)
+
+    if feedback_match:
+        extracted = feedback_match.group(1).replace('\\"', '"').replace('\\n', '\n').strip()
+        if extracted:
+            return extracted
+
+    # Clean leftover wrappers
+    cleaned = re.sub(r'^\s*\{\s*"feedback"\s*:\s*"?', "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'"?\s*\}\s*$', "", cleaned).strip()
+    cleaned = cleaned.replace('\\"', '"').strip()
+
+    return cleaned if cleaned else text_str
+
+
 async def evaluate_answer(config: AnswerEvaluation) -> dict:
     score_prompt = (
         f"You are an AI interviewer. Evaluate the following answer and provide a JSON object with fields: "
@@ -163,14 +196,14 @@ async def evaluate_answer(config: AnswerEvaluation) -> dict:
     score_raw = await call_groq_model(
         SCORE_MODEL,
         score_prompt,
-        max_new_tokens=120,
+        max_new_tokens=1500,
         temperature=0.3,
     )
 
     feedback_raw = await call_groq_model(
         FEEDBACK_MODEL,
         feedback_prompt,
-        max_new_tokens=180,
+        max_new_tokens=1500,
         temperature=0.7,
     )
 
@@ -185,9 +218,7 @@ async def evaluate_answer(config: AnswerEvaluation) -> dict:
     technical = parse_int_value(score_json.get("technical"), 0)
     confidence = parse_int_value(score_json.get("confidence"), 0)
 
-    feedback = str(
-        feedback_json.get("feedback", feedback_text)
-    ).strip()
+    feedback = extract_clean_feedback(feedback_text, feedback_json)
 
     return {
         "score": max(0, min(100, score)),

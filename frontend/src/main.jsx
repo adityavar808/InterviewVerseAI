@@ -11,7 +11,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
       <App />
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        containerStyle={{
+          zIndex: 9999999,
+        }}
+      />
     </Provider>
   </React.StrictMode>,
 );

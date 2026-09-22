@@ -2,301 +2,415 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import {
+  ShieldCheck,
+  UserCheck,
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Brain,
+  Lock,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { setCredentials, logout } from "../../redux/slices/authSlice";
 import { API_BASE_URL } from "../../config/urls";
 
-const G = { blue: "#4285F4", red: "#EA4335", yellow: "#FBBC05", green: "#34A853" };
-
-const STEPS = [
-  { id: "auth",     label: "Authenticating token",  color: G.blue,   bg: "#EFF6FF" },
-  { id: "profile",  label: "Fetching your profile", color: G.red,    bg: "#FFF5F5" },
-  { id: "session",  label: "Initializing session",  color: G.yellow, bg: "#FFFBEB" },
-  { id: "redirect", label: "Launching dashboard",   color: G.green,  bg: "#F0FDF4" },
-];
-
-const GoogleG = () => (
-  <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
-    <path d="M43.611 20.083H24v8h11.303C33.654 32.657 29.223 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#4285F4" />
-    <path d="M6.306 14.691l6.571 4.819C14.655 15.108 19 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4c-7.682 0-14.344 4.337-17.694 10.691z" fill="#EA4335" />
-    <path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" fill="#34A853" />
-    <path d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#FBBC05" />
+// ─── Google SVG ───────────────────────────────────────────────────────────────
+const GoogleIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
   </svg>
 );
 
-const StepRow = ({ step, status }) => {
-  const isDone   = status === "done";
-  const isActive = status === "active";
-
-  return (
-    <div
-      style={{
-        display: "flex", alignItems: "center", gap: 12,
-        padding: "10px 14px", borderRadius: 12,
-        background: isDone ? step.bg : isActive ? "#fff" : "#fafafa",
-        border: `1.5px solid ${isDone ? step.color + "44" : isActive ? step.color + "88" : "#f0f0f0"}`,
-        boxShadow: isActive ? `0 0 0 3px ${step.color}18` : "none",
-        transition: "all .3s",
-        opacity: status === "wait" ? 0.5 : 1,
-      }}
-    >
-      {/* Icon */}
-      <div style={{
-        width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: isDone ? step.color : isActive ? step.color + "18" : "#f3f4f6",
-        transition: "all .3s",
-      }}>
-        {isDone ? (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <polyline points="2,7 5.5,10.5 12,3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ) : isActive ? (
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: step.color, animation: "ivPulse .7s ease infinite" }} />
-        ) : (
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#d1d5db" }} />
-        )}
-      </div>
-
-      {/* Label */}
-      <span style={{ fontSize: 13, fontWeight: 500, flex: 1, color: status === "wait" ? "#9ca3af" : "#111827", transition: "color .3s" }}>
-        {step.label}
-      </span>
-
-      {/* Badge */}
-      {isDone && <span style={{ fontSize: 11, fontWeight: 600, color: step.color }}>Done</span>}
-      {isActive && (
-        <span style={{ fontSize: 12, color: step.color, animation: "ivBlink .8s ease infinite", letterSpacing: 1 }}>●●●</span>
-      )}
-    </div>
-  );
-};
+const STEPS = [
+  {
+    id: "auth",
+    label: "Authenticating OAuth Token",
+    detail: "Validating cryptographic handshake",
+    icon: ShieldCheck,
+    color: "cyan",
+  },
+  {
+    id: "profile",
+    label: "Fetching Candidate Profile",
+    detail: "Synchronizing user credentials & roles",
+    icon: UserCheck,
+    color: "violet",
+  },
+  {
+    id: "session",
+    label: "Initializing AI Workspace",
+    detail: "Configuring mock interview environment",
+    icon: Sparkles,
+    color: "emerald",
+  },
+  {
+    id: "redirect",
+    label: "Launching Dashboard",
+    detail: "Directing to secure workspace",
+    icon: ArrowRight,
+    color: "amber",
+  },
+];
 
 const OAuthSuccess = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [phase,      setPhase]      = useState("loading"); // loading | done | error
+  const [phase, setPhase] = useState("loading"); // loading | done | error
   const [activeStep, setActiveStep] = useState(0);
-  const [errorMsg,   setErrorMsg]   = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [userData, setUserData] = useState(null);
 
-  // Step ticker
+  // Step ticker for visual sequence
   useEffect(() => {
     if (phase !== "loading") return;
-    const iv = setInterval(() => setActiveStep(s => Math.min(s + 1, STEPS.length - 1)), 700);
-    return () => clearInterval(iv);
+    const interval = setInterval(() => {
+      setActiveStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+    }, 600);
+    return () => clearInterval(interval);
   }, [phase]);
 
-  // OAuth sync
+  // OAuth verification request
   useEffect(() => {
-    const sync = async () => {
+    const syncAuth = async () => {
       const params = new URLSearchParams(window.location.search);
-      const token  = params.get("token");
-      if (!token) { navigate("/login", { replace: true }); return; }
+      const token = params.get("token");
+
+      if (!token) {
+        toast.error("Invalid access token");
+        navigate("/login", { replace: true });
+        return;
+      }
+
       try {
         const { data } = await axios.get(`${API_BASE_URL}/auth/me`, {
           withCredentials: true,
           headers: { Authorization: `Bearer ${token}` },
         });
+
         localStorage.setItem("accessToken", token);
         dispatch(setCredentials({ accessToken: token, user: data.user }));
+        setUserData(data.user);
         setPhase("done");
         setActiveStep(STEPS.length - 1);
-        setTimeout(() => navigate(
-          data.user?.profileSetupDone === false ? "/complete-profile" : "/dashboard",
-          { replace: true }
-        ), 1400);
+
+        setTimeout(() => {
+          navigate(
+            data.user?.profileSetupDone === false
+              ? "/complete-profile"
+              : "/dashboard",
+            { replace: true }
+          );
+        }, 1500);
       } catch (err) {
         localStorage.removeItem("accessToken");
         dispatch(logout());
-        const msg = err.response?.data?.message || err.message || "Unable to complete Google sign-in";
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          "Unable to complete Google authentication";
         setPhase("error");
         setErrorMsg(msg);
         toast.error(msg);
-        setTimeout(() => navigate("/login", { replace: true }), 2800);
       }
     };
-    sync();
+
+    syncAuth();
   }, [dispatch, navigate]);
 
-  const ringDash     = phase === "done" ? "124 366" : phase === "error" ? "50 440" : "114 377";
-  const ringOpacity  = phase === "error" ? 0.3 : 1;
-  const labelColor   = phase === "done" ? G.green : phase === "error" ? G.red : G.blue;
-  const labelText    = phase === "done" ? "Access granted" : phase === "error" ? "Sign-in failed" : "Google OAuth";
-  const titleText    = phase === "done" ? "You're all set!" : phase === "error" ? "Something went wrong" : "Signing you in";
-  const subText      = phase === "done"
-    ? "Redirecting to your dashboard…"
-    : phase === "error"
-    ? (errorMsg || "Redirecting back to login…")
-    : "Hang tight while we verify your account…";
-
   return (
-    <>
-      <style>{`
-        @keyframes ivFadeUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes ivSpin    { to{transform:rotate(360deg)} }
-        @keyframes ivSpinRev { to{transform:rotate(-360deg)} }
-        @keyframes ivCheck   { from{stroke-dashoffset:52} to{stroke-dashoffset:0} }
-        @keyframes ivRipple  { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(2.2);opacity:0} }
-        @keyframes ivPulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(.88)} }
-        @keyframes ivBlink   { 0%,100%{opacity:1} 50%{opacity:.2} }
-        @keyframes ivShake   { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
-        @keyframes ivFloat1  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes ivFloat2  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
-        @keyframes ivFloat3  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-13px)} }
-        @keyframes ivStepIn  { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
-      `}</style>
+    <div className="relative min-h-screen w-full bg-[#0B0F17] text-slate-100 flex items-center justify-center p-4 overflow-hidden font-sans selection:bg-cyan-500/30">
+      {/* ─── Ambient Glow Background Blobs ───────────────────────────────────── */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-500/15 via-indigo-500/10 to-emerald-500/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-cyan-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute -top-20 -right-20 w-96 h-96 bg-emerald-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Full-page white bg */}
-      <div style={{
-        minHeight: "100vh", background: "#ffffff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "24px 16px", position: "relative", overflow: "hidden",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}>
+      {/* Grid Pattern Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)`,
+          backgroundSize: "32px 32px",
+        }}
+      />
 
-        {/* Dot grid */}
-        <div style={{
-          position: "absolute", inset: 0, pointerEvents: "none",
-          backgroundImage: "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
-          backgroundSize: "28px 28px", opacity: 0.55,
-        }} />
+      {/* ─── Main Content Card ────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 w-full max-w-md bg-slate-900/60 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-cyan-950/40 flex flex-col items-center"
+      >
+        {/* Top Header Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold tracking-wider uppercase mb-6"
+        >
+          <Brain className="w-3.5 h-3.5" />
+          <span>InterviewVerse AI • Authentication</span>
+        </motion.div>
 
-        {/* Floating colour blobs */}
-        {[
-          { color: G.blue,   style: { width: 300, height: 300, top: -70, right: -50, animation: "ivFloat1 7s ease-in-out infinite" } },
-          { color: G.green,  style: { width: 220, height: 220, bottom: -50, left: -30, animation: "ivFloat2 9s ease-in-out infinite" } },
-          { color: G.yellow, style: { width: 160, height: 160, top: 60, left: 20, animation: "ivFloat3 6s ease-in-out infinite" } },
-        ].map((b, i) => (
-          <div key={i} style={{
-            position: "absolute", borderRadius: "50%", pointerEvents: "none",
-            background: b.color, opacity: 0.065, ...b.style,
-          }} />
-        ))}
+        {/* ─── Orbital Animated Graphic Container ──────────────────────────── */}
+        <div className="relative w-32 h-32 flex items-center justify-center mb-6">
+          {/* External Rotating Halo Ring */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            className={`absolute inset-0 rounded-full border-2 border-dashed ${
+              phase === "done"
+                ? "border-emerald-500/40"
+                : phase === "error"
+                ? "border-rose-500/40"
+                : "border-cyan-500/40"
+            }`}
+          />
 
-        {/* Card */}
-        <div style={{
-          position: "relative", zIndex: 2,
-          background: "#fff", borderRadius: 24,
-          border: "1.5px solid #f1f1f1",
-          boxShadow: "0 2px 8px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.07)",
-          padding: "clamp(28px,5vw,48px) clamp(20px,6vw,40px) clamp(24px,4vw,36px)",
-          width: "100%", maxWidth: 420,
-          display: "flex", flexDirection: "column", alignItems: "center",
-          animation: "ivFadeUp .5s cubic-bezier(.22,1,.36,1) both",
-        }}>
+          {/* Inner Counter-Rotating Pulse Ring */}
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            className={`absolute inset-2 rounded-full border border-gradient ${
+              phase === "done"
+                ? "border-emerald-400/20 shadow-[0_0_25px_rgba(16,185,129,0.25)]"
+                : phase === "error"
+                ? "border-rose-400/20 shadow-[0_0_25px_rgba(244,63,94,0.25)]"
+                : "border-cyan-400/20 shadow-[0_0_25px_rgba(6,182,212,0.25)]"
+            }`}
+          />
 
-          {/* Orbital ring + icon */}
-          <div style={{
-            position: "relative", width: "clamp(116px,28vw,140px)", height: "clamp(116px,28vw,140px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            marginBottom: 28,
-          }}>
-            {/* Ripple on success */}
-            {phase === "done" && (
-              <div style={{
-                position: "absolute", inset: -10, borderRadius: "50%",
-                border: `2px solid ${G.green}`,
-                animation: "ivRipple 2s ease-out infinite",
-                pointerEvents: "none",
-              }} />
-            )}
-
-            <svg viewBox="0 0 200 200" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", animation: `ivSpin ${phase === "error" ? "8" : "5"}s linear infinite` }}>
-              <circle cx="100" cy="100" r="88" fill="none" stroke="#f3f4f6" strokeWidth="1" strokeDasharray="3 8" />
-              {[G.blue, G.red, G.yellow, G.green].map((col, i) => (
-                <circle key={col} cx="100" cy="100" r="78" fill="none"
-                  stroke={col} strokeWidth="3"
-                  strokeDasharray={ringDash}
-                  strokeDashoffset={-(i * 119)}
-                  strokeLinecap="round"
-                  strokeOpacity={ringOpacity}
-                  style={{ transition: "stroke-dasharray .8s ease, stroke-opacity .4s" }}
-                />
-              ))}
-              <circle cx="100" cy="100" r="62" fill="none" stroke="#f0f0f0" strokeWidth="1" strokeDasharray="2 8"
-                style={{ animation: "ivSpinRev 3s linear infinite" }} />
-            </svg>
-
-            {/* Centre disc */}
-            <div style={{
-              width: "clamp(72px,18vw,88px)", height: "clamp(72px,18vw,88px)",
-              borderRadius: "50%", background: "#fff",
-              border: `2px solid ${phase === "done" ? G.green + "55" : phase === "error" ? G.red + "44" : "#f0f0f0"}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 2px 12px rgba(0,0,0,.08)",
-              position: "relative", zIndex: 2,
-              transition: "border-color .4s",
-            }}>
-              {phase === "loading" && <GoogleG />}
-              {phase === "done" && (
-                <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
-                  <polyline points="8,24 19,33 36,13" stroke={G.green} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"
-                    strokeDasharray="52" style={{ animation: "ivCheck .55s cubic-bezier(.4,0,.2,1) both" }} />
-                </svg>
-              )}
-              {phase === "error" && (
-                <svg width="44" height="44" viewBox="0 0 48 48" fill="none" style={{ animation: "ivShake .4s ease both" }}>
-                  <line x1="13" y1="13" x2="35" y2="35" stroke={G.red} strokeWidth="3.5" strokeLinecap="round" />
-                  <line x1="35" y1="13" x2="13" y2="35" stroke={G.red} strokeWidth="3.5" strokeLinecap="round" />
-                </svg>
-              )}
-            </div>
-          </div>
-
-          {/* 4-colour bar */}
-          <div style={{ display: "flex", gap: 5, justifyContent: "center", marginBottom: 24, opacity: phase === "error" ? 0.25 : 1, transition: "opacity .4s" }}>
-            {[G.blue, G.red, G.yellow, G.green].map(col => (
-              <div key={col} style={{ height: 3, width: 28, borderRadius: 3, background: col }} />
-            ))}
-          </div>
-
-          {/* Headline */}
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
-            <p style={{ fontSize: 11, letterSpacing: ".16em", fontWeight: 600, textTransform: "uppercase", color: labelColor, marginBottom: 6, transition: "color .3s" }}>
-              {labelText}
-            </p>
-            <h1 style={{ fontSize: "clamp(18px,4vw,22px)", fontWeight: 700, color: "#111827", marginBottom: 6, lineHeight: 1.25 }}>
-              {titleText}
-            </h1>
-            <p style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.55 }}>
-              {subText}
-            </p>
-          </div>
-
-          {/* Steps */}
-          {phase !== "error" && (
-            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
-              {STEPS.map((step, i) => {
-                const status =
-                  phase === "done" || i < activeStep ? "done"
-                  : phase === "loading" && i === activeStep ? "active"
-                  : "wait";
-                return (
-                  <div key={step.id} style={{ animation: `ivStepIn .3s ease both`, animationDelay: `${i * 0.06}s` }}>
-                    <StepRow step={step} status={status} />
-                  </div>
-                );
-              })}
-            </div>
+          {/* Pulse Waves on Success */}
+          {phase === "done" && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0.8 }}
+              animate={{ scale: 1.4, opacity: 0 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+              className="absolute inset-0 rounded-full border-2 border-emerald-400/60 pointer-events-none"
+            />
           )}
 
-          {/* Footer */}
-          <div style={{
-            width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            paddingTop: 18, borderTop: "1px solid #f3f4f6",
-          }}>
-            <span style={{ fontSize: 10, letterSpacing: ".18em", fontWeight: 500, color: "#9ca3af", textTransform: "uppercase" }}>
-              InterviewVerse AI
-            </span>
-            <div style={{ width: 4, height: 4, borderRadius: "50%", background: labelColor, animation: "ivPulse 2s infinite", transition: "background .3s" }} />
-            <span style={{ fontSize: 10, letterSpacing: ".18em", fontWeight: 500, color: "#9ca3af", textTransform: "uppercase" }}>
-              Secure Auth
-            </span>
+          {/* Center Glass Disc */}
+          <div
+            className={`relative z-10 w-20 h-20 rounded-2xl flex items-center justify-center bg-slate-950/80 border backdrop-blur-md transition-colors duration-500 ${
+              phase === "done"
+                ? "border-emerald-500/50 shadow-lg shadow-emerald-500/20 text-emerald-400"
+                : phase === "error"
+                ? "border-rose-500/50 shadow-lg shadow-rose-500/20 text-rose-400"
+                : "border-cyan-500/50 shadow-lg shadow-cyan-500/20 text-cyan-400"
+            }`}
+          >
+            <AnimatePresence mode="wait">
+              {phase === "loading" && (
+                <motion.div
+                  key="loading"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  className="flex items-center justify-center"
+                >
+                  <GoogleIcon />
+                </motion.div>
+              )}
+              {phase === "done" && (
+                <motion.div
+                  key="done"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+                </motion.div>
+              )}
+              {phase === "error" && (
+                <motion.div
+                  key="error"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                >
+                  <AlertCircle className="w-10 h-10 text-rose-400" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
         </div>
-      </div>
-    </>
+
+        {/* ─── Title & Subtitle ────────────────────────────────────────────── */}
+        <div className="text-center mb-6">
+          <motion.h1
+            key={phase}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent"
+          >
+            {phase === "done"
+              ? "Access Granted!"
+              : phase === "error"
+              ? "Authentication Failed"
+              : "Verifying Account"}
+          </motion.h1>
+          <motion.p
+            key={phase + "-sub"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-xs sm:text-sm text-slate-400 mt-1.5 max-w-xs mx-auto leading-relaxed"
+          >
+            {phase === "done"
+              ? "Your session has been cryptographically secured. Launching your workspace..."
+              : phase === "error"
+              ? errorMsg || "Unable to sync Google credentials. Please try signing in again."
+              : "Synchronizing security tokens and preparing your personalized AI environment..."}
+          </motion.p>
+        </div>
+
+        {/* ─── User Profile Chip (When Done) ───────────────────────────────── */}
+        {phase === "done" && userData && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="w-full mb-6 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3"
+          >
+            {userData.avatar || userData.picture ? (
+              <img
+                src={userData.avatar || userData.picture}
+                alt={userData.name}
+                className="w-9 h-9 rounded-full border border-emerald-400/40 object-cover"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center font-bold text-emerald-300 text-sm">
+                {(userData.name || userData.email || "U")[0].toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-semibold text-slate-100 truncate">
+                {userData.name || "Candidate"}
+              </p>
+              <p className="text-[11px] text-emerald-400/80 truncate">
+                {userData.email}
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-medium border border-emerald-400/30">
+              Verified
+            </span>
+          </motion.div>
+        )}
+
+        {/* ─── Step List (Loading / Done) ───────────────────────────────────── */}
+        {phase !== "error" && (
+          <div className="w-full space-y-2.5 mb-6">
+            {STEPS.map((step, idx) => {
+              const isDone = phase === "done" || idx < activeStep;
+              const isActive = phase === "loading" && idx === activeStep;
+              const StepIcon = step.icon;
+
+              return (
+                <motion.div
+                  key={step.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.08 }}
+                  className={`relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                    isDone
+                      ? "bg-slate-900/80 border-emerald-500/30 shadow-sm shadow-emerald-950/20"
+                      : isActive
+                      ? "bg-slate-800/80 border-cyan-500/50 shadow-md shadow-cyan-950/40"
+                      : "bg-slate-950/40 border-slate-800/50 opacity-40"
+                  }`}
+                >
+                  {/* Icon Circle */}
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                      isDone
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        : isActive
+                        ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 animate-pulse"
+                        : "bg-slate-800 text-slate-500 border border-slate-700/50"
+                    }`}
+                  >
+                    {isDone ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ) : isActive ? (
+                      <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                    ) : (
+                      <StepIcon className="w-4 h-4" />
+                    )}
+                  </div>
+
+                  {/* Step Label & Detail */}
+                  <div className="flex-1 min-w-0 text-left">
+                    <p
+                      className={`text-xs font-medium transition-colors ${
+                        isDone
+                          ? "text-slate-200"
+                          : isActive
+                          ? "text-cyan-300 font-semibold"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {step.label}
+                    </p>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {step.detail}
+                    </p>
+                  </div>
+
+                  {/* Status Indicator Pill */}
+                  {isDone && (
+                    <span className="text-[10px] font-semibold text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                      Done
+                    </span>
+                  )}
+                  {isActive && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-cyan-400 px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                      Syncing
+                    </span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ─── Error Action Button ────────────────────────────────────────── */}
+        {phase === "error" && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full space-y-3 mb-4"
+          >
+            <button
+              onClick={() => navigate("/login", { replace: true })}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-amber-600 hover:from-rose-600 hover:to-amber-700 text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-950/30 transition-all active:scale-[0.98]"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Back to Login</span>
+            </button>
+          </motion.div>
+        )}
+
+        {/* ─── Card Footer Security Badge ───────────────────────────────────── */}
+        <div className="w-full pt-4 mt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 text-cyan-400/70" />
+            <span>256-Bit SSL Encrypted</span>
+          </div>
+          <span className="font-mono text-[10px] text-slate-600 uppercase tracking-widest">
+            OAuth v2.0
+          </span>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

@@ -6,7 +6,9 @@ import User from "../../models/user.model.js";
 import generateAccessToken from "../../utils/generateToken.js";
 import generateRefreshToken from "../../utils/generateRefreshToken.js";
 import getFrontendUrl from "../../utils/frontendUrl.js";
-import { resolveUserStatus } from "../../utils/adminHelpers.js";
+import { resolveUserStatus, sanitizeUser } from "../../utils/adminHelpers.js";
+import { createOrRefreshVerificationEntry } from "../../services/verification.service.js";
+import { findPendingUser } from "../../services/verificationStore.js";
 
 const refreshCookieOptions = {
   httpOnly: true,
@@ -123,6 +125,31 @@ const loginUser = async (req, res) => {
     });
 
     if (!user) {
+      const pendingUser = await findPendingUser({
+        email: normalizedEmail,
+        ignoreExpiry: true,
+      });
+
+      if (pendingUser) {
+        const isMatch = await bcrypt.compare(password, pendingUser.password);
+        if (isMatch) {
+          const verificationResult = await createOrRefreshVerificationEntry({
+            name: pendingUser.name,
+            email: pendingUser.email,
+            password: pendingUser.password,
+            subject: "📧 Verify Your Email - InterviewVerse AI",
+          });
+
+          return res.status(200).json({
+            success: false,
+            requiresVerification: true,
+            message: "Please verify your email first. A new OTP has been sent.",
+            email: normalizedEmail,
+            otp: process.env.NODE_ENV !== "production" ? verificationResult.otp : undefined,
+          });
+        }
+      }
+
       return res.status(400).json({
         success: false,
         message: "Invalid credentials",
@@ -257,9 +284,25 @@ const getMe = async (req, res) => {
     });
   }
 
+  let updated = false;
+  if (req.user.interviewCredits === undefined) {
+    req.user.interviewCredits = 10;
+    updated = true;
+  }
+  if (req.user.resumeCredits === undefined) {
+    req.user.resumeCredits = 10;
+    updated = true;
+  }
+  if (updated && req.user.save) {
+    await req.user.save();
+  }
+
+  const sanitized = sanitizeUser(req.user.toObject());
+
   res.status(200).json({
     success: true,
-    user: req.user,
+    data: sanitized,
+    user: sanitized,
   });
 };
 
@@ -302,11 +345,13 @@ const googleAuthSuccess = async (req, res) => {
 
     const refreshToken = generateRefreshToken(user);
 
-    // Save refresh token
+    // Save refresh token & initialize default credits if missing
     user.refreshToken = refreshToken;
     user.lastLoginAt = new Date();
     user.lastActiveAt = new Date();
     user.status = "active";
+    if (user.interviewCredits === undefined) user.interviewCredits = 10;
+    if (user.resumeCredits === undefined) user.resumeCredits = 10;
 
     await user.save();
 
@@ -316,6 +361,12 @@ const googleAuthSuccess = async (req, res) => {
     });
 
     // Redirect frontend
+    if (req.query.state === "mobile") {
+      return res.redirect(
+        `/api/auth/oauth-success-info?token=${accessToken}`
+      );
+    }
+
     res.redirect(
       `${getFrontendUrl()}/oauth-success?token=${accessToken}`,
     );

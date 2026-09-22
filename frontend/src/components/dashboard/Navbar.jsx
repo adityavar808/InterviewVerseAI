@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
+import { motion } from "framer-motion";
 import {
   User,
   Settings,
@@ -7,17 +7,16 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Zap,
+  FileText,
 } from "lucide-react";
 
 import { useDispatch, useSelector } from "react-redux";
-
 import { useNavigate } from "react-router-dom";
-
 import toast from "react-hot-toast";
 
 import api from "../../services/api";
-
-import { logout } from "../../redux/slices/authSlice";
+import { logout, updateUserCredits } from "../../redux/slices/authSlice";
 
 const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
   const [open, setOpen] = useState(false);
@@ -136,6 +135,43 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
 
       {/* RIGHT SECTION — responsive */}
       <div className="flex items-center gap-2 md:gap-4">
+        {/* CREDIT BADGES */}
+        <div className="hidden sm:flex items-center gap-2">
+          <motion.div
+            key={`interview-credits-${user.interviewCredits}`}
+            initial={{ scale: 0.95, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold"
+            style={{
+              background: "rgba(6,182,212,0.1)",
+              border: "1px solid rgba(6,182,212,0.25)",
+              color: "#22d3ee",
+            }}
+            title="Interview Credits remaining"
+          >
+            <Zap size={13} className="text-cyan-400" />
+            <span>{user.interviewCredits ?? 10} Interviews</span>
+          </motion.div>
+
+          <motion.div
+            key={`resume-credits-${user.resumeCredits}`}
+            initial={{ scale: 0.95, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold"
+            style={{
+              background: "rgba(167,139,250,0.1)",
+              border: "1px solid rgba(167,139,250,0.25)",
+              color: "#c084fc",
+            }}
+            title="Resume Analyzer Credits remaining"
+          >
+            <FileText size={13} className="text-purple-400" />
+            <span>{user.resumeCredits ?? 10} Resumes</span>
+          </motion.div>
+        </div>
+
         {/* NOTIFICATION */}
         <button
           className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
@@ -234,15 +270,25 @@ const Navbar = ({ setSidebarOpen, collapsed, setCollapsed }) => {
               }}
             >
               {/* USER INFO */}
-
-              <div className="px-3 py-2.5 mb-1">
+              <div className="px-3 py-2.5 mb-1 border-b border-white/5 pb-3">
                 <p className="text-sm font-medium text-white">
                   {user.name || "Student"}
                 </p>
-
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   {user.email || "student@example.com"}
                 </p>
+                
+                {/* Mobile Credits Info */}
+                <div className="flex sm:hidden items-center gap-2 mt-2.5 pt-2 border-t border-white/5">
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-lg border border-cyan-500/20">
+                    <Zap size={11} />
+                    <span>{user.interviewCredits ?? 10} Mock</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-lg border border-purple-500/20">
+                    <FileText size={11} />
+                    <span>{user.resumeCredits ?? 10} Resume</span>
+                  </div>
+                </div>
               </div>
 
               {/* MENU */}

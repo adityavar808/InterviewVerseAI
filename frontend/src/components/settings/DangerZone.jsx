@@ -53,45 +53,45 @@ const DangerZone = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative overflow-hidden bg-red-500/[0.035] border border-red-500/20 backdrop-blur-xl rounded-3xl p-7"
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="relative overflow-hidden bg-rose-500/[0.035] border border-rose-500/20 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl"
     >
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-red-500/[0.05] blur-[60px]" />
-        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-orange-500/[0.03] blur-[50px]" />
+        <div className="absolute -top-16 -left-12 h-44 w-44 rounded-full bg-rose-500/10 blur-[40px]" />
+        <div className="absolute -bottom-16 -right-12 h-44 w-44 rounded-full bg-amber-500/10 blur-[40px]" />
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-             style={{ background: "linear-gradient(90deg, rgba(239,68,68,0.45), rgba(249,115,22,0.25), transparent)" }} />
+             style={{ background: "linear-gradient(90deg, rgba(244,63,94,0.6), rgba(245,158,11,0.3), transparent)" }} />
       </div>
 
       <div className="relative">
         
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
-            <TriangleAlert className="text-red-400" size={22} />
+        {/* Compact Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <TriangleAlert className="text-rose-400" size={18} />
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-white leading-tight">Danger Zone</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Sensitive account & security actions</p>
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">Danger Zone</h2>
+            <p className="text-[11px] text-slate-400">Sensitive account & security actions</p>
           </div>
         </div>
 
         {/* Action 1: Logout All Devices */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 mb-6 hover:bg-white/[0.045] transition-all duration-300">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                <LogOut className="text-orange-400" size={18} />
+        <div className="bg-white/[0.025] border border-white/10 rounded-xl p-3.5 mb-3.5 hover:bg-white/[0.04] transition-all duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                <LogOut className="text-amber-400" size={16} />
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-white leading-tight mb-2">Logout All Devices</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  This will immediately sign you out from all active devices and sessions.
+                <h3 className="text-xs font-bold text-white leading-tight mb-0.5">Logout All Devices</h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Sign out immediately from all active devices & sessions.
                 </p>
               </div>
             </div>
@@ -100,25 +100,25 @@ const DangerZone = () => {
               type="button"
               onClick={handleLogoutDevices}
               disabled={isLoggingOut}
-              className="px-5 py-2.5 rounded-2xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-all duration-200 text-orange-400 font-semibold text-xs sm:text-sm flex-shrink-0 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200 text-amber-300 font-bold text-xs flex-shrink-0 active:scale-[0.98] disabled:opacity-50"
             >
               {isLoggingOut ? "Logging out..." : "Logout Devices"}
             </button>
           </div>
         </div>
 
-        {/* Action 2: Delete Account (With 3 Confirmation Steps) */}
-        <div className="bg-white/[0.03] border border-red-500/10 rounded-2xl p-5 hover:bg-white/[0.045] transition-all duration-300">
-          <div className="flex flex-col gap-5">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="text-red-400" size={18} />
+        {/* Action 2: Delete Account */}
+        <div className="bg-white/[0.025] border border-rose-500/15 rounded-xl p-3.5 hover:bg-white/[0.04] transition-all duration-200">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="text-rose-400" size={16} />
               </div>
 
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-white leading-tight mb-2">Delete Account</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Permanently remove your InterviewVerse AI account, analytics, interviews, coding history, and all associated data.
+                <h3 className="text-xs font-bold text-white leading-tight mb-0.5">Delete Account</h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Permanently remove your account, analytics, mock interviews, and data.
                 </p>
               </div>
             </div>
@@ -128,7 +128,7 @@ const DangerZone = () => {
                 <button
                   type="button"
                   onClick={() => setConfirmStep(1)}
-                  className="px-6 py-3.5 rounded-2xl bg-red-500 hover:bg-red-400 transition-all duration-200 text-white font-semibold text-sm shadow-[0_0_20px_rgba(239,68,68,0.25)] hover:shadow-[0_0_25px_rgba(239,68,68,0.35)] flex-shrink-0 active:scale-[0.98]"
+                  className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 transition-all duration-200 text-white font-bold text-xs shadow-md active:scale-[0.98]"
                 >
                   Delete Account
                 </button>
@@ -137,25 +137,25 @@ const DangerZone = () => {
 
             {confirmStep === 1 && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 mt-2"
+                className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-3"
               >
-                <p className="text-xs text-red-300 font-medium mb-3">
-                  Step 1 of 3: Are you sure you want to delete your account? This action is permanent and cannot be undone.
+                <p className="text-xs text-rose-300 font-medium mb-2.5">
+                  Step 1 of 3: Are you sure you want to delete your account? This action is permanent.
                 </p>
-                <div className="flex gap-3 justify-end">
+                <div className="flex gap-2 justify-end">
                   <button
                     type="button"
                     onClick={() => setConfirmStep(0)}
-                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmStep(2)}
-                    className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-400 text-white text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold"
                   >
                     Yes, I am sure
                   </button>
@@ -165,25 +165,25 @@ const DangerZone = () => {
 
             {confirmStep === 2 && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 mt-2"
+                className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-3"
               >
-                <p className="text-xs text-red-300 font-medium mb-3">
-                  Step 2 of 3: Confirm once more. You will lose access to all your resume analysis reports, mock interviews, feedback history, and coding progress immediately.
+                <p className="text-xs text-rose-300 font-medium mb-2.5">
+                  Step 2 of 3: Confirm once more. You will lose access to all your interview history and analytics.
                 </p>
-                <div className="flex gap-3 justify-end">
+                <div className="flex gap-2 justify-end">
                   <button
                     type="button"
                     onClick={() => { setConfirmStep(0); setDeleteConfirmText(""); }}
-                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmStep(3)}
-                    className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-400 text-white text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold"
                   >
                     Yes, proceed
                   </button>
@@ -193,25 +193,25 @@ const DangerZone = () => {
 
             {confirmStep === 3 && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 mt-2"
+                className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-3"
               >
-                <p className="text-xs text-red-300 font-medium mb-3">
-                  Step 3 of 3: To confirm deletion, type <span className="font-bold text-white uppercase tracking-wider bg-red-500/20 px-2 py-0.5 rounded">DELETE</span> in the input field below:
+                <p className="text-xs text-rose-300 font-medium mb-2">
+                  Step 3 of 3: Type <span className="font-bold text-white uppercase tracking-wider bg-rose-500/20 px-1.5 py-0.5 rounded">DELETE</span> to confirm:
                 </p>
                 <input
                   type="text"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="Type DELETE"
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-3 px-4 text-sm text-slate-200 placeholder:text-slate-500 outline-none focus:border-red-500/40 mb-3"
+                  className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-2 px-3 text-xs text-slate-200 placeholder:text-slate-600 outline-none focus:border-rose-500/50 mb-2.5"
                 />
-                <div className="flex gap-3 justify-end">
+                <div className="flex gap-2 justify-end">
                   <button
                     type="button"
                     onClick={() => { setConfirmStep(0); setDeleteConfirmText(""); }}
-                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-semibold"
                   >
                     Cancel
                   </button>
@@ -219,9 +219,9 @@ const DangerZone = () => {
                     type="button"
                     onClick={handleDeleteAccount}
                     disabled={isDeleting || deleteConfirmText !== "DELETE"}
-                    className="px-5 py-2.5 rounded-2xl bg-red-500 hover:bg-red-400 text-white font-semibold text-xs sm:text-sm active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-4 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    {isDeleting ? "Processing..." : "Permanently Delete Account"}
+                    {isDeleting ? "Deleting..." : "Permanently Delete"}
                   </button>
                 </div>
               </motion.div>
@@ -230,13 +230,13 @@ const DangerZone = () => {
         </div>
 
         {/* Warning Alert Note */}
-        <div className="mt-8 bg-red-500/10 border border-red-500/20 rounded-2xl p-5 hover:bg-red-500/[0.14] transition-all duration-300">
-          <div className="flex items-start gap-3.5">
-            <ShieldAlert className="text-red-400 mt-0.5 flex-shrink-0" size={18} />
+        <div className="mt-4 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
+          <div className="flex items-start gap-2.5">
+            <ShieldAlert className="text-rose-400 mt-0.5 flex-shrink-0" size={16} />
             <div>
-              <h3 className="text-sm font-semibold text-white leading-tight mb-2">Important Warning</h3>
+              <h3 className="text-xs font-bold text-white leading-tight mb-0.5">Important Warning</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Actions performed inside the danger zone are sensitive and may permanently affect your account, interview history, coding analytics, resume reports, and AI-generated insights. Please proceed carefully.
+                Actions performed inside the danger zone are permanent and may erase all interview history and analytics.
               </p>
             </div>
           </div>

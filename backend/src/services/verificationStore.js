@@ -106,20 +106,27 @@ export const savePendingUser = async ({ name, email, password, otp, otpExpiry })
   return pendingUser;
 };
 
-export const findPendingUser = async ({ email, otp }) => {
+export const findPendingUser = async ({ email, otp, ignoreExpiry = false }) => {
   const normalizedEmail = normalizeEmail(email);
 
   if (!normalizedEmail) {
     return null;
   }
 
+  const cleanOtp = otp ? String(otp).trim() : null;
+
   if (isDatabaseAvailable()) {
     try {
-      return await PendingUser.findOne({
+      const query = {
         email: normalizedEmail,
-        ...(otp ? { otp } : {}),
-        otpExpiry: { $gt: Date.now() },
-      });
+        ...(cleanOtp ? { otp: cleanOtp } : {}),
+      };
+
+      if (!ignoreExpiry) {
+        query.otpExpiry = { $gt: new Date() };
+      }
+
+      return await PendingUser.findOne(query);
     } catch (error) {
       console.warn("[otp] Falling back to memory pending-user lookup:", error.message);
     }
@@ -131,11 +138,16 @@ export const findPendingUser = async ({ email, otp }) => {
     return null;
   }
 
-  if (otp && pendingUser.otp !== otp) {
+  if (cleanOtp && String(pendingUser.otp).trim() !== cleanOtp) {
     return null;
   }
 
-  if (pendingUser.otpExpiry <= Date.now()) {
+  const expiryTime =
+    pendingUser.otpExpiry instanceof Date
+      ? pendingUser.otpExpiry.getTime()
+      : pendingUser.otpExpiry;
+
+  if (!ignoreExpiry && expiryTime <= Date.now()) {
     getStore().pendingUsers.delete(normalizedEmail);
     return null;
   }

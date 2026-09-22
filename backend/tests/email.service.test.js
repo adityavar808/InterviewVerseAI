@@ -5,8 +5,8 @@ import { normalizeEmailCredential } from "../src/services/email.service.js";
 
 test("normalizes email credentials by removing whitespace", () => {
   assert.equal(
-    normalizeEmailCredential(" nffa drbd fzjp btkx "),
-    "nffadrbdfzjpbtkx",
+    normalizeEmailCredential(" cwkz vwpx onko ttfs "),
+    "cwkzvwpxonkottfs",
   );
   assert.equal(normalizeEmailCredential(" test@example.com "), "test@example.com");
 });

@@ -1,5 +1,4 @@
-const ADMIN_STORAGE_KEY =
-  "adminSession";
+const ADMIN_STORAGE_KEY = "adminSession";
 
 const parseJSON = (value) => {
   try {

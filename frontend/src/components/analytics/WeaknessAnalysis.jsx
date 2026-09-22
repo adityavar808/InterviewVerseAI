@@ -16,9 +16,9 @@ const defaultWeaknesses = [
       "Need stronger understanding of scalable architecture patterns and distributed systems.",
     improvement: "Focus on HLD & LLD practice.",
     severity: "High",
-    color: "text-red-400",
-    bg: "bg-red-500/10",
-    border: "border-red-500/20",
+    color: "text-rose-400",
+    bg: "bg-rose-500/10",
+    border: "border-rose-500/20",
   },
   {
     title: "Communication Confidence",
@@ -26,9 +26,9 @@ const defaultWeaknesses = [
       "Speech confidence slightly drops during technical explanations.",
     improvement: "Practice mock HR interviews regularly.",
     severity: "Medium",
-    color: "text-yellow-400",
-    bg: "bg-yellow-500/10",
-    border: "border-yellow-500/20",
+    color: "text-amber-400",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
   },
   {
     title: "Code Optimization",
@@ -45,11 +45,11 @@ const defaultWeaknesses = [
 const getSeverityStyles = (severity) => {
   switch(severity) {
     case "High":
-      return { color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" };
+      return { color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" };
     case "Medium":
-      return { color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" };
+      return { color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" };
     case "Low":
-      return { color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" };
+      return { color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" };
     default:
       return { color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" };
   }
@@ -65,81 +65,79 @@ const WeaknessAnalysis = ({ weaknesses = defaultWeaknesses }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
+      className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl"
     >
       {/* Glow and top line border */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-red-500/[0.06] blur-[50px]" />
-        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-purple-500/[0.06] blur-[50px]" />
+        <div className="absolute -top-16 -left-12 h-44 w-44 rounded-full bg-rose-500/10 blur-[40px]" />
+        <div className="absolute -top-16 -right-12 h-44 w-44 rounded-full bg-purple-500/10 blur-[40px]" />
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-             style={{ background: "linear-gradient(90deg, rgba(239,68,68,0.5), rgba(139,92,246,0.3), transparent)" }} />
+             style={{ background: "linear-gradient(90deg, rgba(244,63,94,0.6), rgba(167,139,250,0.4), transparent)" }} />
       </div>
 
       <div className="relative">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8 relative">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-4 relative">
           
-          <div className="flex items-center gap-4">
-            
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
               <AlertTriangle
-                className="text-red-400"
-                size={24}
+                className="text-rose-400"
+                size={18}
               />
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white tracking-tight">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
                 Weakness Analysis
               </h2>
-
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-400">
                 AI-detected improvement areas
               </p>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
-            <Sparkles size={13} />
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+            <Sparkles size={12} />
             AI Detection
           </div>
         </div>
 
         {/* Weakness Cards */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           
           {processedWeaknesses.map((item, index) => (
             <motion.div
               key={index}
-              whileHover={{ y: -3 }}
+              whileHover={{ y: -2 }}
               className="
                 relative
                 overflow-hidden
-                rounded-2xl
+                rounded-xl
                 border
                 border-white/10
-                bg-white/[0.03]
-                p-4
-                hover:bg-white/[0.045]
+                bg-white/[0.025]
+                p-3.5
+                hover:bg-white/[0.04]
                 transition-all
-                duration-300
+                duration-200
               "
             >
               <div className="relative">
                 
                 {/* Top */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     
                     <div
                       className={`
-                        w-10
-                        h-10
-                        rounded-xl
+                        w-8
+                        h-8
+                        rounded-lg
                         flex
                         items-center
                         justify-center
@@ -150,16 +148,15 @@ const WeaknessAnalysis = ({ weaknesses = defaultWeaknesses }) => {
                     >
                       <TrendingDown
                         className={item.color}
-                        size={20}
+                        size={16}
                       />
                     </div>
 
                     <div>
-                      <h3 className="text-base font-semibold text-white">
+                      <h3 className="text-sm font-bold text-white">
                         {item.title}
                       </h3>
-
-                      <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+                      <p className="text-[10px] text-slate-400 font-medium">
                         AI Performance Detection
                       </p>
                     </div>
@@ -170,8 +167,8 @@ const WeaknessAnalysis = ({ weaknesses = defaultWeaknesses }) => {
                       px-2.5
                       py-0.5
                       rounded-full
-                      text-xs
-                      font-semibold
+                      text-[10px]
+                      font-bold
                       ${item.bg}
                       ${item.border}
                       border
@@ -183,28 +180,23 @@ const WeaknessAnalysis = ({ weaknesses = defaultWeaknesses }) => {
                 </div>
 
                 {/* Issue */}
-                <div className="mb-4">
-                  
-                  <p className="text-sm text-slate-300 leading-relaxed">
+                <div className="mb-2">
+                  <p className="text-xs text-slate-300 leading-relaxed">
                     {item.issue}
                   </p>
                 </div>
 
                 {/* Improvement */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 mt-4">
-                  
-                  <div className="flex items-start gap-3">
-                    
+                <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2.5">
+                  <div className="flex items-start gap-2">
                     <Brain
                       className="text-cyan-400 mt-0.5 flex-shrink-0"
-                      size={16}
+                      size={14}
                     />
-
                     <div>
-                      <p className="text-xs font-semibold text-white mb-1">
+                      <p className="text-[11px] font-bold text-white mb-0.5">
                         Recommended Improvement
                       </p>
-
                       <p className="text-xs text-slate-400 leading-relaxed">
                         {item.improvement}
                       </p>
@@ -217,14 +209,13 @@ const WeaknessAnalysis = ({ weaknesses = defaultWeaknesses }) => {
         </div>
 
         {/* Bottom Note */}
-        <div className="mt-6 bg-white/[0.03] border border-white/10 rounded-2xl p-4 relative overflow-hidden">
+        <div className="mt-4 bg-white/[0.025] border border-white/10 rounded-xl p-3 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[0.03] to-purple-500/[0.03] pointer-events-none" />
           <div className="relative">
-            <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
+            <h3 className="text-xs font-bold text-white mb-0.5 tracking-tight">
               AI Coaching Recommendation
             </h3>
-
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-300 leading-relaxed">
               Focus on improving weak technical and communication areas consistently to increase interview success rate and placement readiness.
             </p>
           </div>

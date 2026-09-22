@@ -65,7 +65,7 @@ const SocialLinksCard = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-6"
+      className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 shadow-xl"
     >
       {/* Glow */}
       <div className="pointer-events-none absolute inset-0">
@@ -77,12 +77,12 @@ const SocialLinksCard = () => {
       <div className="relative">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-7">
+        <div className="flex items-center justify-between mb-3.5">
           <div>
-            <h2 className="text-xl font-semibold text-white leading-tight">Social Links</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Professional profiles & contact information</p>
+            <h2 className="text-base font-semibold text-white leading-tight">Social Links</h2>
+            <p className="text-[11px] text-slate-400">Professional profiles & contact information</p>
           </div>
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 text-[11px] font-medium">
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 text-[10px] font-medium">
             <Sparkles size={11} />
             Connected Profiles
           </span>

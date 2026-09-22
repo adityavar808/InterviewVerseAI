@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   BriefcaseBusiness,
-  Code2,
   FileText,
   Settings,
 } from "lucide-react";
@@ -24,18 +23,10 @@ export const ADMIN_NAV_ITEMS = [
       "Manage learner and administrator accounts.",
   },
   {
-    name: "Interviews",
-    path: "/admin/interviews",
-    icon: BriefcaseBusiness,
-    description:
-      "Maintain interview tracks and template inventory.",
-  },
-  {
-    name: "Coding",
-    path: "/admin/coding",
-    icon: Code2,
-    description:
-      "Curate coding questions and practice coverage.",
+    name : "Interview Sessions",
+    path : "/admin/interviews",
+    icon : FileText,
+    description : "Check the Status of the Interviews."
   },
   {
     name: "Reports",

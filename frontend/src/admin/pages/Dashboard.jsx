@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Activity,
-  Code2,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
@@ -10,7 +9,6 @@ import StatsCard from "../components/ui/StatsCard";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import UsersGrowthChart from "../components/Charts/UsersGrowthChart";
 import InterviewChart from "../components/Charts/InterviewChart";
-import AIUsageChart from "../components/Charts/AIUsageChart";
 import StatusBadge from "../components/ui/StatusBadge";
 import { adminService } from "../services/adminApi";
 import {
@@ -98,17 +96,6 @@ const Dashboard = () => {
       icon: ShieldCheck,
       accent: "amber",
     },
-    {
-      title: "Coding Questions",
-      value: formatCompactNumber(
-        overview.totalCodingQuestions,
-      ),
-      growth:
-        overview.questionGrowth ?? 0,
-      subtitle: "question bank growth",
-      icon: Code2,
-      accent: "emerald",
-    },
   ];
 
   return (
@@ -123,11 +110,11 @@ const Dashboard = () => {
               Admin dashboard
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-              Monitor learner activity, template inventory, question coverage, and platform-wide alerts from one operational view.
+              Monitor learner activity, template inventory, and platform-wide alerts from one operational view.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Verified users
@@ -149,22 +136,11 @@ const Dashboard = () => {
                 )}
               </p>
             </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Published questions
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-white">
-                {formatCompactNumber(
-                  overview.publishedCodingQuestions,
-                )}
-              </p>
-            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3">
         {statCards.map((card) => (
           <StatsCard
             key={card.title}
@@ -190,15 +166,6 @@ const Dashboard = () => {
             }
           />
         </div>
-      </section>
-
-      <section>
-        <AIUsageChart
-          data={
-            dashboard?.charts
-              ?.codingDifficulties || []
-          }
-        />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">

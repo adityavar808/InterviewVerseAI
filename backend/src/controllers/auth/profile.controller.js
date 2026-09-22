@@ -103,36 +103,42 @@ const updateProfile = async (req, res) => {
             };
           });
 
-    if (!name || !location || !bio || skills.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Name, location, bio, and at least one skill are required",
-      });
+    const isDraft = req.body.isDraft === true || req.body.isFinal === false;
+    const step = req.body.profileSetupStep !== undefined ? Number(req.body.profileSetupStep) : undefined;
+
+    if (!isDraft) {
+      if (!name || !location || !bio || skills.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Name, location, bio, and at least one skill are required",
+        });
+      }
+      user.profileSetupDone = true;
     }
 
-    user.name = name;
-    user.location = location;
-    user.bio = bio;
-    user.headline = headline;
-    user.skills = skills;
-    user.githubUrl = githubUrl;
-    user.linkedinUrl = linkedinUrl;
-    user.portfolioUrl = portfolioUrl;
-    user.certifications = certifications;
+    if (req.body.name !== undefined && name) user.name = name;
+    if (req.body.location !== undefined) user.location = location;
+    if (req.body.bio !== undefined) user.bio = bio;
+    if (req.body.headline !== undefined) user.headline = headline;
+    if (req.body.skills !== undefined) user.skills = skills;
+    if (req.body.githubUrl !== undefined) user.githubUrl = githubUrl;
+    if (req.body.linkedinUrl !== undefined) user.linkedinUrl = linkedinUrl;
+    if (req.body.portfolioUrl !== undefined) user.portfolioUrl = portfolioUrl;
+    if (req.body.certifications !== undefined) user.certifications = certifications;
+    if (step !== undefined && !isNaN(step)) user.profileSetupStep = step;
 
     if (profileImage !== undefined) {
       user.profileImage = profileImage;
     }
 
-    user.profileSetupDone = true;
     user.lastActiveAt = new Date();
 
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "Profile completed successfully",
+      message: isDraft ? "Progress saved" : "Profile completed successfully",
       data: sanitizeUser(user.toObject()),
     });
   } catch (error) {

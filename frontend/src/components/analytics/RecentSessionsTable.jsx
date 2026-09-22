@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Sparkles,
+  History,
 } from "lucide-react";
 
 const defaultSessions = [
@@ -82,133 +83,114 @@ const RecentSessionsTable = ({ sessions: propSessions }) => {
   const displaySessions = sessionsList.length > 0 ? sessionsList : defaultSessions;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
+      className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl"
     >
       {/* Glow and top line border */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-cyan-500/[0.06] blur-[50px]" />
-        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-purple-500/[0.06] blur-[50px]" />
+        <div className="absolute -top-16 -left-12 h-44 w-44 rounded-full bg-cyan-500/10 blur-[40px]" />
+        <div className="absolute -top-16 -right-12 h-44 w-44 rounded-full bg-purple-500/10 blur-[40px]" />
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.5), rgba(139,92,246,0.3), transparent)" }} />
+             style={{ background: "linear-gradient(90deg, rgba(34,211,238,0.6), rgba(167,139,250,0.4), transparent)" }} />
       </div>
 
       <div className="relative">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8 relative">
-          
-          <div>
-            <h2 className="text-xl font-semibold text-white tracking-tight mb-1">
-              Recent Sessions
-            </h2>
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-4 relative">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <History className="text-violet-400" size={18} />
+            </div>
 
-            <p className="text-xs text-slate-400">
-              Latest AI interview performance history
-            </p>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
+                Recent Sessions
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                Latest AI interview performance history
+              </p>
+            </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
-            <Sparkles size={13} />
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+            <Sparkles size={12} />
             Session Analytics
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          
-          <table className="w-full min-w-[800px]">
-            
-            <thead>
+        {/* Scrollable Table Container */}
+        <div className="overflow-x-auto overflow-y-auto max-h-[340px] rounded-xl border border-white/5 pr-1 scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+          <table className="w-full min-w-[700px] text-left border-collapse">
+            <thead className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-md">
               <tr className="border-b border-white/10">
-                
-                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
+                <th className="text-slate-400 text-[11px] font-bold uppercase tracking-wider py-2.5 px-3 bg-slate-900/95">
                   Role
                 </th>
-
-                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
+                <th className="text-slate-400 text-[11px] font-bold uppercase tracking-wider py-2.5 px-3 bg-slate-900/95">
                   Interview Type
                 </th>
-
-                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
+                <th className="text-slate-400 text-[11px] font-bold uppercase tracking-wider py-2.5 px-3 bg-slate-900/95">
                   Score
                 </th>
-
-                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
+                <th className="text-slate-400 text-[11px] font-bold uppercase tracking-wider py-2.5 px-3 bg-slate-900/95">
                   Duration
                 </th>
-
-                <th className="text-left text-slate-400 text-xs font-semibold uppercase tracking-wider py-4">
+                <th className="text-slate-400 text-[11px] font-bold uppercase tracking-wider py-2.5 px-3 bg-slate-900/95">
                   Status
                 </th>
               </tr>
             </thead>
 
-            <tbody>
-              
+            <tbody className="divide-y divide-white/5">
               {displaySessions.map((session, index) => (
                 <motion.tr
                   key={index}
-                  whileHover={{
-                    backgroundColor: "rgba(255,255,255,0.02)",
-                  }}
-                  className="border-b border-white/5 transition-all duration-300"
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+                  className="transition-colors duration-150"
                 >
                   {/* Role */}
-                  <td className="py-5">
-                    
-                    <div>
-                      <h3 className="text-slate-200 font-semibold text-sm">
-                        {session.role}
-                      </h3>
-                    </div>
+                  <td className="py-3 px-3">
+                    <h3 className="text-slate-200 font-bold text-xs sm:text-sm">
+                      {session.role}
+                    </h3>
                   </td>
 
                   {/* Type */}
-                  <td className="py-5">
-                    
-                    <div className="px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-medium w-fit">
+                  <td className="py-3 px-3">
+                    <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[11px] font-semibold inline-block">
                       {session.type}
-                    </div>
+                    </span>
                   </td>
 
                   {/* Score */}
-                  <td className="py-5">
-                    
-                    <div className="text-base font-bold text-white">
+                  <td className="py-3 px-3">
+                    <span className="text-sm font-extrabold text-white">
                       {session.score}
-                    </div>
+                    </span>
                   </td>
 
                   {/* Duration */}
-                  <td className="py-5">
-                    
-                    <div className="flex items-center gap-2 text-slate-300 text-sm">
-                      
-                      <Clock3 size={15} />
-
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-1.5 text-slate-300 text-xs font-medium">
+                      <Clock3 size={13} className="text-slate-400" />
                       {session.duration}
                     </div>
                   </td>
 
                   {/* Status */}
-                  <td className="py-5">
-                    
+                  <td className="py-3 px-3">
                     {session.status === "Passed" ? (
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium w-fit">
-                        
-                        <CheckCircle2 size={14} />
-
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold">
+                        <CheckCircle2 size={12} />
                         Passed
-                      </div>
+                      </span>
                     ) : (
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium w-fit">
-                        
-                        <XCircle size={14} />
-
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-bold">
+                        <XCircle size={12} />
                         Needs Work
-                      </div>
+                      </span>
                     )}
                   </td>
                 </motion.tr>
@@ -218,14 +200,13 @@ const RecentSessionsTable = ({ sessions: propSessions }) => {
         </div>
 
         {/* Bottom Info */}
-        <div className="mt-6 bg-white/[0.03] border border-white/10 rounded-2xl p-4 relative overflow-hidden">
+        <div className="mt-4 bg-white/[0.025] border border-white/10 rounded-xl p-3 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[0.03] to-purple-500/[0.03] pointer-events-none" />
           <div className="relative">
-            <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
+            <h3 className="text-xs font-bold text-white mb-0.5 tracking-tight">
               AI Performance Tracking
             </h3>
-
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-300 leading-relaxed">
               Your recent interview sessions are continuously analyzed to identify strengths, weaknesses, and placement readiness trends using AI-powered evaluation models.
             </p>
           </div>

@@ -128,9 +128,11 @@ const AvatarPreview = ({ name, headline, location, skills, profileImage, current
         .slice(0, 2)
     : "?";
 
-  const skillList = skills
-    ? skills.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4)
+  const allSkills = skills
+    ? skills.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
+  const skillList = allSkills.slice(0, 6);
+  const extraCount = Math.max(0, allSkills.length - skillList.length);
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-5 px-4">
@@ -200,19 +202,26 @@ const AvatarPreview = ({ name, headline, location, skills, profileImage, current
       )}
 
       {/* Skills chips */}
-      {skillList.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 justify-center max-w-[200px]">
-          {skillList.map((skill, i) => (
-            <motion.span
-              key={skill}
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className="px-2 py-0.5 rounded-md border border-emerald-400/20 bg-emerald-400/8 text-emerald-300 text-[11px] font-medium"
-            >
-              {skill}
-            </motion.span>
-          ))}
+      {allSkills.length > 0 && (
+        <div className="flex flex-col items-center gap-1.5 max-w-[240px]">
+          <div className="flex flex-wrap gap-1.5 justify-center max-h-24 overflow-y-auto pr-1">
+            {skillList.map((skill, i) => (
+              <motion.span
+                key={`${skill}-${i}`}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                className="px-2 py-0.5 rounded-md border border-emerald-400/20 bg-emerald-400/8 text-emerald-300 text-[11px] font-medium"
+              >
+                {skill}
+              </motion.span>
+            ))}
+            {extraCount > 0 && (
+              <span className="px-2 py-0.5 rounded-md border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 text-[11px] font-semibold">
+                +{extraCount} more
+              </span>
+            )}
+          </div>
         </div>
       )}
 
@@ -239,6 +248,7 @@ const CompleteProfile = () => {
     reset,
     watch,
     trigger,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -277,6 +287,23 @@ const CompleteProfile = () => {
         portfolioUrl: user?.portfolioUrl || "",
         profileImage: user?.profileImage || "",
       });
+
+      let initialStep = 0;
+      if (typeof user?.profileSetupStep === "number" && user.profileSetupStep > 0) {
+        initialStep = Math.min(user.profileSetupStep, 4);
+      } else {
+        if (user?.githubUrl || user?.linkedinUrl || user?.portfolioUrl) {
+          initialStep = 3;
+        } else if (user?.skills && (Array.isArray(user?.skills) ? user.skills.length > 0 : String(user?.skills).trim().length > 0)) {
+          initialStep = 3;
+        } else if (user?.location || user?.bio) {
+          initialStep = 2;
+        } else if (user?.name) {
+          initialStep = 1;
+        }
+      }
+
+      setCurrentStep(initialStep);
       hasInitializedRef.current = true;
     }
   }, [navigate, reset, user]);
@@ -288,9 +315,28 @@ const CompleteProfile = () => {
   const handleNext = useCallback(async () => {
     const valid = await trigger(step.fields);
     if (!valid) return;
+
+    const nextStep = currentStep + 1;
+    const currentValues = getValues();
+
+    const draftPayload = {
+      ...currentValues,
+      isDraft: true,
+      profileSetupStep: nextStep,
+    };
+
+    try {
+      const updatedUser = await studentService.updateProfile(draftPayload);
+      if (updatedUser) {
+        dispatch(setCredentials({ user: updatedUser, accessToken }));
+      }
+    } catch (err) {
+      console.warn("Failed to persist draft onboarding step to server:", err);
+    }
+
     setDirection(1);
-    setCurrentStep((prev) => prev + 1);
-  }, [trigger, step.fields]);
+    setCurrentStep(nextStep);
+  }, [trigger, step.fields, currentStep, getValues, dispatch, accessToken]);
 
   const handleBack = useCallback(() => {
     setDirection(-1);
@@ -301,6 +347,8 @@ const CompleteProfile = () => {
     try {
       const payload = {
         ...values,
+        isDraft: false,
+        profileSetupStep: 4,
         githubUrl: values.githubUrl?.trim() || "",
         linkedinUrl: values.linkedinUrl?.trim() || "",
         portfolioUrl: values.portfolioUrl?.trim() || "",
@@ -503,7 +551,7 @@ const CompleteProfile = () => {
                           <input
                             {...register("name", { required: "Name is required" })}
                             className={inputClass(errors.name, "cyan")}
-                            placeholder="Aditya Kumar"
+                            placeholder="John Doe"
                             autoFocus
                           />
                           {errors.name && (
@@ -583,25 +631,36 @@ const CompleteProfile = () => {
                         )}
 
                         {/* Live chip preview */}
-                        {watchedValues.skills && (
-                          <div className="mt-3 flex flex-wrap gap-1.5">
-                            {watchedValues.skills
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter(Boolean)
-                              .slice(0, 10)
-                              .map((skill, i) => (
-                                <motion.span
-                                  key={`${skill}-${i}`}
-                                  initial={{ opacity: 0, scale: 0.85 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  className="px-2.5 py-0.5 rounded-lg border border-emerald-400/20 bg-emerald-400/8 text-emerald-300 text-[11px] font-medium"
-                                >
-                                  {skill}
-                                </motion.span>
-                              ))}
-                          </div>
-                        )}
+                        {watchedValues.skills && (() => {
+                          const parsedSkills = watchedValues.skills
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean);
+
+                          if (parsedSkills.length === 0) return null;
+
+                          return (
+                            <div className="mt-3">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[11px] font-medium text-emerald-400">
+                                  Parsed Skills ({parsedSkills.length})
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1 py-1 custom-scrollbar rounded-xl border border-white/10 bg-black/30 p-2.5">
+                                {parsedSkills.map((skill, i) => (
+                                  <motion.span
+                                    key={`${skill}-${i}`}
+                                    initial={{ opacity: 0, scale: 0.85 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="px-2.5 py-0.5 rounded-lg border border-emerald-400/20 bg-emerald-400/10 text-emerald-300 text-[11px] font-medium"
+                                  >
+                                    {skill}
+                                  </motion.span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </label>
                     )}
 

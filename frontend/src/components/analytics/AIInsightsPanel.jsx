@@ -16,9 +16,9 @@ const defaultInsights = [
     description:
       "Your DSA problem-solving speed improved by 24% compared to last month.",
     icon: TrendingUp,
-    color: "text-green-400",
-    bg: "bg-green-500/10",
-    border: "border-green-500/20",
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
   },
   {
     title: "Communication Becoming Stronger",
@@ -53,9 +53,9 @@ const AIInsightsPanel = ({ stats, weaknesses }) => {
         ? `Your coding accuracy stands at ${codingAccuracy}. Keep solving medium DSA challenges to improve edge-case coverage.`
         : "Solve coding challenges to enable AI coding accuracy insights.",
       icon: TrendingUp,
-      color: "text-green-400",
-      bg: "bg-green-500/10",
-      border: "border-green-500/20",
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/10",
+      border: "border-emerald-500/20",
     },
     {
       title: "Communication Quality",
@@ -89,80 +89,76 @@ const AIInsightsPanel = ({ stats, weaknesses }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden bg-white/[0.035] border border-white/10 backdrop-blur-xl rounded-3xl p-5"
+      className="relative overflow-hidden bg-slate-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl"
     >
       {/* Glow and top line border */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-20 -left-12 h-56 w-56 rounded-full bg-cyan-500/[0.06] blur-[50px]" />
-        <div className="absolute -top-20 -right-12 h-56 w-56 rounded-full bg-purple-500/[0.06] blur-[50px]" />
+        <div className="absolute -top-16 -left-12 h-44 w-44 rounded-full bg-cyan-500/10 blur-[40px]" />
+        <div className="absolute -top-16 -right-12 h-44 w-44 rounded-full bg-purple-500/10 blur-[40px]" />
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full"
-             style={{ background: "linear-gradient(90deg, rgba(6,182,212,0.5), rgba(139,92,246,0.3), transparent)" }} />
+             style={{ background: "linear-gradient(90deg, rgba(34,211,238,0.6), rgba(167,139,250,0.4), transparent)" }} />
       </div>
 
       <div className="relative">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8 relative">
-          
-          <div className="flex items-center gap-4">
-            
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-4 relative">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
               <Brain
                 className="text-cyan-400"
-                size={24}
+                size={18}
               />
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white tracking-tight">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
                 AI Insights
               </h2>
-
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-400">
                 Personalized interview intelligence
               </p>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
-            <Sparkles size={13} />
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+            <Sparkles size={12} />
             Smart Recommendations
           </div>
         </div>
 
         {/* Insight Cards */}
-        <div className="space-y-4">
-          
+        <div className="space-y-3">
           {displayInsights.map((item, index) => {
             const Icon = item.icon;
 
             return (
               <motion.div
                 key={index}
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 className="
                   relative
                   overflow-hidden
-                  rounded-2xl
+                  rounded-xl
                   border
                   border-white/10
-                  bg-white/[0.03]
-                  p-4
-                  hover:bg-white/[0.045]
+                  bg-white/[0.025]
+                  p-3.5
+                  hover:bg-white/[0.04]
                   transition-all
-                  duration-300
+                  duration-200
                 "
               >
-                <div className="relative flex gap-4">
+                <div className="relative flex gap-3 items-start">
                   
                   {/* Icon */}
                   <div
                     className={`
-                      w-10
-                      h-10
-                      rounded-xl
+                      w-8
+                      h-8
+                      rounded-lg
                       flex
                       items-center
                       justify-center
@@ -174,18 +170,16 @@ const AIInsightsPanel = ({ stats, weaknesses }) => {
                   >
                     <Icon
                       className={item.color}
-                      size={20}
+                      size={16}
                     />
                   </div>
 
                   {/* Content */}
                   <div>
-                    
-                    <h3 className="text-base font-semibold text-white mb-1">
+                    <h3 className="text-sm font-bold text-white mb-0.5">
                       {item.title}
                     </h3>
-
-                    <p className="text-sm text-slate-300 leading-relaxed">
+                    <p className="text-xs text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </div>
@@ -196,22 +190,19 @@ const AIInsightsPanel = ({ stats, weaknesses }) => {
         </div>
 
         {/* AI Recommendation */}
-        <div className="mt-6 bg-white/[0.03] border border-white/10 rounded-2xl p-4 relative overflow-hidden">
+        <div className="mt-4 bg-white/[0.025] border border-white/10 rounded-xl p-3 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[0.03] to-purple-500/[0.03] pointer-events-none" />
-          <div className="relative flex items-start gap-3">
-            
+          <div className="relative flex items-start gap-2.5">
             <Lightbulb
-              className="text-yellow-400 mt-0.5 flex-shrink-0"
-              size={18}
+              className="text-amber-400 mt-0.5 flex-shrink-0"
+              size={16}
             />
 
             <div>
-              
-              <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
+              <h3 className="text-xs font-bold text-white mb-0.5 tracking-tight">
                 AI Career Suggestion
               </h3>
-
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 {careerSuggestion}
               </p>
             </div>
