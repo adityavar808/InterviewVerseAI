@@ -471,6 +471,9 @@ const InterviewHistory = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Filter state (MUST be declared at top level)
+  const [activeFilter, setActiveFilter] = useState("All");
+
   // Modal state
   const [selectedSession, setSelectedSession] = useState(null);
   const [sessionDetail, setSessionDetail] = useState(null);
@@ -631,53 +634,107 @@ const InterviewHistory = () => {
     );
   }
 
+  const filterOptions = ["All", "Frontend", "Backend", "HR"];
+
+  const filteredInterviews = interviews.filter((interview) => {
+    if (activeFilter === "All") return true;
+    const roleLower = (interview.role || "").toLowerCase();
+    if (activeFilter === "Frontend") return roleLower.includes("frontend");
+    if (activeFilter === "Backend") return roleLower.includes("backend");
+    if (activeFilter === "HR") return roleLower.includes("hr");
+    return true;
+  });
+
   return (
     <>
+      {/* Category filter pills & counter bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-white/[0.06]">
+        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+          {filterOptions.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                activeFilter === filter
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                  : "bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/[0.06] border border-white/5"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-[11px] text-slate-400 font-medium">
+          Showing <span className="text-white font-semibold">{filteredInterviews.length}</span> of {interviews.length} sessions
+        </div>
+      </div>
+
       <div className="space-y-2">
-        {interviews.map((interview, index) => {
+        {filteredInterviews.map((interview, index) => {
           const sc = getScoreColor(interview.score);
           const diffStyle = getDifficultyBadge(interview.difficulty);
           const isActive = selectedSession === (interview.sessionId || interview.id);
+
+          const cleanTags = Array.from(new Set(interview.tags || [])).filter(
+            (t) => t && t.toLowerCase() !== (interview.role || "").toLowerCase()
+          );
 
           return (
             <motion.div
               key={interview.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.07 }}
-              className="rounded-2xl p-4 md:p-5 transition-all"
+              transition={{ delay: index * 0.05 }}
+              className="group rounded-xl p-3 md:p-3.5 transition-all hover:bg-white/[0.04]"
               style={{
-                background: isActive ? "rgba(6,182,212,0.04)" : "rgba(255,255,255,0.02)",
+                background: isActive ? "rgba(6,182,212,0.06)" : "rgba(255,255,255,0.02)",
                 border: isActive
-                  ? "1px solid rgba(6,182,212,0.15)"
+                  ? "1px solid rgba(6,182,212,0.2)"
                   : "1px solid rgba(255,255,255,0.05)",
               }}
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3.5">
                 {/* Score ring */}
                 <div className="flex-shrink-0">
-                  <ScoreRing score={interview.score} size={64} strokeWidth={4} />
+                  <ScoreRing score={interview.score} size={50} strokeWidth={3.5} />
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3 className="text-white font-semibold text-base leading-snug">{interview.role}</h3>
+                    <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-cyan-300 transition-colors">
+                      {interview.role}
+                    </h3>
                     <span
-                      className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider"
+                      className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
                       style={diffStyle}
                     >
                       {interview.difficulty}
                     </span>
                   </div>
 
-                  {interview.tags?.length > 0 && (
-                    <p className="text-slate-500 text-xs mb-2 truncate">{interview.tags.join(" · ")}</p>
-                  )}
+                  {cleanTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      {cleanTags.slice(0, 4).map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/[0.04] text-slate-300 border border-white/5"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      {cleanTags.length > 4 && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] text-slate-500 bg-white/[0.02]">
+                          +{cleanTags.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
 
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-2.5 text-[11px] text-slate-500">
                     <span className="flex items-center gap-1">
-                      <Clock size={11} />
+                      <Clock size={10} />
                       {interview.duration}
                     </span>
                     <span className="w-0.5 h-0.5 rounded-full bg-slate-600" />
@@ -686,36 +743,42 @@ const InterviewHistory = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex-shrink-0 flex gap-2">
+                <div className="flex-shrink-0 flex gap-1.5">
                   <button
-                    className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                    className="w-8.5 h-8.5 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                     style={{
-                      background: isActive ? "rgba(6,182,212,0.15)" : "rgba(6,182,212,0.08)",
-                      border: "1px solid rgba(6,182,212,0.2)",
+                      background: isActive ? "rgba(6,182,212,0.2)" : "rgba(6,182,212,0.08)",
+                      border: "1px solid rgba(6,182,212,0.25)",
                       color: "#06b6d4",
                     }}
-                    title="View Analysis"
+                    title="View Comprehensive Score Analysis"
                     onClick={() => openSessionAnalysis(interview)}
                   >
-                    <BarChart3 size={15} />
+                    <BarChart3 size={14} />
                   </button>
                   <button
-                    className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                    className="w-8.5 h-8.5 rounded-lg flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                     style={{
                       background: "rgba(139,92,246,0.08)",
                       border: "1px solid rgba(139,92,246,0.2)",
                       color: "#a78bfa",
                     }}
-                    title="Reattempt"
-                    onClick={() => toast.success("Use the AI Interview page to start a new session.")}
+                    title="Reattempt Interview Track"
+                    onClick={() => toast.success("Select a track above to launch a new interview session.")}
                   >
-                    <RotateCcw size={15} />
+                    <RotateCcw size={14} />
                   </button>
                 </div>
               </div>
             </motion.div>
           );
         })}
+
+        {filteredInterviews.length === 0 && (
+          <div className="py-8 text-center text-slate-500 text-xs">
+            No interviews found for filter "{activeFilter}".
+          </div>
+        )}
       </div>
 
       {/* ── Analysis Modal (portal) ── */}

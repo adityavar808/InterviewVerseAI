@@ -33,7 +33,7 @@ const roles = [
   "System Design",
 ];
 
-const InterviewSetupModal = ({ open, onClose }) => {
+const InterviewSetupModal = ({ open, onClose, initialRole = "" }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user || {});
@@ -42,11 +42,17 @@ const InterviewSetupModal = ({ open, onClose }) => {
   // Form State Management
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRole, setSelectedRole] = useState(initialRole || "");
   const [selectedExperience, setSelectedExperience] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && initialRole) {
+      setSelectedRole(initialRole);
+    }
+  }, [open, initialRole]);
 
   // Camera & Mic State Management
   const [isCameraOn, setIsCameraOn] = useState(false);
