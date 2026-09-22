@@ -257,7 +257,7 @@ const ResumeAnalyzer = () => {
           </div>
 
           {/* TARGET ROLE PILLS */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar border-t border-white/5">
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 mr-1 flex items-center gap-1">
               <Target size={12} className="text-cyan-400" /> Target Role:
             </span>
@@ -269,7 +269,7 @@ const ResumeAnalyzer = () => {
                   type="button"
                   onClick={() => handleRoleSelect(role)}
                   disabled={loading}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
                     isSelected
                       ? "bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20"
                       : "bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white border border-white/5"
